@@ -1,1 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
 
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Docker
+docker-data/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Ollama model data
+ollama-data/
+
+# IDE files
+.idea/
