@@ -10,6 +10,6 @@ This project is an integrated Agentic AI university management application devel
 
 - Student 1: Course Management
 - Student 2: Assignment Management
-- Student 3: Study Plan Management
+- Student 3: Campus Resource Management
 - Student 4: Campus Event Management
 - Student 5: Career and Internship Management
