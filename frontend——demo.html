@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Events</title>
+  <style>
+    :root{
+      --green:#0a9b43;
+      --green-dark:#087a36;
+      --green-soft:#eaf8ef;
+      --text:#111827;
+      --muted:#667085;
+      --line:#e5e7eb;
+      --bg:#ffffff;
+      --card:#ffffff;
+      --shadow:0 10px 30px rgba(17,24,39,.08);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color:var(--text);
+      background:#fff;
+    }
+
+    a{color:inherit;text-decoration:none}
+
+    .topbar{
+      height:86px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 5vw;
+      border-bottom:1px solid var(--line);
+      position:sticky;
+      top:0;
+      background:rgba(255,255,255,.96);
+      backdrop-filter:blur(10px);
+      z-index:20;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:800;
+      font-size:24px;
+      color:var(--green);
+    }
+
+    .brand-mark{
+      width:42px;
+      height:42px;
+      border:4px solid var(--green);
+      border-radius:50%;
+      position:relative;
+    }
+    .brand-mark:after{
+      content:"";
+      position:absolute;
+      left:12px;
+      top:8px;
+      border-left:13px solid var(--green);
+      border-top:9px solid transparent;
+      border-bottom:9px solid transparent;
+    }
+
+    .nav{
+      display:flex;
+      gap:28px;
+      color:#222;
+      font-weight:600;
+      font-size:15px;
+    }
+    .nav span{cursor:pointer}
+    .nav span:hover{color:var(--green)}
+
+    .actions{
+      display:flex;
+      gap:14px;
+      align-items:center;
+    }
+    .icon-btn{
+      width:40px;height:40px;border-radius:12px;
+      display:grid;place-items:center;
+      border:1px solid var(--line);
+      background:white;
+      cursor:pointer;
+      font-size:18px;
+    }
+
+    .hero{
+      padding:46px 5vw 22px;
+    }
+    .hero-row{
+      display:flex;
+      justify-content:space-between;
+      gap:24px;
+      align-items:end;
+    }
+    h1{
+      font-size:46px;
+      line-height:1;
+      margin:0 0 12px;
+      letter-spacing:-1.5px;
+    }
+    .hero p{
+      margin:0;
+      color:var(--muted);
+      font-size:16px;
+    }
+
+    .ask-ai{
+      border:none;
+      background:var(--green);
+      color:white;
+      font-weight:700;
+      padding:13px 18px;
+      border-radius:12px;
+      cursor:pointer;
+      box-shadow:0 8px 18px rgba(10,155,67,.22);
+    }
+    .ask-ai:hover{background:var(--green-dark)}
+
+    .controls{
+      padding:0 5vw 24px;
+      display:grid;
+      grid-template-columns:1.5fr repeat(3, .7fr);
+      gap:12px;
+    }
+    .control{
+      border:1px solid var(--line);
+      background:white;
+      border-radius:12px;
+      padding:12px 14px;
+      color:#374151;
+      font-size:14px;
+      outline:none;
+    }
+    .control:focus{border-color:var(--green)}
+
+    .section{
+      padding:0 5vw 70px;
+    }
+    .section-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin:10px 0 20px;
+    }
+    .section-head h2{
+      font-size:28px;
+      margin:0;
+    }
+    .result-count{
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:24px 20px;
+    }
+
+    .card{
+      border-radius:16px;
+      overflow:hidden;
+      background:var(--card);
+      border:1px solid #edf0f2;
+      transition:.22s ease;
+      cursor:pointer;
+    }
+    .card:hover{
+      transform:translateY(-4px);
+      box-shadow:var(--shadow);
+    }
+    .image{
+      height:190px;
+      position:relative;
+      background:
+        linear-gradient(135deg, rgba(10,155,67,.18), rgba(31,41,55,.08)),
+        radial-gradient(circle at 30% 20%, #e8f7ed 0, #d6efe0 25%, #eef3f0 70%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+    .image .emoji{
+      font-size:58px;
+      filter:drop-shadow(0 8px 12px rgba(0,0,0,.08));
+    }
+    .date-pill{
+      position:absolute;
+      left:14px;
+      bottom:12px;
+      background:var(--green);
+      color:#fff;
+      padding:6px 9px;
+      border-radius:7px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .tag{
+      position:absolute;
+      right:12px;
+      top:12px;
+      background:rgba(255,255,255,.92);
+      color:var(--green-dark);
+      border:1px solid rgba(10,155,67,.18);
+      padding:5px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+    }
+
+    .content{
+      padding:16px 16px 18px;
+    }
+    .content h3{
+      font-size:20px;
+      line-height:1.15;
+      margin:0 0 9px;
+      letter-spacing:-.2px;
+    }
+    .content p{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.55;
+      min-height:65px;
+    }
+    .meta{
+      margin-top:13px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px 12px;
+      color:#4b5563;
+      font-size:12px;
+      font-weight:600;
+    }
+
+    .chat-launcher{
+      position:fixed;
+      right:28px;
+      bottom:28px;
+      width:58px;
+      height:58px;
+      border:none;
+      background:var(--green);
+      color:#fff;
+      border-radius:50%;
+      font-size:24px;
+      cursor:pointer;
+      box-shadow:0 12px 30px rgba(10,155,67,.35);
+      z-index:40;
+    }
+
+    .chat{
+      position:fixed;
+      right:28px;
+      bottom:98px;
+      width:360px;
+      height:500px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:0 22px 70px rgba(17,24,39,.20);
+      display:none;
+      flex-direction:column;
+      overflow:hidden;
+      z-index:40;
+    }
+    .chat.open{display:flex}
+
+    .chat-head{
+      padding:16px 18px;
+      background:var(--green);
+      color:white;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .chat-head strong{font-size:16px}
+    .chat-head span{font-size:12px;opacity:.85}
+    .chat-close{
+      background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer;
+    }
+
+    .messages{
+      flex:1;
+      overflow:auto;
+      padding:16px;
+      background:#f8faf9;
+    }
+    .msg{
+      max-width:84%;
+      padding:11px 13px;
+      border-radius:14px;
+      margin:0 0 10px;
+      line-height:1.45;
+      font-size:13px;
+    }
+    .bot{
+      background:white;
+      border:1px solid var(--line);
+      border-bottom-left-radius:5px;
+    }
+    .user{
+      background:var(--green);
+      color:white;
+      margin-left:auto;
+      border-bottom-right-radius:5px;
+    }
+
+    .quick{
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+      padding:0 16px 10px;
+      background:#f8faf9;
+    }
+    .quick button{
+      border:1px solid #cfe9d9;
+      background:#fff;
+      color:var(--green-dark);
+      padding:7px 9px;
+      border-radius:999px;
+      font-size:11px;
+      cursor:pointer;
+    }
+
+    .chat-input{
+      display:flex;
+      gap:8px;
+      padding:12px;
+      border-top:1px solid var(--line);
+      background:white;
+    }
+    .chat-input input{
+      flex:1;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:11px 12px;
+      outline:none;
+    }
+    .chat-input button{
+      border:0;
+      border-radius:12px;
+      padding:0 14px;
+      background:var(--green);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .footer{
+      border-top:1px solid var(--line);
+      padding:28px 5vw 40px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    @media(max-width:1100px){
+      .grid{grid-template-columns:repeat(3,1fr)}
+      .controls{grid-template-columns:1fr 1fr}
+      .nav{display:none}
+    }
+    @media(max-width:760px){
+      .grid{grid-template-columns:repeat(2,1fr)}
+      .hero-row{align-items:start;flex-direction:column}
+      h1{font-size:38px}
+      .controls{grid-template-columns:1fr}
+      .chat{right:14px;left:14px;width:auto}
+    }
+    @media(max-width:520px){
+      .grid{grid-template-columns:1fr}
+      .topbar{padding:0 18px}
+      .hero,.controls,.section{padding-left:18px;padding-right:18px}
+      .brand{font-size:20px}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      CampusLife
+    </div>
+    <nav class="nav">
+      <span>What's on⌄</span>
+      <span>Clubs⌄</span>
+      <span>Sport⌄</span>
+      <span>Eat, Drink, Play⌄</span>
+      <span>Wellbeing⌄</span>
+    </nav>
+    <div class="actions">
+      <button class="icon-btn" aria-label="profile">👤</button>
+      <button class="icon-btn" aria-label="search">⌕</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-row">
+        <div>
+          <h1>What's on</h1>
+          <p>Discover campus activities, workshops, social events and student experiences.</p>
+        </div>
+        <button class="ask-ai" onclick="toggleChat(true)">✨ Ask Campus AI</button>
+      </div>
+    </section>
+
+    <section class="controls">
+      <input id="search" class="control" placeholder="Search events..." />
+      <select id="category" class="control">
+        <option value="">All categories</option>
+      </select>
+      <select id="location" class="control">
+        <option value="">All locations</option>
+      </select>
+      <select id="dateRange" class="control">
+        <option value="">Any date</option>
+        <option value="week">This week</option>
+        <option value="month">This month</option>
+      </select>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>All events</h2>
+        <div class="result-count" id="count"></div>
+      </div>
+      <div class="grid" id="eventGrid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    CampusLife Events · ASD 2026 Student Project · Campus Event Management
+  </footer>
+
+  <button class="chat-launcher" onclick="toggleChat()">💬</button>
+
+  <aside class="chat" id="chat">
+    <div class="chat-head">
+      <div>
+        <strong>Campus AI Assistant</strong><br>
+        <span>Powered by Ollama in the real project</span>
+      </div>
+      <button class="chat-close" onclick="toggleChat(false)">×</button>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="msg bot">Hi! Ask me about campus events, dates, categories or locations.</div>
+    </div>
+
+    <div class="quick">
+      <button onclick="askQuick('What events are happening this week?')">This week?</button>
+      <button onclick="askQuick('Any career events?')">Career events?</button>
+      <button onclick="askQuick('What is happening at Building 11?')">Building 11?</button>
+    </div>
+
+    <div class="chat-input">
+      <input id="chatInput" placeholder="Ask about events..." onkeydown="if(event.key==='Enter') sendMessage()" />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </aside>
+
+  <script>
+    const events = [
+      {title:"Wellbeing Week 2026", date:"2026-08-08", category:"Wellbeing", location:"Student Centre", emoji:"🌿", desc:"Drop-in wellbeing activities, peer support and practical ways to recharge during semester."},
+      {title:"Thursday Night Basketball", date:"2026-08-08", category:"Sport", location:"Ross Milbourne Sports Hall", emoji:"🏀", desc:"Friendly social basketball for students of all skill levels. Bring a friend and join a team."},
+      {title:"Campus Handball Social", date:"2026-08-09", category:"Sport", location:"Sports Centre", emoji:"🤾", desc:"A beginner-friendly social competition with relaxed rules and plenty of team spirit."},
+      {title:"Discover Sydney Walk", date:"2026-08-09", category:"Social", location:"Central Station", emoji:"🌆", desc:"Explore hidden gems around Sydney with other students and make new friends."},
+      {title:"AI & Future Careers Workshop", date:"2026-08-10", category:"Career", location:"Building 11", emoji:"🤖", desc:"Learn how AI is changing graduate jobs and what skills employers are looking for."},
+      {title:"International Student Mixer", date:"2026-08-10", category:"Social", location:"Student Commons", emoji:"🌏", desc:"Meet students from around the world in a casual evening with games, snacks and music."},
+      {title:"Python for Beginners", date:"2026-08-11", category:"Workshop", location:"Building 10", emoji:"💻", desc:"A practical beginner session covering Python basics through small coding activities."},
+      {title:"Career Fair 2026", date:"2026-08-12", category:"Career", location:"Great Hall", emoji:"💼", desc:"Meet employers, ask questions about graduate programs and explore internship opportunities."},
+      {title:"Photography Walk", date:"2026-08-13", category:"Creative", location:"Alumni Green", emoji:"📷", desc:"Walk around campus and nearby streets while learning simple photography techniques."},
+      {title:"Board Game Night", date:"2026-08-14", category:"Social", location:"Student Lounge", emoji:"🎲", desc:"A relaxed evening with strategy games, party games and free snacks."},
+      {title:"Sustainability Market", date:"2026-08-15", category:"Community", location:"Alumni Green", emoji:"♻️", desc:"Browse student stalls, recycled goods, sustainable products and local community initiatives."},
+      {title:"Startup Pitch Night", date:"2026-08-16", category:"Career", location:"Building 11", emoji:"🚀", desc:"Student founders pitch ideas to a panel and receive practical feedback from industry guests."},
+      {title:"Yoga on the Green", date:"2026-08-17", category:"Wellbeing", location:"Alumni Green", emoji:"🧘", desc:"A calm morning yoga session suitable for beginners. Mats are available in limited numbers."},
+      {title:"Cybersecurity Challenge", date:"2026-08-18", category:"Workshop", location:"Building 10", emoji:"🔐", desc:"Solve beginner-friendly cybersecurity puzzles in teams and learn core security concepts."},
+      {title:"Student Club Expo", date:"2026-08-19", category:"Community", location:"Great Hall", emoji:"🎪", desc:"Discover campus clubs, meet committee members and sign up for activities that interest you."},
+      {title:"Film Night: Student Shorts", date:"2026-08-20", category:"Creative", location:"Theatre Room", emoji:"🎬", desc:"Watch a selection of short films created by students, followed by a casual discussion."}
+    ];
+
+    const grid = document.getElementById("eventGrid");
+    const search = document.getElementById("search");
+    const category = document.getElementById("category");
+    const locationFilter = document.getElementById("location");
+    const dateRange = document.getElementById("dateRange");
+    const count = document.getElementById("count");
+
+    function prettyDate(value){
+      const d = new Date(value + "T00:00:00");
+      return d.toLocaleDateString("en-AU",{day:"numeric",month:"short"}).toUpperCase();
+    }
+
+    function seedFilters(){
+      [...new Set(events.map(e=>e.category))].sort().forEach(v=>{
+        category.innerHTML += `<option value="${v}">${v}</option>`;
+      });
+      [...new Set(events.map(e=>e.location))].sort().forEach(v=>{
+        locationFilter.innerHTML += `<option value="${v}">${v}</option>`;
+      });
+    }
+
+    function withinRange(eventDate, mode){
+      if(!mode) return true;
+      const today = new Date("2026-08-07T00:00:00");
+      const d = new Date(eventDate + "T00:00:00");
+      const diffDays = Math.floor((d - today) / 86400000);
+      if(mode === "week") return diffDays >= 0 && diffDays <= 7;
+      if(mode === "month") return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+      return true;
+    }
+
+    function render(){
+      const q = search.value.trim().toLowerCase();
+      const cat = category.value;
+      const loc = locationFilter.value;
+      const mode = dateRange.value;
+
+      const filtered = events.filter(e=>{
+        const text = `${e.title} ${e.category} ${e.location} ${e.desc}`.toLowerCase();
+        return (!q || text.includes(q))
+          && (!cat || e.category === cat)
+          && (!loc || e.location === loc)
+          && withinRange(e.date, mode);
+      });
+
+      count.textContent = `${filtered.length} event${filtered.length===1?"":"s"}`;
+      grid.innerHTML = filtered.map(e=>`
+        <article class="card">
+          <div class="image">
+            <span class="emoji">${e.emoji}</span>
+            <span class="tag">${e.category}</span>
+            <span class="date-pill">${prettyDate(e.date)}</span>
+          </div>
+          <div class="content">
+            <h3>${e.title}</h3>
+            <p>${e.desc}</p>
+            <div class="meta">
+              <span>📍 ${e.location}</span>
+              <span>📅 ${new Date(e.date+"T00:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"})}</span>
+            </div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function toggleChat(force){
+      const chat = document.getElementById("chat");
+      const open = typeof force === "boolean" ? force : !chat.classList.contains("open");
+      chat.classList.toggle("open", open);
+      if(open) setTimeout(()=>document.getElementById("chatInput").focus(),100);
+    }
+
+    function addMessage(text, type){
+      const messages = document.getElementById("messages");
+      const div = document.createElement("div");
+      div.className = `msg ${type}`;
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function localAiAnswer(question){
+      const q = question.toLowerCase();
+      let matches = [];
+
+      if(q.includes("this week") || q.includes("week")){
+        matches = events.filter(e=>withinRange(e.date,"week"));
+      } else if(q.includes("career")){
+        matches = events.filter(e=>e.category==="Career");
+      } else if(q.includes("building 11")){
+        matches = events.filter(e=>e.location==="Building 11");
+      } else if(q.includes("sport") || q.includes("basketball")){
+        matches = events.filter(e=>e.category==="Sport");
+      } else if(q.includes("wellbeing") || q.includes("yoga")){
+        matches = events.filter(e=>e.category==="Wellbeing");
+      }
+
+      if(matches.length){
+        const sample = matches.slice(0,5).map(e=>`${e.title} (${prettyDate(e.date)}, ${e.location})`).join("; ");
+        return `I found ${matches.length} relevant event${matches.length===1?"":"s"}: ${sample}${matches.length>5?"…":""}`;
+      }
+
+      return "I can help with questions about dates, categories and locations. In the real project, this box would send your question together with the event data to Ollama.";
+    }
+
+    function sendMessage(){
+      const input = document.getElementById("chatInput");
+      const text = input.value.trim();
+      if(!text) return;
+      addMessage(text,"user");
+      input.value = "";
+      setTimeout(()=>addMessage(localAiAnswer(text),"bot"),350);
+    }
+
+    function askQuick(text){
+      toggleChat(true);
+      document.getElementById("chatInput").value = text;
+      sendMessage();
+    }
+
+    [search,category,locationFilter,dateRange].forEach(el=>el.addEventListener("input",render));
+    seedFilters();
+    render();
+  </script>
+</body>
+</html>
