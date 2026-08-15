@@ -60,7 +60,7 @@ def get_events():
 
 @app.route("/api/events", methods=["POST"])
 def create_event():
-    data = request.get_json()
+    data = request.get_json() or {}
 
     title = data.get("title", "").strip()
     category = data.get("category", "").strip()
@@ -106,5 +106,82 @@ def create_event():
         "message": "Event created successfully.",
         "id": event_id
     }), 201
+
+@app.route("/api/events/<int:event_id>", methods=["PUT"])
+def update_event(event_id):
+    data = request.get_json() or {}
+
+    title = data.get("title", "").strip()
+    category = data.get("category", "").strip()
+    date = data.get("date", "").strip()
+    location = data.get("location", "").strip()
+    description = data.get("description", "").strip()
+
+    if not title or not category or not date or not location or not description:
+        return jsonify({
+            "error": "All required fields must be provided."
+        }), 400
+
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE events
+        SET
+            title = ?,
+            category = ?,
+            date = ?,
+            location = ?,
+            description = ?
+        WHERE id = ?
+        """,
+        (
+            title,
+            category,
+            date,
+            location,
+            description,
+            event_id,
+        ),
+    )
+
+    if cursor.rowcount == 0:
+        conn.close()
+        return jsonify({
+            "error": "Event not found."
+        }), 404
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "message": "Event updated successfully."
+    }), 200
+
+@app.route("/api/events/<int:event_id>", methods=["DELETE"])
+def delete_event(event_id):
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM events WHERE id = ?",
+        (event_id,),
+    )
+
+    if cursor.rowcount == 0:
+        conn.close()
+        return jsonify({
+            "error": "Event not found."
+        }), 404
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "message": "Event deleted successfully."
+    }), 200
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=8000)

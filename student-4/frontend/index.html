@@ -28,6 +28,7 @@
         >
           <span>👤</span>
           <span id="modeLabel">Guest</span>
+          <span class="mode-switch-icon">⇄</span>
         </button>
       </div>
     </header>
@@ -105,16 +106,6 @@
                 placeholder="Search events..."
               />
             </div>
-
-            <select id="adminCategory">
-              <option value="">All categories</option>
-            </select>
-
-            <select id="adminDate">
-              <option value="">Any date</option>
-              <option value="week">This week</option>
-              <option value="month">This month</option>
-            </select>
           </div>
 
           <div class="admin-summary">
@@ -144,7 +135,7 @@
         <div class="event-modal-head">
           <div>
             <p class="admin-eyebrow">Event Management</p>
-            <h2>Add Event</h2>
+            <h2 id="eventModalTitle">Add Event</h2>
           </div>
 
           <button
@@ -223,7 +214,9 @@
               Cancel
             </button>
 
-            <button class="primary-btn" type="submit">Add Event</button>
+            <button class="primary-btn" id="eventSubmitButton" type="submit">
+              Add Event
+            </button>
           </div>
         </form>
       </div>
