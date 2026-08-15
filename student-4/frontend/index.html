@@ -27,41 +27,45 @@
 
     <main>
       <section class="hero">
-        <div class="hero-row">
-          <div>
+        <div class="hero-content">
+          <div class="hero-text">
             <h1>What's on</h1>
+
             <p>
-              Discover campus activities, workshops, social events and student
-              experiences.
+              Discover campus activities, workshops, social events<br />
+              and student experiences.
             </p>
+
+            <div class="hero-search">
+              <span class="search-icon">⌕</span>
+              <input
+                id="search"
+                placeholder="Search events, workshops, or activities..."
+              />
+            </div>
           </div>
+
+          <div class="hero-illustration">
+            <span class="calendar-icon">📅</span>
+            <span class="leaf-icon">🌿</span>
+          </div>
+
           <button class="ask-ai" onclick="toggleChat(true)">
             ✨ Ask Campus AI
           </button>
         </div>
       </section>
 
-      <section class="controls">
-        <input id="search" class="control" placeholder="Search events..." />
-        <select id="category" class="control">
-          <option value="">All categories</option>
-        </select>
-        <select id="location" class="control">
-          <option value="">All locations</option>
-        </select>
-        <select id="dateRange" class="control">
-          <option value="">Any date</option>
-          <option value="week">This week</option>
-          <option value="month">This month</option>
-        </select>
-      </section>
-
       <section class="section">
         <div class="section-head">
-          <h2>All events</h2>
-          <div class="result-count" id="count"></div>
+          <h2>Featured events</h2>
+
+          <button class="view-all" type="button">View all events →</button>
         </div>
+
         <div class="grid" id="eventGrid"></div>
+
+        <div class="result-count" id="count"></div>
       </section>
     </main>
 
