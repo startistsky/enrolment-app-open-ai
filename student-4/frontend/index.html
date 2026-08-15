@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campus Events</title>
+    <link rel="stylesheet" href="/shared/css/student_4.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        CampusLife
+      </div>
+      <nav class="nav">
+        <span>What's on⌄</span>
+        <span>Clubs⌄</span>
+        <span>Sport⌄</span>
+        <span>Eat, Drink, Play⌄</span>
+        <span>Wellbeing⌄</span>
+      </nav>
+      <div class="actions">
+        <button class="icon-btn" aria-label="profile">👤</button>
+        <button class="icon-btn" aria-label="search">⌕</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-row">
+          <div>
+            <h1>What's on</h1>
+            <p>
+              Discover campus activities, workshops, social events and student
+              experiences.
+            </p>
+          </div>
+          <button class="ask-ai" onclick="toggleChat(true)">
+            ✨ Ask Campus AI
+          </button>
+        </div>
+      </section>
+
+      <section class="controls">
+        <input id="search" class="control" placeholder="Search events..." />
+        <select id="category" class="control">
+          <option value="">All categories</option>
+        </select>
+        <select id="location" class="control">
+          <option value="">All locations</option>
+        </select>
+        <select id="dateRange" class="control">
+          <option value="">Any date</option>
+          <option value="week">This week</option>
+          <option value="month">This month</option>
+        </select>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>All events</h2>
+          <div class="result-count" id="count"></div>
+        </div>
+        <div class="grid" id="eventGrid"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      CampusLife Events · ASD 2026 Student Project · Campus Event Management
+    </footer>
+
+    <button class="chat-launcher" onclick="toggleChat()">💬</button>
+
+    <aside class="chat" id="chat">
+      <div class="chat-head">
+        <div>
+          <strong>Campus AI Assistant</strong><br />
+          <span>Powered by Ollama in the real project</span>
+        </div>
+        <button class="chat-close" onclick="toggleChat(false)">×</button>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="msg bot">
+          Hi! Ask me about campus events, dates, categories or locations.
+        </div>
+      </div>
+
+      <div class="quick">
+        <button onclick="askQuick('What events are happening this week?')">
+          This week?
+        </button>
+        <button onclick="askQuick('Any career events?')">Career events?</button>
+        <button onclick="askQuick('What is happening at Building 11?')">
+          Building 11?
+        </button>
+      </div>
+
+      <div class="chat-input">
+        <input
+          id="chatInput"
+          placeholder="Ask about events..."
+          onkeydown="if (event.key === 'Enter') sendMessage();"
+        />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </aside>
+
+    <script src="js/events.js"></script>
+  </body>
+</html>
