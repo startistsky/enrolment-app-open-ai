@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campus Events</title>
+    <link rel="stylesheet" href="/shared/css/student_4.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        CampusLife
+      </div>
+      <nav class="nav">
+        <span>What's on⌄</span>
+        <span>Clubs⌄</span>
+        <span>Sport⌄</span>
+        <span>Eat, Drink, Play⌄</span>
+        <span>Wellbeing⌄</span>
+      </nav>
+      <div class="actions">
+        <button
+          class="mode-btn"
+          id="modeButton"
+          type="button"
+          onclick="toggleMode()"
+        >
+          <span>👤</span>
+          <span id="modeLabel">Guest</span>
+          <span class="mode-switch-icon">⇄</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div id="guestView">
+        <section class="hero">
+          <div class="hero-content">
+            <div class="hero-text">
+              <h1>What's on</h1>
+
+              <p>
+                Discover campus activities, workshops, social events<br />
+                and student experiences.
+              </p>
+
+              <div class="hero-search">
+                <span class="search-icon">⌕</span>
+                <input
+                  id="search"
+                  placeholder="Search events, workshops, or activities..."
+                />
+              </div>
+            </div>
+
+            <div class="hero-illustration">
+              <span class="calendar-icon">📅</span>
+              <span class="leaf-icon">🌿</span>
+            </div>
+
+            <button class="ask-ai" onclick="toggleChat(true)">
+              ✨ Ask Campus AI
+            </button>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Featured events</h2>
+
+            <button class="view-all" type="button">View all events →</button>
+          </div>
+
+          <div class="grid" id="eventGrid"></div>
+
+          <div class="result-count" id="count"></div>
+        </section>
+      </div>
+      <div id="adminView" class="admin-view">
+        <section class="admin-section">
+          <div class="admin-heading">
+            <div>
+              <p class="admin-eyebrow">Event Management</p>
+              <h1>Manage Events</h1>
+              <p class="admin-description">
+                Create, update and manage campus activities and events.
+              </p>
+            </div>
+
+            <button
+              class="add-event-btn"
+              type="button"
+              onclick="openEventModal()"
+            >
+              + Add Event
+            </button>
+          </div>
+
+          <div class="admin-toolbar">
+            <div class="admin-search">
+              <span>⌕</span>
+              <input
+                id="adminSearch"
+                type="text"
+                placeholder="Search events..."
+              />
+            </div>
+          </div>
+
+          <div class="admin-summary">
+            <span id="adminCount">0 events</span>
+          </div>
+
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Category</th>
+                  <th>Date</th>
+                  <th>Location</th>
+                  <th class="actions-column">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody id="adminEventTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+    <div class="event-modal-backdrop" id="eventModal">
+      <div class="event-modal">
+        <div class="event-modal-head">
+          <div>
+            <p class="admin-eyebrow">Event Management</p>
+            <h2 id="eventModalTitle">Add Event</h2>
+          </div>
+
+          <button
+            class="event-modal-close"
+            type="button"
+            onclick="closeEventModal()"
+          >
+            ×
+          </button>
+        </div>
+
+        <form id="eventForm">
+          <div class="form-group">
+            <label for="eventTitle">Event title</label>
+            <input
+              id="eventTitle"
+              type="text"
+              placeholder="e.g. Campus Movie Night"
+              required
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventCategory">Category</label>
+              <input
+                id="eventCategory"
+                type="text"
+                placeholder="e.g. Social"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="eventDate">Date</label>
+              <input id="eventDate" type="date" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="eventLocation">Location</label>
+            <input
+              id="eventLocation"
+              type="text"
+              placeholder="e.g. Student Centre"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="eventEmoji">Emoji</label>
+            <input
+              id="eventEmoji"
+              type="text"
+              placeholder="e.g. 🎬"
+              maxlength="4"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="eventDescription">Description</label>
+            <textarea
+              id="eventDescription"
+              rows="4"
+              placeholder="Write a short event description..."
+              required
+            ></textarea>
+          </div>
+
+          <div class="event-modal-actions">
+            <button
+              class="secondary-btn"
+              type="button"
+              onclick="closeEventModal()"
+            >
+              Cancel
+            </button>
+
+            <button class="primary-btn" id="eventSubmitButton" type="submit">
+              Add Event
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <footer class="footer">
+      CampusLife Events · ASD 2026 Student Project · Campus Event Management
+    </footer>
+
+    <button class="chat-launcher" onclick="toggleChat()">💬</button>
+
+    <aside class="chat" id="chat">
+      <div class="chat-head">
+        <div>
+          <strong>Campus AI Assistant</strong><br />
+          <span>Powered by Ollama in the real project</span>
+        </div>
+        <button class="chat-close" onclick="toggleChat(false)">×</button>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="msg bot">
+          Hi! Ask me about campus events, dates, categories or locations.
+        </div>
+      </div>
+
+      <div class="quick">
+        <button onclick="askQuick('What events are happening this week?')">
+          This week?
+        </button>
+        <button onclick="askQuick('Any career events?')">Career events?</button>
+        <button onclick="askQuick('What is happening at Building 11?')">
+          Building 11?
+        </button>
+      </div>
+
+      <div class="chat-input">
+        <input
+          id="chatInput"
+          placeholder="Ask about events..."
+          onkeydown="if (event.key === 'Enter') sendMessage();"
+        />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </aside>
+
+    <script src="js/events.js"></script>
+  </body>
+</html>
