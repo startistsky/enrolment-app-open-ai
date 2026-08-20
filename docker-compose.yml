@@ -1,1 +1,25 @@
+# Ted：
+services:
 
+  backend:
+    build:
+      context: .
+      dockerfile: student-4/backend/Dockerfile
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      AI_SERVICE_URL: http://host.docker.internal:11434/api/generate
+
+
+  frontend:
+    build:
+      context: .
+      dockerfile: student-4/frontend/Dockerfile
+
+    ports:
+      - "8080:80"
+
+    depends_on:
+      - backend
