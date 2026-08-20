@@ -1,4 +1,4 @@
-# Ted：
+#Ted
 services:
 
   backend:
@@ -10,7 +10,10 @@ services:
       - "8000:8000"
 
     environment:
-      AI_SERVICE_URL: http://host.docker.internal:11434/api/generate
+      AI_SERVICE_URL: http://ollama:11434/api/generate
+
+    depends_on:
+      - ollama
 
 
   frontend:
@@ -23,3 +26,17 @@ services:
 
     depends_on:
       - backend
+
+
+  ollama:
+    image: ollama/ollama:latest
+
+    ports:
+      - "11434:11434"
+
+    volumes:
+      - ollama_data:/root/.ollama
+
+
+volumes:
+  ollama_data:
