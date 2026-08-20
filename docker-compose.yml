@@ -1,5 +1,16 @@
-#Ted
 services:
+
+  database:
+    build:
+      context: .
+      dockerfile: student-4/database/Dockerfile
+
+    environment:
+      DATABASE_PATH: /data/events.db
+
+    volumes:
+      - database_data:/data
+
 
   backend:
     build:
@@ -11,8 +22,13 @@ services:
 
     environment:
       AI_SERVICE_URL: http://ollama:11434/api/generate
+      DATABASE_PATH: /data/events.db
+
+    volumes:
+      - database_data:/data
 
     depends_on:
+      - database
       - ollama
 
 
@@ -39,4 +55,5 @@ services:
 
 
 volumes:
+  database_data:
   ollama_data:

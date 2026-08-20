@@ -1,14 +1,16 @@
-import sqlite3
 import os
+import sqlite3
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DATABASE = os.path.join(
-    BASE_DIR,
-    "../database/events.db"
+DATABASE = os.getenv(
+    "DATABASE_PATH",
+    os.path.join(
+        BASE_DIR,
+        "../database/events.db"
+    )
 )
-
 
 def get_all_events():
     conn = sqlite3.connect(DATABASE)
