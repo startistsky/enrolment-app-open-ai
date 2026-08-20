@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Resources</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+  <!-- Top Navigation -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      CampusLife
+    </div>
+
+    <nav class="nav">
+      <a href="../../shared/frontend/index.html">Home</a>
+      <span>Courses</span>
+      <span>Assignments</span>
+      <span class="active">Resources</span>
+      <span>Events</span>
+      <span>Career</span>
+    </nav>
+
+    <div class="actions">
+      <button class="icon-btn" aria-label="profile">👤</button>
+      <button class="icon-btn" aria-label="search">⌕</button>
+    </div>
+  </header>
+
+
+  <main>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-row">
+
+        <div>
+          <h1>Campus Resources</h1>
+
+          <p>
+            Find study spaces, libraries, computer labs,
+            printers and other campus facilities.
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <button class="secondary-btn" onclick="openResourceForm()">
+            + Add Resource
+          </button>
+
+          <button class="ask-ai" onclick="toggleChat(true)">
+            ✨ Ask Campus AI
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- Search and Filters -->
+    <section class="controls">
+
+      <input
+        id="search"
+        class="control"
+        placeholder="Search resources..."
+      />
+
+      <select id="typeFilter" class="control">
+        <option value="">All types</option>
+      </select>
+
+      <select id="buildingFilter" class="control">
+        <option value="">All buildings</option>
+      </select>
+
+      <select id="availabilityFilter" class="control">
+        <option value="">All availability</option>
+        <option value="Available">Available</option>
+        <option value="Busy">Busy</option>
+        <option value="Unavailable">Unavailable</option>
+        <option value="Closed">Closed</option>
+      </select>
+
+    </section>
+
+
+    <!-- Resource List -->
+    <section class="section">
+
+      <div class="section-head">
+
+        <h2>All Resources</h2>
+
+        <div
+          class="result-count"
+          id="resultCount">
+        </div>
+
+      </div>
+
+
+      <div
+        class="grid"
+        id="resourceGrid">
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- Footer -->
+  <footer class="footer">
+    CampusLife Resources · ASD 2026 Student Project ·
+    Campus Resource Management
+  </footer>
+
+
+  <!-- Floating AI Button -->
+  <button
+    class="chat-launcher"
+    onclick="toggleChat()">
+    💬
+  </button>
+
+
+  <!-- AI Chat -->
+  <aside
+    class="chat"
+    id="chat">
+
+    <div class="chat-head">
+
+      <div>
+        <strong>Campus AI Assistant</strong><br>
+        <span>Campus resource recommendation assistant</span>
+      </div>
+
+      <button
+        class="chat-close"
+        onclick="toggleChat(false)">
+        ×
+      </button>
+
+    </div>
+
+
+    <div
+      class="messages"
+      id="messages">
+
+      <div class="msg bot">
+        Hi! Tell me what kind of campus resource you need
+        and I can recommend a suitable option.
+      </div>
+
+    </div>
+
+
+    <div class="quick">
+
+      <button onclick="askQuick('I need a quiet study space')">
+        Quiet study?
+      </button>
+
+      <button onclick="askQuick('Where can I print?')">
+        Need a printer
+      </button>
+
+      <button onclick="askQuick('I need a study room for 6 people')">
+        Room for 6
+      </button>
+
+      <button onclick="askQuick('What resources are available?')">
+        Available now?
+      </button>
+
+    </div>
+
+
+    <div class="chat-input">
+
+      <input
+        id="chatInput"
+        placeholder="Ask about campus resources..."
+        onkeydown="if(event.key === 'Enter') sendMessage()"
+      />
+
+      <button onclick="sendMessage()">
+        Send
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- Resource Detail Modal -->
+  <div
+    class="modal-overlay"
+    id="detailModal">
+
+    <div class="modal">
+
+      <button
+        class="modal-close"
+        onclick="closeDetail()">
+        ×
+      </button>
+
+      <div id="detailContent"></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- Add Resource Modal -->
+  <div
+    class="modal-overlay"
+    id="resourceFormModal">
+
+    <div class="modal form-modal">
+
+      <button
+        class="modal-close"
+        onclick="closeResourceForm()">
+        ×
+      </button>
+
+      <h2>Add Campus Resource</h2>
+
+      <form id="resourceForm">
+
+        <label>
+          Resource Name
+          <input id="formName" required />
+        </label>
+
+        <label>
+          Resource Type
+          <select id="formType" required>
+            <option value="">Select type</option>
+            <option>Library</option>
+            <option>Study Room</option>
+            <option>Computer Lab</option>
+            <option>Printer</option>
+            <option>Parking</option>
+          </select>
+        </label>
+
+        <label>
+          Building
+          <input id="formBuilding" required />
+        </label>
+
+        <label>
+          Floor
+          <input id="formFloor" />
+        </label>
+
+        <label>
+          Capacity
+          <input
+            id="formCapacity"
+            type="number"
+            min="0"
+          />
+        </label>
+
+        <label>
+          Availability
+          <select id="formAvailability" required>
+            <option>Available</option>
+            <option>Busy</option>
+            <option>Unavailable</option>
+            <option>Closed</option>
+          </select>
+        </label>
+
+        <label>
+          Opening Hours
+          <input
+            id="formHours"
+            placeholder="8:00 AM - 10:00 PM"
+          />
+        </label>
+
+        <label>
+          Location
+          <input id="formLocation" />
+        </label>
+
+        <label class="full-width">
+          Description
+          <textarea
+            id="formDescription"
+            rows="4">
+          </textarea>
+        </label>
+
+        <div class="form-actions">
+
+          <button
+            type="button"
+            class="cancel-btn"
+            onclick="closeResourceForm()">
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="ask-ai">
+            Add Resource
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    /*
+      Temporary frontend data.
+
+      Later we will replace this array with:
+      fetch("http://127.0.0.1:5003/resources")
+    */
+
+    let resources = [
+
+      {
+        resource_id: 1,
+        resource_name: "UTS Library",
+        resource_type: "Library",
+        building: "UTS Central",
+        floor: "Levels 7-9",
+        capacity: 500,
+        availability_status: "Available",
+        opening_hours: "8:00 AM - 10:00 PM",
+        location: "Building 2",
+        description:
+          "Library with quiet study areas, computers and group study spaces."
+      },
+
+      {
+        resource_id: 2,
+        resource_name: "Building 11 Study Room 1",
+        resource_type: "Study Room",
+        building: "Building 11",
+        floor: "Level 4",
+        capacity: 6,
+        availability_status: "Available",
+        opening_hours: "8:00 AM - 9:00 PM",
+        location: "Building 11, Level 4",
+        description:
+          "Small group study room suitable for collaborative work."
+      },
+
+      {
+        resource_id: 3,
+        resource_name: "Building 11 Study Room 2",
+        resource_type: "Study Room",
+        building: "Building 11",
+        floor: "Level 4",
+        capacity: 8,
+        availability_status: "Busy",
+        opening_hours: "8:00 AM - 9:00 PM",
+        location: "Building 11, Level 4",
+        description:
+          "Group study room with a whiteboard and display screen."
+      },
+
+      {
+        resource_id: 4,
+        resource_name: "Building 10 Computer Lab",
+        resource_type: "Computer Lab",
+        building: "Building 10",
+        floor: "Level 3",
+        capacity: 30,
+        availability_status: "Available",
+        opening_hours: "8:00 AM - 8:00 PM",
+        location: "Building 10, Level 3",
+        description:
+          "Computer laboratory with desktop computers and study workstations."
+      },
+
+      {
+        resource_id: 5,
+        resource_name: "UTS Central Computer Lab",
+        resource_type: "Computer Lab",
+        building: "UTS Central",
+        floor: "Level 5",
+        capacity: 40,
+        availability_status: "Available",
+        opening_hours: "8:00 AM - 10:00 PM",
+        location: "Building 2, Level 5",
+        description:
+          "Large computer laboratory available for individual study."
+      },
+
+      {
+        resource_id: 6,
+        resource_name: "Building 2 Printer",
+        resource_type: "Printer",
+        building: "UTS Central",
+        floor: "Level 7",
+        capacity: 1,
+        availability_status: "Available",
+        opening_hours: "8:00 AM - 10:00 PM",
+        location: "Building 2, Level 7",
+        description:
+          "Colour and black-and-white printing service near the library."
+      },
+
+      {
+        resource_id: 7,
+        resource_name: "Building 11 Printer",
+        resource_type: "Printer",
+        building: "Building 11",
+        floor: "Level 2",
+        capacity: 1,
+        availability_status: "Available",
+        opening_hours: "8:00 AM - 9:00 PM",
+        location: "Building 11, Level 2",
+        description:
+          "Student printer supporting colour and black-and-white printing."
+      },
+
+      {
+        resource_id: 8,
+        resource_name: "Building 1 Quiet Study Area",
+        resource_type: "Study Room",
+        building: "Building 1",
+        floor: "Level 3",
+        capacity: 20,
+        availability_status: "Available",
+        opening_hours: "8:00 AM - 8:00 PM",
+        location: "Building 1, Level 3",
+        description:
+          "Quiet study area designed for individual study and reading."
+      },
+
+      {
+        resource_id: 9,
+        resource_name: "Building 6 Study Space",
+        resource_type: "Study Room",
+        building: "Building 6",
+        floor: "Level 4",
+        capacity: 15,
+        availability_status: "Busy",
+        opening_hours: "9:00 AM - 7:00 PM",
+        location: "Building 6, Level 4",
+        description:
+          "Open study space with tables and power outlets."
+      },
+
+      {
+        resource_id: 10,
+        resource_name: "Thomas Street Parking",
+        resource_type: "Parking",
+        building: "Building 10",
+        floor: "Ground",
+        capacity: 50,
+        availability_status: "Available",
+        opening_hours: "6:00 AM - 11:00 PM",
+        location: "Thomas Street",
+        description:
+          "Parking facility close to the UTS City Campus."
+      }
+
+    ];
+
+
+    const resourceGrid =
+      document.getElementById("resourceGrid");
+
+    const search =
+      document.getElementById("search");
+
+    const typeFilter =
+      document.getElementById("typeFilter");
+
+    const buildingFilter =
+      document.getElementById("buildingFilter");
+
+    const availabilityFilter =
+      document.getElementById("availabilityFilter");
+
+    const resultCount =
+      document.getElementById("resultCount");
+
+
+    function resourceIcon(type) {
+
+      const icons = {
+        "Library": "📚",
+        "Study Room": "🪑",
+        "Computer Lab": "🖥️",
+        "Printer": "🖨️",
+        "Parking": "🚗"
+      };
+
+      return icons[type] || "🏫";
+
+    }
+
+
+    function seedFilters() {
+
+      const types =
+        [...new Set(
+          resources.map(resource => resource.resource_type)
+        )].sort();
+
+      types.forEach(type => {
+
+        typeFilter.innerHTML +=
+          `<option value="${type}">${type}</option>`;
+
+      });
+
+
+      const buildings =
+        [...new Set(
+          resources.map(resource => resource.building)
+        )].sort();
+
+      buildings.forEach(building => {
+
+        buildingFilter.innerHTML +=
+          `<option value="${building}">${building}</option>`;
+
+      });
+
+    }
+
+
+    function renderResources() {
+
+      const query =
+        search.value.trim().toLowerCase();
+
+      const type =
+        typeFilter.value;
+
+      const building =
+        buildingFilter.value;
+
+      const availability =
+        availabilityFilter.value;
+
+
+      const filtered =
+        resources.filter(resource => {
+
+          const text =
+            `${resource.resource_name}
+             ${resource.resource_type}
+             ${resource.building}
+             ${resource.location}
+             ${resource.description}`
+              .toLowerCase();
+
+
+          return (
+            (!query || text.includes(query)) &&
+            (!type ||
+              resource.resource_type === type) &&
+            (!building ||
+              resource.building === building) &&
+            (!availability ||
+              resource.availability_status === availability)
+          );
+
+        });
+
+
+      resultCount.textContent =
+        `${filtered.length} resource${filtered.length === 1 ? "" : "s"}`;
+
+
+      resourceGrid.innerHTML =
+        filtered.map(resource => `
+
+          <article
+            class="card"
+            onclick="openDetail(${resource.resource_id})">
+
+            <div class="image">
+
+              <span class="emoji">
+                ${resourceIcon(resource.resource_type)}
+              </span>
+
+              <span class="tag">
+                ${resource.resource_type}
+              </span>
+
+              <span class="
+                availability-pill
+                ${resource.availability_status.toLowerCase()}
+              ">
+                ${resource.availability_status}
+              </span>
+
+            </div>
+
+
+            <div class="content">
+
+              <h3>
+                ${resource.resource_name}
+              </h3>
+
+              <p>
+                ${resource.description}
+              </p>
+
+
+              <div class="meta">
+
+                <span>
+                  📍 ${resource.location}
+                </span>
+
+                <span>
+                  👥 Capacity:
+                  ${resource.capacity ?? "N/A"}
+                </span>
+
+                <span>
+                  🕒 ${resource.opening_hours || "Hours unavailable"}
+                </span>
+
+              </div>
+
+            </div>
+
+          </article>
+
+        `).join("");
+
+    }
+
+
+    function openDetail(resourceId) {
+
+      const resource =
+        resources.find(
+          item => item.resource_id === resourceId
+        );
+
+      if (!resource) {
+        return;
+      }
+
+
+      const content =
+        document.getElementById("detailContent");
+
+
+      content.innerHTML = `
+
+        <div class="detail-icon">
+          ${resourceIcon(resource.resource_type)}
+        </div>
+
+        <div class="detail-tags">
+
+          <span class="tag-static">
+            ${resource.resource_type}
+          </span>
+
+          <span class="
+            availability-static
+            ${resource.availability_status.toLowerCase()}
+          ">
+            ${resource.availability_status}
+          </span>
+
+        </div>
+
+
+        <h2>
+          ${resource.resource_name}
+        </h2>
+
+
+        <p class="detail-description">
+          ${resource.description}
+        </p>
+
+
+        <div class="detail-grid">
+
+          <div>
+            <strong>Building</strong>
+            <span>${resource.building}</span>
+          </div>
+
+          <div>
+            <strong>Floor</strong>
+            <span>${resource.floor || "N/A"}</span>
+          </div>
+
+          <div>
+            <strong>Capacity</strong>
+            <span>${resource.capacity ?? "N/A"}</span>
+          </div>
+
+          <div>
+            <strong>Opening Hours</strong>
+            <span>${resource.opening_hours || "N/A"}</span>
+          </div>
+
+          <div>
+            <strong>Location</strong>
+            <span>${resource.location || "N/A"}</span>
+          </div>
+
+          <div>
+            <strong>Status</strong>
+            <span>${resource.availability_status}</span>
+          </div>
+
+        </div>
+
+
+        <div class="detail-actions">
+
+          <button class="secondary-btn">
+            Edit Resource
+          </button>
+
+          <button
+            class="delete-btn"
+            onclick="deleteResource(${resource.resource_id})">
+            Delete Resource
+          </button>
+
+        </div>
+
+      `;
+
+
+      document
+        .getElementById("detailModal")
+        .classList.add("open");
+
+    }
+
+
+    function closeDetail() {
+
+      document
+        .getElementById("detailModal")
+        .classList.remove("open");
+
+    }
+
+
+    function deleteResource(resourceId) {
+
+      const resource =
+        resources.find(
+          item => item.resource_id === resourceId
+        );
+
+
+      if (!resource) {
+        return;
+      }
+
+
+      const confirmed =
+        confirm(
+          `Are you sure you want to delete ${resource.resource_name}?`
+        );
+
+
+      if (!confirmed) {
+        return;
+      }
+
+
+      resources =
+        resources.filter(
+          item => item.resource_id !== resourceId
+        );
+
+
+      closeDetail();
+
+      renderResources();
+
+    }
+
+
+    function openResourceForm() {
+
+      document
+        .getElementById("resourceFormModal")
+        .classList.add("open");
+
+    }
+
+
+    function closeResourceForm() {
+
+      document
+        .getElementById("resourceFormModal")
+        .classList.remove("open");
+
+    }
+
+
+    document
+      .getElementById("resourceForm")
+      .addEventListener(
+        "submit",
+        function(event) {
+
+          event.preventDefault();
+
+
+          const newResource = {
+
+            resource_id:
+              Math.max(
+                0,
+                ...resources.map(
+                  resource => resource.resource_id
+                )
+              ) + 1,
+
+            resource_name:
+              document.getElementById("formName").value,
+
+            resource_type:
+              document.getElementById("formType").value,
+
+            building:
+              document.getElementById("formBuilding").value,
+
+            floor:
+              document.getElementById("formFloor").value,
+
+            capacity:
+              Number(
+                document.getElementById("formCapacity").value
+              ) || null,
+
+            availability_status:
+              document.getElementById("formAvailability").value,
+
+            opening_hours:
+              document.getElementById("formHours").value,
+
+            location:
+              document.getElementById("formLocation").value,
+
+            description:
+              document.getElementById("formDescription").value
+
+          };
+
+
+          resources.push(newResource);
+
+          this.reset();
+
+          closeResourceForm();
+
+          seedFiltersAgain();
+
+          renderResources();
+
+        }
+      );
+
+
+    function seedFiltersAgain() {
+
+      typeFilter.innerHTML =
+        `<option value="">All types</option>`;
+
+      buildingFilter.innerHTML =
+        `<option value="">All buildings</option>`;
+
+      seedFilters();
+
+    }
+
+
+    function toggleChat(force) {
+
+      const chat =
+        document.getElementById("chat");
+
+
+      const open =
+        typeof force === "boolean"
+          ? force
+          : !chat.classList.contains("open");
+
+
+      chat.classList.toggle(
+        "open",
+        open
+      );
+
+
+      if (open) {
+
+        setTimeout(
+          () =>
+            document
+              .getElementById("chatInput")
+              .focus(),
+          100
+        );
+
+      }
+
+    }
+
+
+    function addMessage(text, type) {
+
+      const messages =
+        document.getElementById("messages");
+
+      const message =
+        document.createElement("div");
+
+      message.className =
+        `msg ${type}`;
+
+      message.textContent =
+        text;
+
+      messages.appendChild(message);
+
+      messages.scrollTop =
+        messages.scrollHeight;
+
+    }
+
+
+    function localAiAnswer(question) {
+
+      const query =
+        question.toLowerCase();
+
+
+      let matches = [];
+
+
+      if (
+        query.includes("quiet") ||
+        query.includes("study")
+      ) {
+
+        matches =
+          resources.filter(
+            resource =>
+              resource.resource_type === "Study Room" ||
+              resource.resource_type === "Library"
+          );
+
+      }
+
+      else if (
+        query.includes("printer") ||
+        query.includes("print")
+      ) {
+
+        matches =
+          resources.filter(
+            resource =>
+              resource.resource_type === "Printer"
+          );
+
+      }
+
+      else if (
+        query.includes("computer") ||
+        query.includes("lab")
+      ) {
+
+        matches =
+          resources.filter(
+            resource =>
+              resource.resource_type === "Computer Lab"
+          );
+
+      }
+
+      else if (
+        query.includes("parking")
+      ) {
+
+        matches =
+          resources.filter(
+            resource =>
+              resource.resource_type === "Parking"
+          );
+
+      }
+
+      else if (
+        query.includes("available")
+      ) {
+
+        matches =
+          resources.filter(
+            resource =>
+              resource.availability_status === "Available"
+          );
+
+      }
+
+
+      if (matches.length) {
+
+        const sample =
+          matches
+            .slice(0, 3)
+            .map(
+              resource =>
+                `${resource.resource_name} (${resource.location})`
+            )
+            .join("; ");
+
+
+        return (
+          `I found ${matches.length} suitable resource` +
+          `${matches.length === 1 ? "" : "s"}: ${sample}.`
+        );
+
+      }
+
+
+      return (
+        "I can recommend study rooms, libraries, computer labs, " +
+        "printers and parking facilities. In the final system, " +
+        "this request will be sent to Ollama and an approved LLM."
+      );
+
+    }
+
+
+    function sendMessage() {
+
+      const input =
+        document.getElementById("chatInput");
+
+      const text =
+        input.value.trim();
+
+
+      if (!text) {
+        return;
+      }
+
+
+      addMessage(
+        text,
+        "user"
+      );
+
+
+      input.value = "";
+
+
+      setTimeout(
+        () =>
+          addMessage(
+            localAiAnswer(text),
+            "bot"
+          ),
+        350
+      );
+
+    }
+
+
+    function askQuick(text) {
+
+      toggleChat(true);
+
+      document
+        .getElementById("chatInput")
+        .value = text;
+
+      sendMessage();
+
+    }
+
+
+    [
+      search,
+      typeFilter,
+      buildingFilter,
+      availabilityFilter
+    ]
+      .forEach(
+        element =>
+          element.addEventListener(
+            "input",
+            renderResources
+          )
+      );
+
+
+    seedFilters();
+
+    renderResources();
+
+  </script>
+
+</body>
+</html>
