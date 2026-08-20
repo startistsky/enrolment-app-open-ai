@@ -1,11 +1,14 @@
 from flask import Blueprint, jsonify, request
 import requests
-
+import os
 from event_db import get_events_for_ai
 
 
 ai_bp = Blueprint("ai", __name__)
-
+AI_SERVICE_URL = os.getenv(
+    "AI_SERVICE_URL",
+    "http://localhost:11434/api/generate"
+)
 
 @ai_bp.route("/api/ai", methods=["POST"])
 def ai_assistant():
@@ -50,7 +53,7 @@ def ai_assistant():
     """
 
     response = requests.post(
-        "http://localhost:11434/api/generate",
+        AI_SERVICE_URL,
         json={
             "model": "qwen2.5:0.5b",
             "prompt": prompt,
