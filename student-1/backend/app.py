@@ -2,14 +2,21 @@ import os
 
 import requests
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:8081"])
 
 DATABASE_SERVICE_URL = os.getenv(
     "DATABASE_SERVICE_URL", "http://localhost:5001"
 ).rstrip("/")
+AI_SERVICE_URL = os.getenv(
+    "AI_SERVICE_URL", "http://localhost:11434/api/generate"
+)
+AI_MODEL = "qwen2.5:0.5b"
 REQUEST_TIMEOUT_SECONDS = 5
+AI_REQUEST_TIMEOUT_SECONDS = 60
 
 REQUIRED_COURSE_FIELDS = [
     "course_code",
@@ -187,6 +194,65 @@ def delete_course(course_id):
     if error:
         return error
     return forward_database_response(response)
+
+
+@app.post("/api/courses/<int:course_id>/recommendation")
+def generate_course_recommendation(course_id):
+    course_response, error = database_request("GET", f"/courses/{course_id}")
+    if error:
+        return error
+    if course_response.status_code != 200:
+        return forward_database_response(course_response)
+
+    try:
+        course = course_response.json()
+    except ValueError:
+        return jsonify({"error": "Invalid response from database service"}), 502
+
+    if not isinstance(course, dict):
+        return jsonify({"error": "Invalid response from database service"}), 502
+
+    prompt = (
+        "Give a short course summary followed by exactly 3 practical study "
+        "recommendations. Be concise.\n"
+        f"Course: {course.get('course_code')} - {course.get('course_name')}\n"
+        f"Lecturer: {course.get('lecturer')}\n"
+        f"Semester: {course.get('semester')}\n"
+        f"Credit points: {course.get('credit_points')}\n"
+        f"Description: {course.get('course_description')}"
+    )
+
+    try:
+        ai_response = requests.post(
+            AI_SERVICE_URL,
+            json={
+                "model": AI_MODEL,
+                "prompt": prompt,
+                "stream": False,
+            },
+            timeout=AI_REQUEST_TIMEOUT_SECONDS,
+        )
+    except requests.Timeout:
+        return jsonify({"error": "AI service request timed out"}), 504
+    except requests.RequestException:
+        return jsonify({"error": "AI service unavailable"}), 503
+
+    if not ai_response.ok:
+        return jsonify({"error": "AI service unavailable"}), 503
+
+    try:
+        ai_body = ai_response.json()
+    except ValueError:
+        return jsonify({"error": "Invalid response from AI service"}), 502
+
+    recommendation = ai_body.get("response") if isinstance(ai_body, dict) else None
+    if not isinstance(recommendation, str) or not recommendation.strip():
+        return jsonify({"error": "Invalid response from AI service"}), 502
+
+    return jsonify({
+        "course_id": course_id,
+        "recommendation": recommendation.strip(),
+    })
 
 
 if __name__ == "__main__":
