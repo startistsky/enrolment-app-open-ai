@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Management | AI Smart Campus</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/courses.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        SmartCampus AI
+    </div>
+    <nav class="nav" aria-label="Current module">
+        <span>Course Management</span>
+    </nav>
+</header>
+<main class="app-shell">
+    <header class="app-header">
+        <div>
+            <p class="eyebrow">AI Smart Campus</p>
+            <h1>Course Management</h1>
+            <p>Manage course information for the university catalogue.</p>
+        </div>
+        <button id="add-course-button" class="button button-primary" type="button">Add Course</button>
+    </header>
+
+    <div id="alert" class="alert" role="status" aria-live="polite" hidden></div>
+
+    <section class="card" aria-labelledby="courses-heading">
+        <div class="section-header">
+            <div>
+                <h2 id="courses-heading">Courses</h2>
+                <p id="course-count" class="muted">Loading courses…</p>
+            </div>
+            <div class="search-group">
+                <label for="course-search">Search courses</label>
+                <input id="course-search" type="search" placeholder="Search by code, name or lecturer" autocomplete="off">
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Code</th>
+                        <th scope="col">Course name</th>
+                        <th scope="col">Lecturer</th>
+                        <th scope="col">Semester</th>
+                        <th scope="col">Credits</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="course-table-body">
+                    <tr><td colspan="6" class="empty-state">Loading courses…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="content-grid">
+        <section class="card" aria-labelledby="details-heading">
+            <h2 id="details-heading">Course Details</h2>
+            <div id="course-details" class="detail-panel">
+                <p class="muted">Select View beside a course to see its details.</p>
+            </div>
+        </section>
+        <section class="card ai-card" aria-labelledby="assistant-heading">
+            <span class="status-badge">AI powered</span>
+            <h2 id="assistant-heading">AI Course Assistant</h2>
+            <p>Select and view a course, then generate a concise summary and practical study advice.</p>
+            <button id="generate-advice-button" class="button button-primary" type="button" disabled>
+                Generate Study Advice
+            </button>
+            <div id="ai-result" class="ai-result" role="status" aria-live="polite">
+                <p class="muted">View a course to activate the assistant.</p>
+            </div>
+        </section>
+    </div>
+</main>
+
+<dialog id="course-dialog" aria-labelledby="form-title">
+    <form id="course-form">
+        <div class="dialog-header">
+            <div>
+                <p class="eyebrow">Course record</p>
+                <h2 id="form-title">Add Course</h2>
+            </div>
+            <button id="close-dialog-button" class="icon-button" type="button" aria-label="Close">&times;</button>
+        </div>
+        <input id="course-id" type="hidden">
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="course-code">Course code</label>
+                <input id="course-code" name="course_code" type="text" required maxlength="30">
+            </div>
+            <div class="form-field">
+                <label for="course-name">Course name</label>
+                <input id="course-name" name="course_name" type="text" required maxlength="150">
+            </div>
+            <div class="form-field">
+                <label for="lecturer">Lecturer</label>
+                <input id="lecturer" name="lecturer" type="text" required maxlength="120">
+            </div>
+            <div class="form-field">
+                <label for="semester">Semester</label>
+                <input id="semester" name="semester" type="text" required maxlength="60" placeholder="e.g. Spring 2026">
+            </div>
+            <div class="form-field">
+                <label for="credit-points">Credit points</label>
+                <input id="credit-points" name="credit_points" type="number" required min="1" step="1">
+            </div>
+            <div class="form-field form-field-wide">
+                <label for="course-description">Course description</label>
+                <textarea id="course-description" name="course_description" rows="5" required maxlength="1000"></textarea>
+            </div>
+        </div>
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+            <button id="cancel-button" class="button button-secondary" type="button">Cancel</button>
+            <button id="save-course-button" class="button button-primary" type="submit">Save Course</button>
+        </div>
+    </form>
+</dialog>
+</body>
+</html>
