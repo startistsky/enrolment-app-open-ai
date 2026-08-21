@@ -5,7 +5,6 @@ WORKDIR /app
 RUN pip install --no-cache-dir flask requests
 
 COPY student-3/backend/app.py /app/app.py
-COPY student-3/database /app/database
 
 EXPOSE 8000
 
