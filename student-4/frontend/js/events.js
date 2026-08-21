@@ -511,83 +511,12 @@ function addMessage(text, type) {
 }
 
 
-function localAiAnswer(question) {
-  const q =
-    question.toLowerCase();
-
-  let matches = [];
-
-  if (
-    q.includes("this week") ||
-    q.includes("week")
-  ) {
-    matches = events.filter((e) =>
-      withinRange(
-        e.date,
-        "week",
-      ),
-    );
-  }
-
-  else if (
-    q.includes("career")
-  ) {
-    matches = events.filter(
-      (e) =>
-        e.category === "Career",
-    );
-  }
-
-  else if (
-    q.includes("building 11")
-  ) {
-    matches = events.filter(
-      (e) =>
-        e.location === "Building 11",
-    );
-  }
-
-  else if (
-    q.includes("sport") ||
-    q.includes("basketball")
-  ) {
-    matches = events.filter(
-      (e) =>
-        e.category === "Sport",
-    );
-  }
-
-  else if (
-    q.includes("wellbeing") ||
-    q.includes("yoga")
-  ) {
-    matches = events.filter(
-      (e) =>
-        e.category === "Wellbeing",
-    );
-  }
-
-  if (matches.length) {
-    const sample = matches
-      .slice(0, 5)
-      .map(
-        (e) =>
-          `${e.title} (${prettyDate(e.date)}, ${e.location})`,
-      )
-      .join("; ");
-
-    return `I found ${matches.length} relevant event${
-      matches.length === 1 ? "" : "s"
-    }: ${sample}${
-      matches.length > 5 ? "…" : ""
-    }`;
-  }
-
-  return "I can help with questions about dates, categories and locations. In the real project, this box would send your question together with the event data to Ollama.";
-}
 
 
-function sendMessage() {
+//请求ai回答
+async function sendMessage() {
+
+  //找到聊天输入框 → 拿到用户输入 → 如果空的就不发送。
   const input =
     document.getElementById("chatInput");
 
@@ -603,15 +532,25 @@ function sendMessage() {
 
   input.value = "";
 
-  setTimeout(
-    () =>
-      addMessage(
-        localAiAnswer(text),
-        "bot",
-      ),
-    350,
+  const response = await fetch("/api/ai", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: text
+    })
+  });
+
+  const data = await response.json();
+
+  addMessage(
+    data.response,
+    "bot",
   );
+
 }
+
 
 
 function askQuick(text) {

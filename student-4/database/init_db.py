@@ -1,6 +1,13 @@
+import os
 import sqlite3
 
-conn = sqlite3.connect("events.db")
+
+DATABASE = os.getenv(
+    "DATABASE_PATH",
+    "events.db"
+)
+
+conn = sqlite3.connect(DATABASE)
 cursor = conn.cursor()
 
 cursor.execute("""
