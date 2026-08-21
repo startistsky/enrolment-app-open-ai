@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
-from event_db import (
-    get_all_events,
+from database_api import (
+    get_events as get_events_db,
     create_event as create_event_db,
     update_event as update_event_db,
     delete_event as delete_event_db,
@@ -13,8 +13,7 @@ events_bp = Blueprint("events", __name__)
 
 @events_bp.route("/api/events", methods=["GET"])
 def get_events():
-    events = get_all_events()
-
+    events = get_events_db()
     return jsonify(events)
 
 
@@ -28,7 +27,13 @@ def create_event():
     location = data.get("location", "").strip()
     description = data.get("description", "").strip()
 
-    if not title or not category or not date or not location or not description:
+    if not all([
+        title,
+        category,
+        date,
+        location,
+        description
+    ]):
         return jsonify({
             "error": "All required fields must be provided."
         }), 400
@@ -57,7 +62,13 @@ def update_event(event_id):
     location = data.get("location", "").strip()
     description = data.get("description", "").strip()
 
-    if not title or not category or not date or not location or not description:
+    if not all([
+        title,
+        category,
+        date,
+        location,
+        description
+    ]):
         return jsonify({
             "error": "All required fields must be provided."
         }), 400
@@ -78,7 +89,7 @@ def update_event(event_id):
 
     return jsonify({
         "message": "Event updated successfully."
-    }), 200
+    })
 
 
 @events_bp.route("/api/events/<int:event_id>", methods=["DELETE"])
@@ -92,4 +103,4 @@ def delete_event(event_id):
 
     return jsonify({
         "message": "Event deleted successfully."
-    }), 200
+    })
