@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8001/api/courses";
+const API_BASE_URL = "/api/courses";
 
 const state = {courses: [], selectedCourseId: null};
 const elements = {
