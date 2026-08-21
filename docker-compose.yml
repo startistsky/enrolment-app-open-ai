@@ -80,6 +80,14 @@ services:
     depends_on:
       - student1-backend
 
+  shared-frontend:
+    build:
+      context: ./shared/frontend
+      dockerfile: Dockerfile
+
+    ports:
+      - "8888:80"
+
   ollama:
     image: ollama/ollama:latest
 
