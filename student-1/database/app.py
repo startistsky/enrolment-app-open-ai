@@ -3,7 +3,7 @@ import sqlite3
 from pathlib import Path
 
 app = Flask(__name__)
-DB_PATH = Path(__file__).with_name("courses.db")
+DB_PATH = Path(__file__).resolve().parent / "data" / "courses.db"
 
 
 def get_connection():
@@ -22,7 +22,7 @@ def init_db():
             lecturer TEXT NOT NULL,
             semester TEXT NOT NULL,
             credit_points INTEGER NOT NULL,
-            description TEXT
+            course_description TEXT
         )
     """)
     count = conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0]
@@ -41,7 +41,7 @@ def init_db():
         ]
         conn.executemany("""
             INSERT INTO courses
-            (course_code, course_name, lecturer, semester, credit_points, description)
+            (course_code, course_name, lecturer, semester, credit_points, course_description)
             VALUES (?, ?, ?, ?, ?, ?)
         """, courses)
     conn.commit()
@@ -81,11 +81,11 @@ def create_course():
         conn = get_connection()
         cursor = conn.execute("""
             INSERT INTO courses
-            (course_code, course_name, lecturer, semester, credit_points, description)
+            (course_code, course_name, lecturer, semester, credit_points, course_description)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (
             data["course_code"], data["course_name"], data["lecturer"],
-            data["semester"], int(data["credit_points"]), data.get("description", "")
+            data["semester"], int(data["credit_points"]), data.get("course_description", "")
         ))
         conn.commit()
         course_id = cursor.lastrowid
@@ -105,11 +105,11 @@ def update_course(course_id):
     cursor = conn.execute("""
         UPDATE courses
         SET course_code = ?, course_name = ?, lecturer = ?, semester = ?,
-            credit_points = ?, description = ?
+            credit_points = ?, course_description = ?
         WHERE course_id = ?
     """, (
         data["course_code"], data["course_name"], data["lecturer"], data["semester"],
-        int(data["credit_points"]), data.get("description", ""), course_id
+        int(data["credit_points"]), data.get("course_description", ""), course_id
     ))
     conn.commit()
     changed = cursor.rowcount
