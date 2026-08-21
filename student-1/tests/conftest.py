@@ -29,12 +29,16 @@ def database_client(tmp_path):
 
 
 @pytest.fixture
-def backend_client():
-    backend_app = load_module(
+def backend_app():
+    module = load_module(
         "student1_backend_app",
         STUDENT_1_DIR / "backend" / "app.py",
     )
-    backend_app.app.config.update(TESTING=True)
+    module.app.config.update(TESTING=True)
+    return module
 
+
+@pytest.fixture
+def backend_client(backend_app):
     with backend_app.app.test_client() as client:
         yield client

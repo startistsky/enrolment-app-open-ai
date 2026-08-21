@@ -17,6 +17,7 @@ const elements = {
     formTitle: document.getElementById("form-title"),
     generateAdviceButton: document.getElementById("generate-advice-button"),
     aiResult: document.getElementById("ai-result"),
+    agenticTrace: document.getElementById("agentic-trace"),
     saveButton: document.getElementById("save-course-button"),
 };
 
@@ -150,6 +151,35 @@ function renderAiResult(message, className = "") {
     elements.aiResult.replaceChildren(content);
 }
 
+function renderAgenticTrace(trace = []) {
+    const traceByPhase = new Map(trace.map((item) => [item.phase, item]));
+    const fragment = document.createDocumentFragment();
+
+    ["plan", "act", "observe", "adapt"].forEach((phase, index) => {
+        const item = traceByPhase.get(phase);
+        const stage = document.createElement("div");
+        stage.className = `agentic-stage agentic-stage-${item?.status || "pending"}`;
+
+        const name = document.createElement("strong");
+        name.textContent = phase.charAt(0).toUpperCase() + phase.slice(1);
+        const status = document.createElement("span");
+        status.textContent = item?.status?.replace("_", " ") || "pending";
+        const detail = document.createElement("small");
+        detail.textContent = item?.detail || "Waiting to run";
+        stage.append(name, status, detail);
+        fragment.appendChild(stage);
+
+        if (index < 3) {
+            const arrow = document.createElement("span");
+            arrow.className = "agentic-arrow";
+            arrow.textContent = "→";
+            fragment.appendChild(arrow);
+        }
+    });
+
+    elements.agenticTrace.replaceChildren(fragment);
+}
+
 function resetAssistant(enabled = false) {
     elements.generateAdviceButton.disabled = !enabled;
     elements.generateAdviceButton.textContent = "Generate Study Advice";
@@ -159,6 +189,7 @@ function resetAssistant(enabled = false) {
             : "View a course to activate the assistant.",
         "muted"
     );
+    renderAgenticTrace();
 }
 
 async function viewCourse(courseId) {
@@ -281,6 +312,7 @@ async function generateStudyAdvice() {
     elements.generateAdviceButton.disabled = true;
     elements.generateAdviceButton.textContent = "Generating…";
     renderAiResult("Generating course summary and study recommendations…", "muted");
+    renderAgenticTrace();
 
     try {
         const result = await apiRequest(
@@ -289,6 +321,7 @@ async function generateStudyAdvice() {
         );
         if (state.selectedCourseId === courseId) {
             renderAiResult(result.recommendation, "ai-response");
+            renderAgenticTrace(result.agentic_trace);
         }
     } catch (error) {
         if (state.selectedCourseId === courseId) {
@@ -313,3 +346,4 @@ elements.dialog.addEventListener("click", (event) => {
 });
 
 loadCourses();
+renderAgenticTrace();

@@ -1,4 +1,5 @@
 import os
+import re
 
 import requests
 from flask import Flask, jsonify, request
@@ -121,6 +122,52 @@ def course_code_exists(course_code, excluded_course_id=None):
     return duplicate, None
 
 
+def request_ai_recommendation(prompt):
+    try:
+        ai_response = requests.post(
+            AI_SERVICE_URL,
+            json={
+                "model": AI_MODEL,
+                "prompt": prompt,
+                "stream": False,
+            },
+            timeout=AI_REQUEST_TIMEOUT_SECONDS,
+        )
+    except requests.Timeout:
+        return None, (jsonify({"error": "AI service request timed out"}), 504)
+    except requests.RequestException:
+        return None, (jsonify({"error": "AI service unavailable"}), 503)
+
+    if not ai_response.ok:
+        return None, (jsonify({"error": "AI service unavailable"}), 503)
+
+    try:
+        ai_body = ai_response.json()
+    except ValueError:
+        return None, (jsonify({"error": "Invalid response from AI service"}), 502)
+
+    recommendation = ai_body.get("response") if isinstance(ai_body, dict) else None
+    if not isinstance(recommendation, str) or not recommendation.strip():
+        return None, (jsonify({"error": "Invalid response from AI service"}), 502)
+
+    return recommendation.strip(), None
+
+
+def validate_ai_recommendation(recommendation):
+    if not recommendation.strip():
+        return False, "The response was empty"
+
+    has_summary = re.search(r"(?im)^\s*summary\s*:", recommendation)
+    numbered_items = re.findall(r"(?m)^\s*(\d+)[.)]\s+\S.+$", recommendation)
+
+    if not has_summary:
+        return False, "The response did not include a labelled summary"
+    if numbered_items != ["1", "2", "3"]:
+        return False, "The response did not include exactly three numbered recommendations"
+
+    return True, "The response contains a summary and exactly three recommendations"
+
+
 @app.get("/health")
 def health():
     return jsonify({"status": "ok", "service": "course-backend"})
@@ -198,6 +245,12 @@ def delete_course(course_id):
 
 @app.post("/api/courses/<int:course_id>/recommendation")
 def generate_course_recommendation(course_id):
+    agentic_trace = [{
+        "phase": "plan",
+        "status": "completed",
+        "detail": "Defined the goal: a concise summary and exactly three study recommendations",
+    }]
+
     course_response, error = database_request("GET", f"/courses/{course_id}")
     if error:
         return error
@@ -213,8 +266,13 @@ def generate_course_recommendation(course_id):
         return jsonify({"error": "Invalid response from database service"}), 502
 
     prompt = (
-        "Give a short course summary followed by exactly 3 practical study "
-        "recommendations. Be concise.\n"
+        "Create study advice using exactly this format:\n"
+        "Summary: <one concise course summary>\n"
+        "Study Recommendations:\n"
+        "1. <practical recommendation>\n"
+        "2. <practical recommendation>\n"
+        "3. <practical recommendation>\n"
+        "Keep the response concise.\n"
         f"Course: {course.get('course_code')} - {course.get('course_name')}\n"
         f"Lecturer: {course.get('lecturer')}\n"
         f"Semester: {course.get('semester')}\n"
@@ -222,36 +280,63 @@ def generate_course_recommendation(course_id):
         f"Description: {course.get('course_description')}"
     )
 
-    try:
-        ai_response = requests.post(
-            AI_SERVICE_URL,
-            json={
-                "model": AI_MODEL,
-                "prompt": prompt,
-                "stream": False,
-            },
-            timeout=AI_REQUEST_TIMEOUT_SECONDS,
+    recommendation, ai_error = request_ai_recommendation(prompt)
+    if ai_error:
+        return ai_error
+
+    agentic_trace.append({
+        "phase": "act",
+        "status": "completed",
+        "detail": "Retrieved the course and requested advice from Ollama",
+    })
+
+    is_valid, observation = validate_ai_recommendation(recommendation)
+    agentic_trace.append({
+        "phase": "observe",
+        "status": "passed" if is_valid else "correction_required",
+        "detail": observation,
+    })
+
+    if is_valid:
+        agentic_trace.append({
+            "phase": "adapt",
+            "status": "not_required",
+            "detail": "The first response met the required structure; no retry was needed",
+        })
+    else:
+        adapted_prompt = (
+            f"{prompt}\n\n"
+            "Your previous response did not match the required structure. "
+            f"Problem observed: {observation}. Correct it now and return only "
+            "the requested Summary and three numbered Study Recommendations."
         )
-    except requests.Timeout:
-        return jsonify({"error": "AI service request timed out"}), 504
-    except requests.RequestException:
-        return jsonify({"error": "AI service unavailable"}), 503
+        recommendation, ai_error = request_ai_recommendation(adapted_prompt)
+        if ai_error:
+            return ai_error
 
-    if not ai_response.ok:
-        return jsonify({"error": "AI service unavailable"}), 503
+        corrected_is_valid, corrected_observation = validate_ai_recommendation(
+            recommendation
+        )
+        if not corrected_is_valid:
+            return jsonify({
+                "error": "AI response did not match the required structure after one retry",
+                "agentic_trace": agentic_trace + [{
+                    "phase": "adapt",
+                    "status": "failed",
+                    "detail": corrected_observation,
+                }],
+            }), 502
 
-    try:
-        ai_body = ai_response.json()
-    except ValueError:
-        return jsonify({"error": "Invalid response from AI service"}), 502
-
-    recommendation = ai_body.get("response") if isinstance(ai_body, dict) else None
-    if not isinstance(recommendation, str) or not recommendation.strip():
-        return jsonify({"error": "Invalid response from AI service"}), 502
+        agentic_trace.append({
+            "phase": "adapt",
+            "status": "completed",
+            "detail": "Sent one corrective prompt and accepted the corrected response",
+        })
 
     return jsonify({
         "course_id": course_id,
-        "recommendation": recommendation.strip(),
+        "recommendation": recommendation,
+        "agentic_trace": agentic_trace,
     })
 
 
