@@ -959,26 +959,24 @@ a {
 
 .messages {
   flex: 1;
-
   overflow: auto;
-
   padding: 16px;
-
   background: #f8faf9;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .msg {
+  width: fit-content;
   max-width: 84%;
-
   padding: 11px 13px;
-
   border-radius: 14px;
-
   margin: 0 0 10px;
-
   line-height: 1.45;
-
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .bot {
@@ -991,11 +989,9 @@ a {
 
 .user {
   background: var(--green);
-
   color: white;
-
-  margin-left: auto;
-
+  align-self: flex-end;
+  margin-left: 0;
   border-bottom-right-radius: 5px;
 }
 
