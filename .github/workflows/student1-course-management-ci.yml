@@ -1,0 +1,53 @@
+name: Student 1 Course Management CI
+
+on:
+  push:
+    paths:
+      - "student-1/**"
+      - ".github/workflows/student1-course-management-ci.yml"
+  pull_request:
+    paths:
+      - "student-1/**"
+      - ".github/workflows/student1-course-management-ci.yml"
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Student 1 dependencies
+        run: |
+          python -m pip install -r student-1/backend/requirements.txt
+          python -m pip install -r student-1/database/requirements.txt
+          python -m pip install -r student-1/tests/requirements.txt
+
+      - name: Check Python dependencies
+        run: python -m pip check
+
+      - name: Check Python syntax
+        run: python -m compileall -q student-1/backend student-1/database
+
+      - name: Check JavaScript syntax
+        run: node --check student-1/frontend/public/js/courses.js
+
+      - name: Run Student 1 tests
+        run: python -m pytest student-1/tests -v
+
+      - name: Build Student 1 Docker images
+        run: |
+          docker build -t student1-database-ci student-1/database
+          docker build -t student1-backend-ci student-1/backend
+          docker build -t student1-frontend-ci student-1/frontend
