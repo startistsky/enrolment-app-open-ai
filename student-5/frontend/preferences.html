@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Career Preferences</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<nav>
+
+    <h2>CareerConnect</h2>
+
+    <div>
+        <a href="index.html">Jobs</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="preferences.html">Preferences</a>
+    </div>
+
+</nav>
+
+
+<main>
+
+    <h1>Career Preferences</h1>
+
+    <p>
+        Tell us what kind of opportunities you're looking for.
+    </p>
+
+
+    <form id="preferences-form">
+
+        <label>
+            Preferred Locations
+        </label>
+
+        <input
+            id="locations"
+            placeholder="Sydney, Melbourne"
+        >
+
+
+        <label>
+            Preferred Industries
+        </label>
+
+        <input
+            id="industries"
+            placeholder="Technology, Finance"
+        >
+
+
+        <label>
+            Job Types
+        </label>
+
+        <input
+            id="job-types"
+            placeholder="Internship, Graduate"
+        >
+
+
+        <label>
+            Your Skills
+        </label>
+
+        <textarea
+            id="skills"
+            placeholder="Python, SQL, JavaScript..."
+        ></textarea>
+
+
+        <label>
+            Career Goals
+        </label>
+
+        <textarea
+            id="career-goals"
+            placeholder="Become a software engineer..."
+        ></textarea>
+
+
+        <button type="submit">
+            Save Preferences
+        </button>
+
+    </form>
+
+</main>
+
+
+<script src="js/api.js"></script>
+<script src="js/preferences.js"></script>
+
+</body>
+
+</html>
