@@ -1,0 +1,43 @@
+name: Student 2 Assignment Management
+
+on:
+  push:
+    branches: [student_2]
+    paths:
+      - "student-2/**"
+      - ".github/workflows/student-2.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "student-2/**"
+      - ".github/workflows/student-2.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install services
+        run: |
+          pip install -r student-2/database/requirements.txt
+          pip install -r student-2/backend/requirements.txt
+      - name: Initialise and validate database
+        run: |
+          python student-2/database/init_db.py
+          python - <<'PY'
+          import sqlite3
+          db = sqlite3.connect("student-2/database/assignments.db")
+          count = db.execute("SELECT COUNT(*) FROM assignments").fetchone()[0]
+          assert count >= 10, f"Expected at least 10 assignments, found {count}"
+          print(f"Validated {count} assignment records")
+          PY
+      - name: Compile Python source
+        run: python -m compileall -q student-2/backend student-2/database
+      - name: Build Student 2 containers
+        run: |
+          docker build -f student-2/database/Dockerfile -t student2-database .
+          docker build -f student-2/backend/Dockerfile -t student2-backend .
+          docker build -f student-2/frontend/Dockerfile -t student2-frontend .
