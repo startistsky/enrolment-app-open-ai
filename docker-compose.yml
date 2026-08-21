@@ -5,6 +5,10 @@ services:
       context: .
       dockerfile: student-4/database/Dockerfile
 
+    ports:
+      - "5002:5002"
+
+
     environment:
       DATABASE_PATH: /data/events.db
 
