@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Career Opportunities</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+
+  <body>
+    <nav>
+      <a class="nav-brand" href="/"> Career&Internship </a>
+
+      <div class="nav-links">
+        <a href="/"> Jobs </a>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/preferences.html"> Preferences </a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="hero">
+        <div>
+          <span class="hero-label"> CAREER & INTERNSHIPS </span>
+
+          <h1>Find your next opportunity</h1>
+
+          <p>
+            Discover jobs and internships that match your skills and career
+            goals.
+          </p>
+        </div>
+      </section>
+
+      <section class="search-section">
+        <input type="text" id="search" placeholder="Search jobs..." />
+
+        <select id="location">
+          <option value="">All Locations</option>
+
+          <option value="Sydney">Sydney</option>
+
+          <option value="Melbourne">Melbourne</option>
+
+          <option value="Brisbane">Brisbane</option>
+        </select>
+
+        <select id="industry">
+          <option value="">All Industries</option>
+
+          <option value="Technology">Technology</option>
+
+          <option value="Finance">Finance</option>
+
+          <option value="Marketing">Marketing</option>
+        </select>
+
+        <select id="job-type">
+          <option value="">All Types</option>
+
+          <option value="Internship">Internship</option>
+
+          <option value="Graduate">Graduate</option>
+
+          <option value="Part-time">Part-time</option>
+
+          <option value="Full-time">Full-time</option>
+        </select>
+
+        <button onclick="searchJobs()">Search</button>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow"> OPPORTUNITIES </span>
+
+            <h2>Available Opportunities</h2>
+          </div>
+        </div>
+
+        <div id="job-list" class="job-grid"></div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/jobs.js') }}"></script>
+  </body>
+</html>

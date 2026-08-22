@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Job Details</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+
+  <body>
+    <nav>
+      <a class="nav-brand" href="/"> Career&Internship </a>
+
+      <div class="nav-links">
+        <a href="/"> Jobs </a>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/preferences.html"> Preferences </a>
+      </div>
+    </nav>
+
+    <main>
+      <div id="job-details"></div>
+
+      <div class="actions">
+        <button onclick="saveJob()">Save Job</button>
+
+        <button onclick="applyJob()">Apply</button>
+
+        <button class="secondary-button" onclick="analyseJob()">
+          Analyse with AI
+        </button>
+      </div>
+
+      <section class="ai-section">
+        <span class="eyebrow"> AI ASSISTANT </span>
+
+        <h2>AI Job Analysis</h2>
+
+        <div id="ai-analysis">
+          <div class="empty-state">
+            <p>Click "Analyse with AI" to see:</p>
+
+            <ul>
+              <li>Required skills</li>
+
+              <li>Qualifications</li>
+
+              <li>Experience</li>
+
+              <li>ATS keywords</li>
+
+              <li>Job summary</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="chat">
+        <span class="eyebrow"> CAREER ASSISTANT </span>
+
+        <h2>AI Career Assistant</h2>
+
+        <div id="chat-messages"></div>
+
+        <div class="chat-input">
+          <input id="chat-input" placeholder="Ask about this job..." />
+
+          <button onclick="sendMessage()">Send</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/job.js') }}"></script>
+  </body>
+</html>

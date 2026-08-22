@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Career Preferences</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+
+  <body>
+    <nav>
+      <a class="nav-brand" href="/"> Career&Internship </a>
+
+      <div class="nav-links">
+        <a href="/"> Jobs </a>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/preferences.html"> Preferences </a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="page-header">
+        <span class="eyebrow"> PERSONALISE </span>
+
+        <h1>Career Preferences</h1>
+
+        <p>Tell us what kind of opportunities you're looking for.</p>
+      </section>
+
+      <form id="preferences-form">
+        <label for="locations"> Preferred Locations </label>
+
+        <input id="locations" placeholder="Sydney, Melbourne" />
+
+        <label for="industries"> Preferred Industries </label>
+
+        <input id="industries" placeholder="Technology, Finance" />
+
+        <label for="job-types"> Job Types </label>
+
+        <input id="job-types" placeholder="Internship, Graduate" />
+
+        <label for="skills"> Your Skills </label>
+
+        <textarea
+          id="skills"
+          placeholder="Python, SQL, JavaScript..."
+        ></textarea>
+
+        <label for="career-goals"> Career Goals </label>
+
+        <textarea
+          id="career-goals"
+          placeholder="Become a software engineer..."
+        ></textarea>
+
+        <button type="submit">Save Preferences</button>
+        <button
+          type="button"
+          class="secondary-button"
+          onclick="deleteAllPreferences()"
+        >
+          Clear Preferences
+        </button>
+      </form>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/preferences.js') }}"></script>
+  </body>
+</html>

@@ -1,45 +1,63 @@
-const form =
-    document.getElementById("preferences-form");
+const form = document.getElementById("preferences-form");
 
+async function loadPreferences() {
+  try {
+    const data = await getPreferences();
 
-form.addEventListener("submit", async function(event) {
+    if (!data) return;
 
-    event.preventDefault();
+    document.getElementById("locations").value = data.locations || "";
 
+    document.getElementById("industries").value = data.industries || "";
 
-    const data = {
+    document.getElementById("job-types").value = data.job_types || "";
 
-        locations:
-            document.getElementById("locations").value,
+    document.getElementById("skills").value = data.skills || "";
 
-        industries:
-            document.getElementById("industries").value,
+    document.getElementById("career-goals").value = data.career_goals || "";
+  } catch (error) {
+    console.error(error);
+  }
+}
 
-        job_types:
-            document.getElementById("job-types").value,
+form.addEventListener("submit", async function (event) {
+  event.preventDefault();
 
-        skills:
-            document.getElementById("skills").value,
+  const data = {
+    locations: document.getElementById("locations").value,
 
-        career_goals:
-            document.getElementById("career-goals").value
+    industries: document.getElementById("industries").value,
 
-    };
+    job_types: document.getElementById("job-types").value,
 
+    skills: document.getElementById("skills").value,
 
-    await fetch(
-        "http://localhost:5000/preferences",
-        {
-            method: "POST",
+    career_goals: document.getElementById("career-goals").value,
+  };
 
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify(data)
-        }
-    );
-
+  try {
+    await savePreferences(data);
 
     alert("Career preferences saved!");
+  } catch (error) {
+    alert(error.message);
+  }
 });
+
+async function deleteAllPreferences() {
+  if (!confirm("Delete your preferences?")) {
+    return;
+  }
+
+  try {
+    await deletePreferences();
+
+    form.reset();
+
+    alert("Preferences deleted.");
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadPreferences);

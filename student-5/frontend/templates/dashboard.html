@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Career Dashboard</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+
+  <body>
+    <nav>
+      <a class="nav-brand" href="/"> Career&Internship </a>
+
+      <div class="nav-links">
+        <a href="/"> Jobs </a>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/preferences.html"> Preferences </a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="page-header">
+        <span class="eyebrow"> YOUR CAREER </span>
+
+        <h1>Career Dashboard</h1>
+
+        <p>Manage saved opportunities and track your applications.</p>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow"> SAVED </span>
+
+            <h2>Saved Jobs</h2>
+          </div>
+        </div>
+
+        <div id="saved-jobs" class="job-grid"></div>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow"> APPLICATIONS </span>
+
+            <h2>My Applications</h2>
+          </div>
+        </div>
+
+        <div id="applications"></div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  </body>
+</html>

@@ -1,88 +1,93 @@
 async function searchJobs() {
+  const search = document.getElementById("search").value.trim();
 
-    const search =
-        document.getElementById("search").value;
+  const location = document.getElementById("location").value;
 
-    const location =
-        document.getElementById("location").value;
+  const industry = document.getElementById("industry").value;
 
-    const industry =
-        document.getElementById("industry").value;
+  const jobType = document.getElementById("job-type").value;
 
-    const jobType =
-        document.getElementById("job-type").value;
+  const params = new URLSearchParams();
 
+  if (search) params.set("search", search);
 
-    let params = "?";
+  if (location) params.set("location", location);
 
-    params += `search=${encodeURIComponent(search)}`;
-    params += `&location=${encodeURIComponent(location)}`;
-    params += `&industry=${encodeURIComponent(industry)}`;
-    params += `&job_type=${encodeURIComponent(jobType)}`;
+  if (industry) params.set("industry", industry);
 
+  if (jobType) params.set("job_type", jobType);
 
-    const jobs = await getJobs(params);
+  try {
+    const jobs = await getJobs(params.toString() ? `?${params}` : "");
 
     displayJobs(jobs);
+  } catch (error) {
+    console.error(error);
+
+    document.getElementById("job-list").innerHTML = `
+            <p>
+                Could not load jobs.
+                Make sure Flask is running
+                on port 5005.
+            </p>
+        `;
+  }
 }
 
-
 function displayJobs(jobs) {
+  const container = document.getElementById("job-list");
 
-    const container =
-        document.getElementById("job-list");
+  container.innerHTML = "";
 
-    container.innerHTML = "";
+  if (!jobs.length) {
+    container.innerHTML = `
+            <div class="empty-state">
+                No jobs found.
+            </div>
+        `;
 
+    return;
+  }
 
-    if (jobs.length === 0) {
+  jobs.forEach((job) => {
+    const description = job.description || "";
 
-        container.innerHTML =
-            "<p>No jobs found.</p>";
+    container.innerHTML += `
 
-        return;
-    }
+            <article class="job-card">
 
-
-    jobs.forEach(job => {
-
-        container.innerHTML += `
-
-            <div class="job-card">
-
-                <h3>${job.title}</h3>
+                <h3>
+                    ${job.title}
+                </h3>
 
                 <p class="company">
                     ${job.company}
                 </p>
 
                 <p>
-                    📍 ${job.location}
+                    📍 ${job.location || "Not specified"}
                 </p>
 
                 <p>
-                    ${job.industry}
+                    ${job.industry || "General"}
                 </p>
 
                 <span class="tag">
-                    ${job.job_type}
+                    ${job.job_type || "Opportunity"}
                 </span>
 
                 <p>
-                    ${job.description.substring(0, 150)}...
+                    ${description.substring(0, 150)}
+                    ${description.length > 150 ? "..." : ""}
                 </p>
 
-                <a href="job.html?id=${job.id}">
-                    View Details
+                <a href="/job.html?id=${job.id}">
+                    View Details →
                 </a>
 
-            </div>
-
+            </article>
         `;
-    });
+  });
 }
 
-
-// Load jobs when page opens
-
-searchJobs();
+document.addEventListener("DOMContentLoaded", searchJobs);
