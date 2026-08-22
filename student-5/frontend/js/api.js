@@ -1,313 +1,151 @@
 const API_URL = "http://localhost:5005";
 
+async function apiRequest(url, options = {}) {
+  const response = await fetch(`${API_URL}${url}`, {
+    ...options,
 
-// =========================================================
-// Generic API helper
-// =========================================================
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
 
-async function apiRequest(
-    endpoint,
-    options = {}
-) {
+  const data = await response.json();
 
-    try {
+  if (!response.ok) {
+    throw new Error(data.error || "Request failed");
+  }
 
-        const response = await fetch(
-            `${API_URL}${endpoint}`,
-            {
-                ...options,
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    ...(options.headers || {})
-                }
-            }
-        );
-
-        let data = {};
-
-        try {
-            data = await response.json();
-        } catch {
-            data = {};
-        }
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                data.message ||
-                `Request failed (${response.status})`
-            );
-        }
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "API error:",
-            error
-        );
-
-        throw error;
-    }
+  return data;
 }
 
-
-// =========================================================
-// Status
-// =========================================================
-
-async function getAPIStatus() {
-
-    return apiRequest(
-        "/api/status"
-    );
-}
-
-
-// =========================================================
+// =============================
 // Jobs
-// =========================================================
+// =============================
 
 async function getJobs(params = "") {
-
-    return apiRequest(
-        `/jobs${params}`
-    );
+  return apiRequest(`/jobs${params}`);
 }
-
 
 async function getJob(id) {
-
-    return apiRequest(
-        `/jobs/${id}`
-    );
+  return apiRequest(`/jobs/${id}`);
 }
 
-
-async function createJob(job) {
-
-    return apiRequest(
-        "/jobs",
-        {
-            method: "POST",
-
-            body: JSON.stringify(job)
-        }
-    );
+async function createJobAPI(data) {
+  return apiRequest("/jobs", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
-
-async function updateJob(
-    id,
-    job
-) {
-
-    return apiRequest(
-        `/jobs/${id}`,
-        {
-            method: "PUT",
-
-            body: JSON.stringify(job)
-        }
-    );
+async function updateJobAPI(id, data) {
+  return apiRequest(`/jobs/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 }
-
 
 async function deleteJobAPI(id) {
-
-    return apiRequest(
-        `/jobs/${id}`,
-        {
-            method: "DELETE"
-        }
-    );
+  return apiRequest(`/jobs/${id}`, {
+    method: "DELETE",
+  });
 }
 
-
-// =========================================================
-// Saved jobs
-// =========================================================
+// =============================
+// Saved
+// =============================
 
 async function saveJobAPI(id) {
-
-    return apiRequest(
-        `/saved/${id}`,
-        {
-            method: "POST"
-        }
-    );
+  return apiRequest(`/saved/${id}`, {
+    method: "POST",
+  });
 }
-
 
 async function getSavedJobs() {
-
-    return apiRequest(
-        "/saved"
-    );
+  return apiRequest("/saved");
 }
 
-
-async function unsaveJobAPI(id) {
-
-    return apiRequest(
-        `/saved/${id}`,
-        {
-            method: "DELETE"
-        }
-    );
+async function deleteSavedJobAPI(id) {
+  return apiRequest(`/saved/${id}`, {
+    method: "DELETE",
+  });
 }
 
-
-// =========================================================
+// =============================
 // Applications
-// =========================================================
+// =============================
 
 async function getApplications() {
-
-    return apiRequest(
-        "/applications"
-    );
+  return apiRequest("/applications");
 }
 
+async function createApplication(jobId) {
+  return apiRequest("/applications", {
+    method: "POST",
 
-async function createApplication(
-    jobId
-) {
-
-    return apiRequest(
-        "/applications",
-        {
-            method: "POST",
-
-            body: JSON.stringify({
-                job_id: jobId,
-                status: "Applied"
-            })
-        }
-    );
+    body: JSON.stringify({
+      job_id: jobId,
+      status: "Applied",
+    }),
+  });
 }
 
-
-async function updateApplication(
-    id,
-    status,
-    notes = ""
-) {
-
-    return apiRequest(
-        `/applications/${id}`,
-        {
-            method: "PUT",
-
-            body: JSON.stringify({
-                status,
-                notes
-            })
-        }
-    );
+async function updateApplicationAPI(id, data) {
+  return apiRequest(`/applications/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 }
 
-
-async function deleteApplicationAPI(
-    id
-) {
-
-    return apiRequest(
-        `/applications/${id}`,
-        {
-            method: "DELETE"
-        }
-    );
+async function deleteApplicationAPI(id) {
+  return apiRequest(`/applications/${id}`, {
+    method: "DELETE",
+  });
 }
 
+// =============================
+// Career Profile
+// =============================
 
-// =========================================================
-// Preferences
-// =========================================================
-
-async function getPreferences() {
-
-    return apiRequest(
-        "/preferences"
-    );
+async function getCareerProfile() {
+  return apiRequest("/profile");
 }
 
-
-async function savePreferences(
-    preferences
-) {
-
-    return apiRequest(
-        "/preferences",
-        {
-            method: "POST",
-
-            body: JSON.stringify(
-                preferences
-            )
-        }
-    );
+async function saveCareerProfileAPI(data) {
+  return apiRequest("/profile", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
+// =============================
+// Agent
+// =============================
 
-async function deletePreferences() {
-
-    return apiRequest(
-        "/preferences",
-        {
-            method: "DELETE"
-        }
-    );
+async function runCareerAgentAPI() {
+  return apiRequest("/agent/match", {
+    method: "POST",
+  });
 }
 
-
-// =========================================================
+// =============================
 // AI
-// =========================================================
+// =============================
 
 async function analyseJobAPI(id) {
-
-    return apiRequest(
-        `/jobs/${id}/analyse`,
-        {
-            method: "POST"
-        }
-    );
+  return apiRequest(`/jobs/${id}/analyse`, {
+    method: "POST",
+  });
 }
 
+async function sendChatMessage(message, jobId = null) {
+  return apiRequest("/ai/chat", {
+    method: "POST",
 
-async function sendChatMessage(
-    message
-) {
+    body: JSON.stringify({
+      message,
 
-    return apiRequest(
-        "/ai/chat",
-        {
-            method: "POST",
-
-            body: JSON.stringify({
-                message
-            })
-        }
-    );
-}
-
-
-// =========================================================
-// Career Agent
-// =========================================================
-
-async function runCareerAgent() {
-
-    return apiRequest(
-        "/api/career-agent",
-        {
-            method: "POST"
-        }
-    );
+      job_id: jobId,
+    }),
+  });
 }

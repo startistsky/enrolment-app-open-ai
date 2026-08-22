@@ -1,107 +1,146 @@
-// ============================================================
-// Dashboard
-// ============================================================
-
 async function loadDashboard() {
-  const savedContainer = document.getElementById("saved-jobs");
+  await loadSavedJobs();
 
-  const applicationContainer = document.getElementById("applications");
+  await loadApplications();
+}
+
+// ======================================
+// Saved jobs
+// ======================================
+
+async function loadSavedJobs() {
+  const container = document.getElementById("saved-jobs");
 
   try {
-    const savedJobs = await getSavedJobs();
+    const jobs = await getSavedJobs();
 
-    const applications = await getApplications();
+    container.innerHTML = "";
 
-    // ====================================================
-    // Saved jobs
-    // ====================================================
+    if (!jobs.length) {
+      container.innerHTML = `
 
-    savedContainer.innerHTML = "";
+                <p class="status-message">
+                    You have no saved jobs.
+                </p>
 
-    if (savedJobs.length === 0) {
-      savedContainer.innerHTML = `
-                <div class="empty-state">
+            `;
+
+      return;
+    }
+
+    jobs.forEach((job) => {
+      container.innerHTML += `
+
+                <article class="job-card">
+
+                    <span class="tag">
+                        ${escapeHtml(job.job_type || "")}
+                    </span>
+
                     <h3>
-                        No saved jobs
+                        ${escapeHtml(job.title)}
                     </h3>
 
-                    <p>
-                        Save opportunities from the jobs page.
+                    <p class="company">
+                        ${escapeHtml(job.company)}
                     </p>
-                </div>
-            `;
-    } else {
-      savedJobs.forEach((job) => {
-        savedContainer.innerHTML += `
 
-                    <article class="job-card">
+                    <p>
+                        📍 ${escapeHtml(job.location || "")}
+                    </p>
 
-                        <span class="tag">
-                            ${job.job_type || "Opportunity"}
-                        </span>
-
-                        <h3>
-                            ${job.title}
-                        </h3>
-
-                        <p class="company">
-                            ${job.company}
-                        </p>
-
-                        <p>
-                            📍 ${job.location}
-                        </p>
+                    <div class="admin-actions">
 
                         <a
                             href="/job.html?id=${job.id}"
-                            class="view-link"
                         >
-                            View Job →
+                            View
                         </a>
 
-                    </article>
+                        <button
+                            class="danger-button"
+                            onclick="removeSavedJob(${job.id})"
+                        >
+                            Remove
+                        </button>
 
-                `;
-      });
+                    </div>
+
+                </article>
+
+            `;
+    });
+  } catch (error) {
+    container.innerHTML = `
+
+            <p class="status-message error">
+                ${escapeHtml(error.message)}
+            </p>
+
+        `;
+  }
+}
+
+async function removeSavedJob(id) {
+  const message = document.getElementById("saved-message");
+
+  try {
+    await deleteSavedJobAPI(id);
+
+    message.className = "status-message success";
+
+    message.textContent = "Saved job removed.";
+
+    await loadSavedJobs();
+  } catch (error) {
+    message.className = "status-message error";
+
+    message.textContent = error.message;
+  }
+}
+
+// ======================================
+// Applications
+// ======================================
+
+async function loadApplications() {
+  const container = document.getElementById("applications");
+
+  try {
+    const applications = await getApplications();
+
+    container.innerHTML = "";
+
+    if (!applications.length) {
+      container.innerHTML = `
+
+                <p class="status-message">
+                    No applications yet.
+                </p>
+
+            `;
+
+      return;
     }
 
-    // ====================================================
-    // Applications
-    // ====================================================
+    applications.forEach((application) => {
+      container.innerHTML += `
 
-    applicationContainer.innerHTML = "";
-
-    if (applications.length === 0) {
-      applicationContainer.innerHTML = `
-                <div class="empty-state">
-
-                    <h3>
-                        No applications yet
-                    </h3>
-
-                    <p>
-                        Apply to a job and it will appear here.
-                    </p>
-
-                </div>
-            `;
-    } else {
-      applications.forEach((application) => {
-        applicationContainer.innerHTML += `
-
-                    <div
-                        class="application"
-                        id="application-${application.id}"
-                    >
+                    <article class="application">
 
                         <div>
 
                             <h3>
-                                ${application.title}
+                                ${escapeHtml(application.title)}
                             </h3>
 
-                            <p class="company">
-                                ${application.company}
+                            <p>
+                                ${escapeHtml(application.company)}
+                            </p>
+
+                            <p>
+                                Applied:
+                                ${escapeHtml(application.applied_at || "")}
                             </p>
 
                         </div>
@@ -112,6 +151,16 @@ async function loadDashboard() {
                             <select
                                 id="status-${application.id}"
                             >
+
+                                <option
+                                    ${
+                                      application.status === "Interested"
+                                        ? "selected"
+                                        : ""
+                                    }
+                                >
+                                    Interested
+                                </option>
 
                                 <option
                                     ${
@@ -157,87 +206,74 @@ async function loadDashboard() {
 
 
                             <button
-                                onclick="updateApplication(${application.id})"
                                 class="secondary-button"
+                                onclick="updateApplication(${application.id})"
                             >
                                 Update
                             </button>
 
 
                             <button
-                                onclick="deleteApplication(${application.id})"
                                 class="danger-button"
+                                onclick="deleteApplication(${application.id})"
                             >
                                 Delete
                             </button>
 
                         </div>
 
-
-                        <p>
-                            ${application.notes || ""}
-                        </p>
-
-
-                        <p
-                            id="application-message-${application.id}"
-                        ></p>
-
-                    </div>
+                    </article>
 
                 `;
-      });
-    }
+    });
   } catch (error) {
-    document.getElementById("dashboard-message").className = "message error";
+    container.innerHTML = `
 
-    document.getElementById("dashboard-message").textContent =
-      "Could not load dashboard: " + error.message;
+            <p class="status-message error">
+                ${escapeHtml(error.message)}
+            </p>
+
+        `;
   }
 }
-
-// ============================================================
-// Update application
-// ============================================================
 
 async function updateApplication(id) {
   const status = document.getElementById(`status-${id}`).value;
 
-  const message = document.getElementById(`application-message-${id}`);
-
   try {
-    await updateApplicationAPI(id, status, "");
+    await updateApplicationAPI(
+      id,
 
-    message.className = "message success";
+      {
+        status,
+        notes: "",
+      },
+    );
 
-    message.textContent = "Application updated.";
+    await loadApplications();
   } catch (error) {
-    message.className = "message error";
-
-    message.textContent = "Update failed: " + error.message;
+    console.error(error);
   }
 }
 
-// ============================================================
-// Delete application
-// ============================================================
-
 async function deleteApplication(id) {
-  const message = document.getElementById("dashboard-message");
-
   try {
     await deleteApplicationAPI(id);
 
-    message.className = "message success";
-
-    message.textContent = "Application deleted.";
-
-    loadDashboard();
+    await loadApplications();
   } catch (error) {
-    message.className = "message error";
-
-    message.textContent = "Delete failed: " + error.message;
+    console.error(error);
   }
+}
+
+// Escape
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 loadDashboard();

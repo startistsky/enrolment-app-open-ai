@@ -5,7 +5,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>CareerConnect Admin</title>
+    <title>Admin | CareerConnect</title>
 
     <link
       rel="stylesheet"
@@ -17,106 +17,127 @@
     <header class="topbar">
       <a href="/" class="brand">
         <span class="brand-mark"></span>
-        <span>CareerConnect</span>
+
+        <span> CareerConnect </span>
       </a>
 
       <nav class="nav">
-        <a href="/">Jobs</a>
+        <a href="/"> Jobs </a>
+
         <a href="/dashboard.html"> Dashboard </a>
+
         <a href="/admin.html"> Admin </a>
       </nav>
     </header>
 
     <main>
-      <section class="hero">
-        <h1>Admin Job Management</h1>
+      <section class="small-hero">
+        <span class="eyebrow"> ADMIN </span>
 
-        <p>Create, edit and delete career opportunities.</p>
+        <h1>Job Management</h1>
+
+        <p>Create, edit and remove opportunities.</p>
       </section>
 
-      <!-- Status -->
+      <section>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> JOB MANAGEMENT </span>
 
-      <div id="admin-status" class="status-message" style="display: none"></div>
+            <h2 id="form-title">Add Job</h2>
+          </div>
+        </div>
 
-      <!-- Job Form -->
+        <form id="job-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label> Job Title </label>
 
-      <form id="job-form">
-        <h2>Add / Edit Job</h2>
+              <input id="title" required />
+            </div>
 
-        <label> Job Title </label>
+            <div class="form-group">
+              <label> Company </label>
 
-        <input
-          id="title"
-          type="text"
-          required
-          placeholder="Frontend Developer"
-        />
+              <input id="company" required />
+            </div>
 
-        <label> Company </label>
+            <div class="form-group">
+              <label> Location </label>
 
-        <input
-          id="company"
-          type="text"
-          required
-          placeholder="Example Company"
-        />
+              <input id="location" />
+            </div>
 
-        <label> Location </label>
+            <div class="form-group">
+              <label> Industry </label>
 
-        <input id="location" type="text" placeholder="Sydney" />
+              <input id="industry" />
+            </div>
 
-        <label> Industry </label>
+            <div class="form-group">
+              <label> Job Type </label>
 
-        <input id="industry" type="text" placeholder="Technology" />
+              <select id="job-type">
+                <option value="">Select type</option>
 
-        <label> Job Type </label>
+                <option>Internship</option>
 
-        <input id="job-type" type="text" placeholder="Internship" />
+                <option>Graduate</option>
 
-        <label> Description </label>
+                <option>Part-time</option>
 
-        <textarea
-          id="description"
-          placeholder="Describe the role..."
-        ></textarea>
+                <option>Full-time</option>
+              </select>
+            </div>
 
-        <label> Requirements </label>
+            <div class="form-group">
+              <label> Salary </label>
 
-        <textarea
-          id="requirements"
-          placeholder="HTML, CSS, JavaScript..."
-        ></textarea>
+              <input id="salary" />
+            </div>
+          </div>
 
-        <label> Salary </label>
+          <div class="form-group">
+            <label> Description </label>
 
-        <input id="salary" type="text" placeholder="$60,000 - $70,000" />
+            <textarea id="description"></textarea>
+          </div>
 
-        <label> Application URL </label>
+          <div class="form-group">
+            <label> Requirements </label>
 
-        <input
-          id="application-url"
-          type="url"
-          placeholder="https://example.com/apply"
-        />
+            <textarea id="requirements"></textarea>
+          </div>
 
-        <div class="admin-actions">
-          <button id="job-submit" type="submit">Create Job</button>
+          <div class="form-group">
+            <label> Application URL </label>
+
+            <input id="application-url" />
+          </div>
+
+          <button type="submit" class="primary-button">Save Job</button>
 
           <button
-            id="cancel-edit"
             type="button"
+            id="cancel-edit"
+            class="secondary-button"
             style="display: none"
-            onclick="cancelEdit()"
           >
             Cancel Edit
           </button>
-        </div>
-      </form>
 
-      <!-- Existing Jobs -->
+          <p id="job-message" class="status-message"></p>
+        </form>
+      </section>
 
       <section>
-        <h2>Existing Jobs</h2>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> DATABASE </span>
+
+            <h2>Existing Jobs</h2>
+          </div>
+        </div>
 
         <div id="admin-jobs" class="job-grid"></div>
       </section>

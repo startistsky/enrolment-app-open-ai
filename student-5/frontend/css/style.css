@@ -1,7 +1,3 @@
-/* ============================================================
-   ROOT
-============================================================ */
-
 :root {
   --green: #0a9b43;
   --green-dark: #087a36;
@@ -13,7 +9,6 @@
   --line: #e5e7eb;
 
   --card: #ffffff;
-
   --background: #ffffff;
 
   --danger: #dc2626;
@@ -24,9 +19,9 @@
   --radius: 18px;
 }
 
-/* ============================================================
+/* =========================================
    BASE
-============================================================ */
+========================================= */
 
 * {
   box-sizing: border-box;
@@ -65,17 +60,15 @@ textarea {
   font-family: inherit;
 }
 
-/* ============================================================
+/* =========================================
    HEADER
-============================================================ */
+========================================= */
 
 .topbar {
   min-height: 86px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
 
   padding: 0 5vw;
@@ -83,7 +76,6 @@ textarea {
   border-bottom: 1px solid var(--line);
 
   position: sticky;
-
   top: 0;
 
   z-index: 20;
@@ -95,7 +87,6 @@ textarea {
 
 .brand {
   display: flex;
-
   align-items: center;
 
   gap: 12px;
@@ -103,13 +94,11 @@ textarea {
   color: var(--green);
 
   font-size: 24px;
-
   font-weight: 800;
 }
 
 .brand-mark {
   width: 42px;
-
   height: 42px;
 
   border: 4px solid var(--green);
@@ -125,7 +114,6 @@ textarea {
   position: absolute;
 
   left: 12px;
-
   top: 8px;
 
   border-left: 13px solid var(--green);
@@ -137,15 +125,11 @@ textarea {
 
 .nav {
   display: flex;
-
   align-items: center;
 
   gap: 28px;
 
-  color: var(--text);
-
   font-size: 15px;
-
   font-weight: 600;
 }
 
@@ -157,13 +141,12 @@ textarea {
   color: var(--green);
 }
 
-/* ============================================================
+/* =========================================
    MAIN
-============================================================ */
+========================================= */
 
 main {
   width: 90%;
-
   max-width: 1200px;
 
   margin: 0 auto;
@@ -175,9 +158,9 @@ section {
   margin-bottom: 40px;
 }
 
-/* ============================================================
+/* =========================================
    HERO
-============================================================ */
+========================================= */
 
 .hero {
   padding: 60px 0 45px;
@@ -195,27 +178,25 @@ section {
   color: var(--green);
 
   font-size: 12px;
-
   font-weight: 800;
 
   letter-spacing: 1.5px;
 }
 
-.hero h1 {
+.hero h1,
+.small-hero h1 {
   max-width: 750px;
 
   margin: 0 0 16px;
 
-  color: var(--text);
-
   font-size: 48px;
-
   line-height: 1.05;
 
   letter-spacing: -1.5px;
 }
 
-.hero p {
+.hero p,
+.small-hero p {
   max-width: 700px;
 
   margin: 0;
@@ -223,19 +204,17 @@ section {
   color: var(--muted);
 
   font-size: 18px;
-
   line-height: 1.6;
 }
 
-/* ============================================================
+/* =========================================
    SECTION HEAD
-============================================================ */
+========================================= */
 
 .section-head {
   display: flex;
 
   align-items: flex-start;
-
   justify-content: space-between;
 
   gap: 20px;
@@ -251,7 +230,6 @@ section {
   color: var(--green);
 
   font-size: 11px;
-
   font-weight: 800;
 
   letter-spacing: 1.2px;
@@ -271,30 +249,86 @@ section {
   color: var(--muted);
 }
 
-/* ============================================================
-   CAREER AGENT
-============================================================ */
+/* =========================================
+   PROFILE
+========================================= */
 
-.agent-panel {
+.profile-section {
   padding: 30px;
 
-  background: linear-gradient(135deg, #f7fcf9, #ffffff);
+  background: var(--card);
 
-  border: 1px solid rgba(10, 155, 67, 0.16);
+  border: 1px solid var(--line);
 
   border-radius: var(--radius);
 
-  box-shadow: var(--shadow);
+  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.06);
 }
 
-.agent-status {
+/* =========================================
+   AGENT
+========================================= */
+
+.agent-section {
+  padding: 30px;
+
+  background: var(--green-soft);
+
+  border: 1px solid rgba(10, 155, 67, 0.15);
+
+  border-radius: var(--radius);
+}
+
+.agent-header {
   display: flex;
 
+  justify-content: space-between;
   align-items: center;
 
-  gap: 7px;
+  gap: 25px;
+}
 
-  padding: 7px 12px;
+.agent-header h2 {
+  margin: 6px 0;
+
+  font-size: 28px;
+}
+
+.agent-header p {
+  max-width: 650px;
+
+  margin: 0;
+
+  color: var(--muted);
+
+  line-height: 1.6;
+}
+
+.agent-label {
+  color: var(--green-dark);
+
+  font-size: 12px;
+  font-weight: 800;
+
+  letter-spacing: 1px;
+}
+
+.agent-empty {
+  padding: 20px;
+
+  background: white;
+
+  border-radius: 12px;
+
+  color: var(--muted);
+}
+
+.match-score {
+  display: inline-block;
+
+  margin-bottom: 10px;
+
+  padding: 6px 10px;
 
   border-radius: 999px;
 
@@ -302,24 +336,14 @@ section {
 
   color: var(--green-dark);
 
-  font-size: 12px;
+  font-size: 13px;
 
-  font-weight: 700;
+  font-weight: 800;
 }
 
-.status-dot {
-  width: 8px;
-
-  height: 8px;
-
-  border-radius: 50%;
-
-  background: var(--green);
-}
-
-/* ============================================================
+/* =========================================
    FORMS
-============================================================ */
+========================================= */
 
 .form-grid {
   display: grid;
@@ -338,10 +362,7 @@ section {
 
   margin-bottom: 7px;
 
-  color: var(--text);
-
   font-size: 14px;
-
   font-weight: 700;
 }
 
@@ -388,9 +409,9 @@ textarea::placeholder {
   color: #98a2b3;
 }
 
-/* ============================================================
+/* =========================================
    BUTTONS
-============================================================ */
+========================================= */
 
 button {
   border: none;
@@ -402,7 +423,6 @@ button {
   cursor: pointer;
 
   font-size: 14px;
-
   font-weight: 700;
 
   transition:
@@ -415,22 +435,20 @@ button:hover {
   transform: translateY(-1px);
 }
 
+button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
 .primary-button {
   display: inline-block;
 
   background: var(--green);
 
   color: #ffffff;
-
-  padding: 12px 20px;
-
-  border-radius: 10px;
-
-  font-weight: 700;
-
-  border: none;
-
-  cursor: pointer;
 }
 
 .primary-button:hover {
@@ -450,22 +468,18 @@ button:hover {
 }
 
 .danger-button {
-  background: var(--danger-soft);
+  background: var(--danger);
 
-  color: var(--danger);
+  color: white;
 }
 
 .danger-button:hover {
-  background: #fee2e2;
+  background: #b42318;
 }
 
-.inline-button {
-  margin-top: 15px;
-}
-
-/* ============================================================
+/* =========================================
    SEARCH
-============================================================ */
+========================================= */
 
 .search-section {
   padding: 24px;
@@ -488,19 +502,14 @@ button:hover {
 .search-controls {
   display: grid;
 
-  grid-template-columns:
-    2fr
-    1fr
-    1fr
-    1fr
-    auto;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
 
   gap: 10px;
 }
 
-/* ============================================================
+/* =========================================
    JOB GRID
-============================================================ */
+========================================= */
 
 .job-grid {
   display: grid;
@@ -510,9 +519,9 @@ button:hover {
   gap: 20px;
 }
 
-/* ============================================================
+/* =========================================
    JOB CARD
-============================================================ */
+========================================= */
 
 .job-card {
   min-width: 0;
@@ -541,8 +550,6 @@ button:hover {
 
 .job-card h3 {
   margin: 14px 0 7px;
-
-  color: var(--text);
 
   font-size: 20px;
 }
@@ -588,9 +595,9 @@ button:hover {
   color: var(--green-dark);
 }
 
-/* ============================================================
+/* =========================================
    TAG
-============================================================ */
+========================================= */
 
 .tag {
   display: inline-block;
@@ -608,9 +615,9 @@ button:hover {
   font-weight: 800;
 }
 
-/* ============================================================
+/* =========================================
    JOB DETAILS
-============================================================ */
+========================================= */
 
 #job-details {
   padding-top: 40px;
@@ -660,9 +667,9 @@ button:hover {
   margin: 20px 0 30px;
 }
 
-/* ============================================================
+/* =========================================
    AI
-============================================================ */
+========================================= */
 
 .ai-section,
 .chat {
@@ -680,6 +687,12 @@ button:hover {
 .ai-section h2,
 .chat h2 {
   margin-top: 0;
+}
+
+.analysis-result h3 {
+  color: var(--green-dark);
+
+  margin-bottom: 5px;
 }
 
 .ai-message {
@@ -708,12 +721,6 @@ button:hover {
   line-height: 1.5;
 }
 
-.analysis-result h3 {
-  color: var(--green-dark);
-
-  margin-bottom: 5px;
-}
-
 .chat-input {
   display: flex;
 
@@ -726,15 +733,14 @@ button:hover {
   flex: 1;
 }
 
-/* ============================================================
+/* =========================================
    APPLICATIONS
-============================================================ */
+========================================= */
 
 .application {
   display: flex;
 
   align-items: center;
-
   justify-content: space-between;
 
   flex-wrap: wrap;
@@ -772,17 +778,21 @@ button:hover {
   width: auto;
 }
 
-/* =========================================================
-   Status Messages
-========================================================= */
+/* =========================================
+   STATUS
+========================================= */
 
 .status-message {
+  display: none;
+
   padding: 14px 18px;
-  margin: 0 0 20px;
+
+  margin: 15px 0;
 
   border-radius: 10px;
 
   font-size: 14px;
+
   font-weight: 700;
 }
 
@@ -806,9 +816,19 @@ button:hover {
   border: 1px solid #fecdca;
 }
 
-/* =========================================================
-   Admin actions
-========================================================= */
+.status-message.info {
+  display: block;
+
+  color: var(--muted);
+
+  background: #f8fafc;
+
+  border: 1px solid var(--line);
+}
+
+/* =========================================
+   ADMIN
+========================================= */
 
 .admin-actions {
   display: flex;
@@ -842,16 +862,72 @@ button:hover {
   color: var(--green-dark);
 }
 
-.admin-actions button {
-  margin: 0;
-}
+/* =========================================
+   RESPONSIVE
+========================================= */
 
-.danger-button {
-  background: #d92d20;
-  color: white;
-}
+@media (max-width: 800px) {
+  .topbar {
+    flex-direction: column;
 
-.danger-button:hover {
-  background: #b42318;
-  color: white;
+    gap: 15px;
+
+    padding: 18px;
+  }
+
+  .nav {
+    gap: 16px;
+  }
+
+  .hero h1,
+  .small-hero h1 {
+    font-size: 36px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .agent-header {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .agent-header button {
+    width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+
+  .chat-input {
+    flex-direction: column;
+  }
+
+  .chat-input button {
+    width: 100%;
+  }
+
+  .application-controls {
+    width: 100%;
+
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .application-controls select,
+  .application-controls button {
+    width: 100%;
+  }
 }

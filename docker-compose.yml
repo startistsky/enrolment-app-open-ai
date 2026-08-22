@@ -121,6 +121,50 @@ services:
     depends_on:
       - student1-backend
 
+  # Student 5 Docker Compose Configuration
+  student5-database:
+    build:
+      context: .
+      dockerfile: student-5/database/Dockerfile
+
+    ports:
+      - "5005:5005"
+
+    environment:
+      DATABASE_PATH: /data/database.db
+
+    volumes:
+      - student5-database-data:/data
+
+
+  student5-backend:
+    build:
+      context: .
+      dockerfile: student-5/backend/Dockerfile
+
+    ports:
+      - "8005:8005"
+
+    environment:
+      AI_SERVICE_URL: http://ollama:11434/api/generate
+      DATABASE_SERVICE_URL: http://student5-database:5005
+
+    depends_on:
+      - student5-database
+      - ollama
+
+
+  student5-frontend:
+    build:
+      context: .
+      dockerfile: student-5/frontend/Dockerfile
+
+    ports:
+      - "8085:80"
+
+    depends_on:
+      - student5-backend
+
   # Shared Frontend
 
   shared-frontend:
@@ -131,9 +175,7 @@ services:
     ports:
       - "8888:80"
 
-
   # Shared Ollama
-
   ollama:
     image: ollama/ollama:latest
 
@@ -148,3 +190,4 @@ volumes:
   database_data:
   ollama_data:
   student1-course-data:
+  student5-career-data:

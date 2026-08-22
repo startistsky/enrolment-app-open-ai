@@ -1,14 +1,110 @@
+const params = new URLSearchParams(window.location.search);
+const jobId = params.get("id");
+
+let currentJob = null;
+let analysing = false;
+
+function escapeHTML(value) {
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// Keep compatibility with existing code
+function escapeHtml(value) {
+    return escapeHTML(value);
+}
+
+
 // ============================================================
-// Job Details
+// Simple AI analysis
 // ============================================================
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
+function displayAnalysis(value) {
+    if (!value) {
+        return "<p>No information available.</p>";
+    }
 
-const jobId =
-    params.get("id");
+    if (Array.isArray(value)) {
+        return `
+            <ul>
+                ${value.map(item => `
+                    <li>${escapeHTML(item)}</li>
+                `).join("")}
+            </ul>
+        `;
+    }
+
+    return `
+        <p>
+            ${escapeHTML(value)}
+        </p>
+    `;
+}
+
+
+// ============================================================
+// Render AI analysis
+// ============================================================
+
+function renderAIAnalysis(result) {
+
+    const container = document.getElementById("ai-analysis");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = `
+
+        <div class="analysis-grid">
+
+            <div class="analysis-card">
+                <h3>Skills</h3>
+
+                ${displayAnalysis(result.skills)}
+            </div>
+
+
+            <div class="analysis-card">
+                <h3>Qualifications</h3>
+
+                ${displayAnalysis(result.qualifications)}
+            </div>
+
+
+            <div class="analysis-card">
+                <h3>Experience</h3>
+
+                ${displayAnalysis(result.experience)}
+            </div>
+
+
+            <div class="analysis-card">
+                <h3>ATS Keywords</h3>
+
+                ${displayAnalysis(result.ats_keywords)}
+            </div>
+
+
+            <div class="analysis-card analysis-summary">
+                <h3>Summary</h3>
+
+                ${displayAnalysis(result.summary)}
+            </div>
+
+        </div>
+
+    `;
+}
 
 
 // ============================================================
@@ -17,63 +113,76 @@ const jobId =
 
 async function loadJob() {
 
-    const container =
-        document.getElementById(
-            "job-details"
-        );
+    const container = document.getElementById("job-details");
 
+    if (!container) {
+        return;
+    }
 
     if (!jobId) {
 
         container.innerHTML = `
-            <div class="message error">
-                No job was selected.
-            </div>
+            <p class="status-message error">
+                No job selected.
+            </p>
         `;
 
         return;
     }
 
-
     try {
 
-        const job =
-            await getJob(jobId);
+        currentJob = await getJob(jobId);
 
+        if (!currentJob) {
+            throw new Error("Job not found.");
+        }
 
         container.innerHTML = `
 
-            <div class="job-detail-card">
+            <article class="job-detail-card">
 
                 <span class="tag">
-                    ${job.job_type || "Opportunity"}
+                    ${escapeHTML(
+                        currentJob.job_type || "Opportunity"
+                    )}
                 </span>
 
 
                 <h1>
-                    ${job.title}
+                    ${escapeHTML(
+                        currentJob.title || "Untitled Job"
+                    )}
                 </h1>
 
 
                 <h2>
-                    ${job.company}
+                    ${escapeHTML(
+                        currentJob.company || "Company not specified"
+                    )}
                 </h2>
 
 
-                <p class="job-location">
-                    📍 ${job.location || "Not specified"}
+                <p>
+                    📍 ${escapeHTML(
+                        currentJob.location || "Location not specified"
+                    )}
                 </p>
 
 
                 <p>
                     <strong>Industry:</strong>
-                    ${job.industry || "Not specified"}
+                    ${escapeHTML(
+                        currentJob.industry || "Not specified"
+                    )}
                 </p>
 
 
                 <p>
                     <strong>Salary:</strong>
-                    ${job.salary || "Not specified"}
+                    ${escapeHTML(
+                        currentJob.salary || "Not specified"
+                    )}
                 </p>
 
 
@@ -85,7 +194,10 @@ async function loadJob() {
                 </h2>
 
                 <p class="long-text">
-                    ${job.description || "No description provided."}
+                    ${escapeHTML(
+                        currentJob.description ||
+                        "No job description available."
+                    )}
                 </p>
 
 
@@ -94,70 +206,101 @@ async function loadJob() {
                 </h2>
 
                 <p class="long-text">
-                    ${job.requirements || "No requirements provided."}
+                    ${escapeHTML(
+                        currentJob.requirements ||
+                        "No requirements provided."
+                    )}
                 </p>
 
 
                 ${
-                    job.application_url
-                    ? `
-                        <a
-                            class="primary-button inline-button"
-                            href="${job.application_url}"
-                            target="_blank"
-                        >
-                            External Application →
-                        </a>
-                    `
-                    : ""
+                    currentJob.application_url
+                        ? `
+                            <div class="job-external-link">
+
+                                <a
+                                    href="${escapeHTML(
+                                        currentJob.application_url
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="primary-button"
+                                >
+                                    Open Application
+                                </a>
+
+                            </div>
+                        `
+                        : ""
                 }
 
-            </div>
+            </article>
 
         `;
 
     } catch (error) {
 
+        console.error(
+            "Could not load job:",
+            error
+        );
+
         container.innerHTML = `
-            <div class="message error">
-                Could not load this job.
-                ${error.message}
-            </div>
+
+            <p class="status-message error">
+
+                Could not load job:
+
+                ${escapeHTML(error.message)}
+
+            </p>
+
         `;
     }
 }
 
 
 // ============================================================
-// Save
+// Save job
 // ============================================================
 
 async function saveJob() {
 
     const message =
-        document.getElementById(
-            "job-action-message"
-        );
+        document.getElementById("job-action-message");
 
+    if (!jobId || !message) {
+        return;
+    }
 
     try {
+
+        message.className =
+            "status-message info";
+
+        message.textContent =
+            "Saving job...";
 
         await saveJobAPI(jobId);
 
         message.className =
-            "message success";
+            "status-message success";
 
         message.textContent =
             "Job saved successfully.";
 
     } catch (error) {
 
+        console.error(
+            "Save job error:",
+            error
+        );
+
         message.className =
-            "message error";
+            "status-message error";
 
         message.textContent =
-            "Could not save job: "
-            + error.message;
+            `Could not save job: ${error.message}`;
     }
 }
 
@@ -169,118 +312,112 @@ async function saveJob() {
 async function applyJob() {
 
     const message =
-        document.getElementById(
-            "job-action-message"
-        );
+        document.getElementById("job-action-message");
 
+    if (!jobId || !message) {
+        return;
+    }
 
     try {
+
+        message.className =
+            "status-message info";
+
+        message.textContent =
+            "Adding application...";
 
         await createApplication(jobId);
 
         message.className =
-            "message success";
+            "status-message success";
 
         message.textContent =
-            "Application added to your dashboard.";
+            "Application added successfully.";
 
     } catch (error) {
 
+        console.error(
+            "Application error:",
+            error
+        );
+
         message.className =
-            "message error";
+            "status-message error";
 
         message.textContent =
-            "Could not create application: "
-            + error.message;
+            `Could not create application: ${error.message}`;
     }
 }
 
 
 // ============================================================
-// AI analysis
+// AI / ATS Analysis
 // ============================================================
 
 async function analyseJob() {
 
     const container =
-        document.getElementById(
-            "ai-analysis"
-        );
+        document.getElementById("ai-analysis");
 
+    if (!container || !jobId) {
+        return;
+    }
+
+    if (analysing) {
+        return;
+    }
+
+    analysing = true;
 
     container.innerHTML = `
-        <div class="message">
-            AI is analysing this opportunity...
-        </div>
-    `;
 
+        <p class="status-message info">
+            Analysing job...
+        </p>
+
+    `;
 
     try {
 
         const result =
             await analyseJobAPI(jobId);
 
+        if (
+            result &&
+            result.success === false
+        ) {
 
-        container.innerHTML = `
+            throw new Error(
+                result.error ||
+                "Analysis failed."
+            );
+        }
 
-            <div class="analysis-result">
-
-                <h3>
-                    Skills
-                </h3>
-
-                <p>
-                    ${result.skills || "Not available"}
-                </p>
-
-
-                <h3>
-                    Qualifications
-                </h3>
-
-                <p>
-                    ${result.qualifications || "Not available"}
-                </p>
-
-
-                <h3>
-                    Experience
-                </h3>
-
-                <p>
-                    ${result.experience || "Not available"}
-                </p>
-
-
-                <h3>
-                    ATS Keywords
-                </h3>
-
-                <p>
-                    ${result.ats_keywords || "Not available"}
-                </p>
-
-
-                <h3>
-                    Summary
-                </h3>
-
-                <p>
-                    ${result.summary || "Not available"}
-                </p>
-
-            </div>
-
-        `;
+        renderAIAnalysis(result);
 
     } catch (error) {
 
+        console.error(
+            "AI analysis error:",
+            error
+        );
+
         container.innerHTML = `
-            <div class="message error">
+
+            <p class="status-message error">
+
                 AI analysis failed:
-                ${error.message}
-            </div>
+
+                ${escapeHTML(error.message)}
+
+            </p>
+
         `;
+
+    } finally {
+
+        analysing = false;
+
     }
 }
 
@@ -292,48 +429,46 @@ async function analyseJob() {
 async function sendMessage() {
 
     const input =
-        document.getElementById(
-            "chat-input"
-        );
+        document.getElementById("chat-input");
 
+    const chat =
+        document.getElementById("chat-messages");
+
+    const status =
+        document.getElementById("chat-message");
+
+    if (
+        !input ||
+        !chat ||
+        !status ||
+        !jobId
+    ) {
+        return;
+    }
 
     const message =
         input.value.trim();
-
 
     if (!message) {
         return;
     }
 
 
-    const chat =
-        document.getElementById(
-            "chat-messages"
-        );
-
-
-    const status =
-        document.getElementById(
-            "chat-message"
-        );
-
+    // User message
 
     chat.innerHTML += `
 
         <div class="user-message">
-
-            ${message}
-
+            ${escapeHTML(message)}
         </div>
 
     `;
-
 
     input.value = "";
 
 
     status.className =
-        "message";
+        "status-message info";
 
     status.textContent =
         "Career Agent is thinking...";
@@ -343,34 +478,84 @@ async function sendMessage() {
 
         const result =
             await sendChatMessage(
-                message
+                message,
+                jobId
             );
+
+        const response =
+            result.response ||
+            "No response received.";
 
 
         chat.innerHTML += `
 
             <div class="ai-message">
 
-                ${result.response}
+                ${escapeHTML(response)}
 
             </div>
 
         `;
 
 
+        status.className =
+            "status-message";
+
         status.textContent = "";
 
 
+        chat.scrollTop =
+            chat.scrollHeight;
+
     } catch (error) {
 
+        console.error(
+            "Career Agent chat error:",
+            error
+        );
+
         status.className =
-            "message error";
+            "status-message error";
 
         status.textContent =
-            "AI assistant failed: "
-            + error.message;
+            `Career Agent could not complete the request: ${error.message}`;
     }
 }
 
+
+// ============================================================
+// Enter to send chat
+// ============================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        const input =
+            document.getElementById("chat-input");
+
+        if (!input) {
+            return;
+        }
+
+        input.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+                    sendMessage();
+                }
+
+            }
+        );
+
+    }
+);
 
 loadJob();

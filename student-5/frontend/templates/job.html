@@ -17,60 +17,74 @@
     <header class="topbar">
       <a href="/" class="brand">
         <span class="brand-mark"></span>
-
         <span>CareerConnect</span>
       </a>
 
       <nav class="nav">
         <a href="/">Jobs</a>
-
-        <a href="/dashboard.html"> Dashboard </a>
-
-        <a href="/admin.html"> Admin </a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/admin.html">Admin</a>
       </nav>
     </header>
 
     <main>
-      <div id="job-details">
-        <p>Loading job...</p>
-      </div>
+      <!-- Job details -->
 
-      <div class="actions">
-        <button onclick="saveJob()" class="secondary-button">Save Job</button>
+      <section id="job-details">
+        <p class="status-message info">Loading job...</p>
+      </section>
 
-        <button onclick="applyJob()" class="primary-button">Apply</button>
+      <section class="actions">
+        <button type="button" onclick="saveJob()" class="secondary-button">
+          Save Job
+        </button>
 
-        <button onclick="analyseJob()" class="primary-button">
+        <button type="button" onclick="applyJob()" class="primary-button">
+          Apply
+        </button>
+
+        <button type="button" onclick="analyseJob()" class="primary-button">
           Analyse with AI
         </button>
-      </div>
+      </section>
 
-      <p id="job-action-message"></p>
+      <!-- Action status -->
+
+      <p id="job-action-message" class="status-message"></p>
 
       <section class="ai-section">
-        <span class="section-label"> AI ANALYSIS </span>
+        <span class="section-label"> ATS & AI ANALYSIS </span>
 
         <h2>Job Analysis</h2>
 
         <div id="ai-analysis">
-          <p>Select "Analyse with AI" to analyse the job requirements.</p>
+          <p>Select "Analyse with AI" to analyse this job.</p>
         </div>
       </section>
+
+      <!-- Chat -->
 
       <section class="chat">
         <span class="section-label"> CAREER ASSISTANT </span>
 
         <h2>Ask the Career Agent</h2>
 
-        <div id="chat-messages"></div>
+        <div id="chat-messages" class="chat-messages"></div>
 
         <div class="chat-input">
-          <input id="chat-input" placeholder="Ask about this job..." />
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="Ask about this job..."
+            autocomplete="off"
+          />
 
-          <button onclick="sendMessage()">Send</button>
+          <button type="button" onclick="sendMessage()" class="primary-button">
+            Send
+          </button>
         </div>
 
-        <p id="chat-message"></p>
+        <p id="chat-message" class="status-message"></p>
       </section>
     </main>
 

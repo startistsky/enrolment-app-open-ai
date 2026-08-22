@@ -5,7 +5,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>CareerConnect</title>
+    <title>Jobs | CareerConnect</title>
 
     <link
       rel="stylesheet"
@@ -17,173 +17,203 @@
     <header class="topbar">
       <a href="/" class="brand">
         <span class="brand-mark"></span>
-        <span>CareerConnect</span>
+
+        <span> CareerConnect </span>
       </a>
 
       <nav class="nav">
-        <a href="/">Jobs</a>
+        <a href="/"> Jobs </a>
+
         <a href="/dashboard.html"> Dashboard </a>
+
         <a href="/admin.html"> Admin </a>
       </nav>
     </header>
 
     <main>
-      <!-- Hero -->
+      <!-- HERO -->
 
       <section class="hero">
-        <div>
-          <span class="eyebrow"> CAREER & INTERNSHIP AGENT </span>
+        <span class="eyebrow"> CAREER & INTERNSHIP AGENT </span>
 
-          <h1>Find opportunities that fit your career.</h1>
+        <h1>Find opportunities that fit your career.</h1>
 
-          <p>
-            Tell our agent what you are looking for. It will match your skills,
-            goals and preferences with available jobs and internships.
-          </p>
-        </div>
+        <p>
+          Build your career profile and let the Career Agent match your skills,
+          goals and experience with available jobs.
+        </p>
       </section>
 
-      <!-- Career Agent -->
+      <!-- CAREER PROFILE -->
 
-      <section class="agent-panel">
+      <section class="profile-section">
         <div class="section-head">
           <div>
-            <span class="section-label"> AI CAREER MATCHING </span>
+            <span class="section-label"> CAREER PROFILE </span>
 
-            <h2>Build your career profile</h2>
+            <h2>Tell the agent about yourself</h2>
 
-            <p>The agent uses your profile to find relevant opportunities.</p>
-          </div>
-
-          <div class="agent-status">
-            <span class="status-dot"></span>
-
-            Agent ready
+            <p>Your profile is used to improve job recommendations.</p>
           </div>
         </div>
 
-        <form id="career-agent-form">
+        <form id="profile-form">
           <div class="form-grid">
             <div class="form-group">
-              <label for="agent-locations"> Preferred locations </label>
+              <label> Preferred Locations </label>
 
-              <input id="agent-locations" placeholder="Sydney, Melbourne" />
+              <input id="locations" placeholder="Sydney, Melbourne" />
             </div>
 
             <div class="form-group">
-              <label for="agent-industries"> Industries </label>
+              <label> Preferred Industries </label>
 
-              <input id="agent-industries" placeholder="Technology, Finance" />
+              <input id="industries" placeholder="Technology, Finance" />
             </div>
 
             <div class="form-group">
-              <label for="agent-job-types"> Opportunity type </label>
+              <label> Preferred Job Types </label>
 
-              <select id="agent-job-types">
-                <option value="">Any type</option>
-
-                <option value="Internship">Internship</option>
-
-                <option value="Graduate">Graduate</option>
-
-                <option value="Part-time">Part-time</option>
-
-                <option value="Full-time">Full-time</option>
-              </select>
+              <input id="job-types" placeholder="Graduate, Internship" />
             </div>
 
             <div class="form-group">
-              <label for="agent-skills"> Your skills </label>
+              <label> Education </label>
 
-              <input id="agent-skills" placeholder="Python, SQL, JavaScript" />
+              <input
+                id="education"
+                placeholder="Bachelor of Computer Science"
+              />
             </div>
           </div>
 
           <div class="form-group">
-            <label for="agent-goals"> Career goals </label>
+            <label> Skills </label>
 
             <textarea
-              id="agent-goals"
-              placeholder="Become a software engineer and gain experience in web development..."
+              id="skills"
+              placeholder="Python, SQL, JavaScript, React..."
             ></textarea>
           </div>
 
-          <div class="agent-actions">
-            <button type="submit" class="primary-button">
-              Find My Opportunities
-            </button>
+          <div class="form-group">
+            <label> Experience </label>
 
-            <span id="agent-message"></span>
+            <textarea
+              id="experience"
+              placeholder="Projects, internships or previous work..."
+            ></textarea>
           </div>
+
+          <div class="form-group">
+            <label> Career Goals </label>
+
+            <textarea
+              id="career-goals"
+              placeholder="Become a software engineer..."
+            ></textarea>
+          </div>
+
+          <button type="submit" class="secondary-button">
+            Save Career Profile
+          </button>
+
+          <p id="profile-message" class="status-message"></p>
         </form>
       </section>
 
-      <!-- Search -->
+      <!-- CAREER AGENT -->
+
+      <section class="agent-section">
+        <div class="agent-header">
+          <div>
+            <span class="agent-label"> AI CAREER AGENT </span>
+
+            <h2>Find My Opportunities</h2>
+
+            <p>
+              The agent analyses your profile, evaluates available jobs,
+              considers ATS requirements and recommends the strongest matches.
+            </p>
+          </div>
+
+          <button id="agent-button" class="primary-button" onclick="runAgent()">
+            Find My Opportunities
+          </button>
+        </div>
+
+        <p id="agent-status" class="status-message"></p>
+
+        <div id="agent-results" class="job-grid"></div>
+      </section>
+
+      <!-- SEARCH -->
 
       <section class="search-section">
         <div class="search-title">
-          <span class="section-label"> EXPLORE </span>
+          <span class="section-label"> JOB SEARCH </span>
 
-          <h2>Search all opportunities</h2>
+          <h2>Browse all opportunities</h2>
         </div>
 
         <div class="search-controls">
-          <input type="text" id="search" placeholder="Search jobs..." />
+          <input id="search" placeholder="Search jobs..." />
 
           <select id="location">
             <option value="">All Locations</option>
 
-            <option value="Sydney">Sydney</option>
+            <option>Sydney</option>
 
-            <option value="Melbourne">Melbourne</option>
+            <option>Melbourne</option>
 
-            <option value="Brisbane">Brisbane</option>
+            <option>Brisbane</option>
           </select>
 
           <select id="industry">
             <option value="">All Industries</option>
 
-            <option value="Technology">Technology</option>
+            <option>Technology</option>
 
-            <option value="Finance">Finance</option>
+            <option>Finance</option>
 
-            <option value="Marketing">Marketing</option>
+            <option>Marketing</option>
           </select>
 
           <select id="job-type">
             <option value="">All Types</option>
 
-            <option value="Internship">Internship</option>
+            <option>Internship</option>
 
-            <option value="Graduate">Graduate</option>
+            <option>Graduate</option>
 
-            <option value="Part-time">Part-time</option>
+            <option>Part-time</option>
 
-            <option value="Full-time">Full-time</option>
+            <option>Full-time</option>
           </select>
 
-          <button type="button" onclick="searchJobs()">Search</button>
+          <button onclick="searchJobs()" class="primary-button">Search</button>
         </div>
       </section>
 
-      <!-- Agent Recommendations -->
+      <!-- JOBS -->
 
       <section>
         <div class="section-head">
           <div>
-            <span class="section-label"> RECOMMENDED FOR YOU </span>
+            <span class="section-label"> OPPORTUNITIES </span>
 
-            <h2>Career opportunities</h2>
-
-            <p id="recommendation-text">Browse available opportunities.</p>
+            <h2>Available Jobs</h2>
           </div>
         </div>
 
-        <div id="job-list" class="job-grid"></div>
+        <div id="job-list" class="job-grid">
+          <p>Loading jobs...</p>
+        </div>
       </section>
     </main>
 
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jobs.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
   </body>
 </html>
