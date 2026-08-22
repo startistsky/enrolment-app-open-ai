@@ -1,3 +1,5 @@
+import os
+
 from flask import (
     Flask,
     request,
@@ -8,31 +10,66 @@ from flask import (
 from flask_cors import CORS
 
 from database import get_db, init_db
+from ai_service import analyse_job, chat
 
-from ai_service import (
-    analyse_job,
-    chat
+
+# =========================================================
+# PATHS
+# =========================================================
+
+BASE_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+)
+
+FRONTEND_DIR = os.path.join(
+    BASE_DIR,
+    "frontend"
+)
+
+TEMPLATE_DIR = os.path.join(
+    FRONTEND_DIR,
+    "templates"
+)
+
+STATIC_DIR = os.path.join(
+    FRONTEND_DIR
 )
 
 
+# =========================================================
+# FLASK
+# =========================================================
+
 app = Flask(
     __name__,
-    template_folder="../frontend/templates",
-    static_folder="../frontend",
+    template_folder=TEMPLATE_DIR,
+    static_folder=STATIC_DIR,
     static_url_path="/static"
 )
 
 CORS(app)
 
+
+# =========================================================
+# DATABASE
+# =========================================================
+
 init_db()
 
 
 # =========================================================
-# FRONTEND
+# FRONTEND PAGES
 # =========================================================
 
 @app.route("/")
 def index():
+    return render_template("index.html")
+
+
+@app.route("/index.html")
+def index_html():
     return render_template("index.html")
 
 
@@ -57,29 +94,44 @@ def admin_page():
 
 
 # =========================================================
-# STATUS
+# API STATUS
 # =========================================================
 
-@app.route("/api/status")
+@app.route("/api/status", methods=["GET"])
 def status():
 
     return jsonify({
-        "message": "CareerConnect API is running",
+        "message": "Career and Internship Management API is running",
         "status": "success"
     })
 
 
 # =========================================================
-# JOBS - GET
+# JOBS - READ
 # =========================================================
 
 @app.route("/jobs", methods=["GET"])
 def get_jobs():
 
-    search = request.args.get("search", "")
-    location = request.args.get("location", "")
-    industry = request.args.get("industry", "")
-    job_type = request.args.get("job_type", "")
+    search = request.args.get(
+        "search",
+        ""
+    )
+
+    location = request.args.get(
+        "location",
+        ""
+    )
+
+    industry = request.args.get(
+        "industry",
+        ""
+    )
+
+    job_type = request.args.get(
+        "job_type",
+        ""
+    )
 
     db = get_db()
 
@@ -141,51 +193,24 @@ def get_jobs():
 
 
 # =========================================================
-# JOBS - GET SINGLE
-# =========================================================
-
-@app.route("/jobs/<int:job_id>", methods=["GET"])
-def get_job(job_id):
-
-    db = get_db()
-
-    job = db.execute(
-        """
-        SELECT *
-        FROM jobs
-        WHERE id = ?
-        """,
-        (job_id,)
-    ).fetchone()
-
-    db.close()
-
-    if not job:
-
-        return jsonify({
-            "error": "Job not found"
-        }), 404
-
-    return jsonify(dict(job))
-
-
-# =========================================================
-# JOBS - CREATE
+# JOB - CREATE
 # =========================================================
 
 @app.route("/jobs", methods=["POST"])
 def create_job():
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
     if not data.get("title"):
         return jsonify({
-            "error": "Job title is required."
+            "error": "Job title is required"
         }), 400
 
     if not data.get("company"):
         return jsonify({
-            "error": "Company is required."
+            "error": "Company is required"
         }), 400
 
     db = get_db()
@@ -226,24 +251,64 @@ def create_job():
     db.close()
 
     return jsonify({
-        "message": "Job created successfully.",
+        "message": "Job created successfully",
         "job_id": job_id
     }), 201
 
 
 # =========================================================
-# JOBS - UPDATE
+# JOB - READ ONE
 # =========================================================
 
-@app.route("/jobs/<int:job_id>", methods=["PUT"])
+@app.route("/jobs/<int:job_id>", methods=["GET"])
+def get_job(job_id):
+
+    db = get_db()
+
+    job = db.execute(
+        """
+        SELECT *
+        FROM jobs
+        WHERE id = ?
+        """,
+        (job_id,)
+    ).fetchone()
+
+    db.close()
+
+    if not job:
+
+        return jsonify({
+            "error": "Job not found"
+        }), 404
+
+    return jsonify(
+        dict(job)
+    )
+
+
+# =========================================================
+# JOB - UPDATE
+# =========================================================
+
+@app.route(
+    "/jobs/<int:job_id>",
+    methods=["PUT"]
+)
 def update_job(job_id):
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
     db = get_db()
 
     existing = db.execute(
-        "SELECT id FROM jobs WHERE id = ?",
+        """
+        SELECT id
+        FROM jobs
+        WHERE id = ?
+        """,
         (job_id,)
     ).fetchone()
 
@@ -252,12 +317,13 @@ def update_job(job_id):
         db.close()
 
         return jsonify({
-            "error": "Job not found."
+            "error": "Job not found"
         }), 404
 
     db.execute(
         """
         UPDATE jobs
+
         SET
             title = ?,
             company = ?,
@@ -268,6 +334,7 @@ def update_job(job_id):
             requirements = ?,
             salary = ?,
             application_url = ?
+
         WHERE id = ?
         """,
         (
@@ -285,50 +352,137 @@ def update_job(job_id):
     )
 
     db.commit()
-
     db.close()
 
     return jsonify({
-        "message": "Job updated successfully."
+        "message": "Job updated successfully"
     })
 
 
 # =========================================================
-# JOBS - DELETE
+# JOB - DELETE
 # =========================================================
 
-@app.route("/jobs/<int:job_id>", methods=["DELETE"])
+@app.route(
+    "/jobs/<int:job_id>",
+    methods=["DELETE"]
+)
 def delete_job(job_id):
 
     db = get_db()
 
-    cursor = db.execute(
-        "DELETE FROM jobs WHERE id = ?",
+    existing = db.execute(
+        """
+        SELECT id
+        FROM jobs
+        WHERE id = ?
+        """,
+        (job_id,)
+    ).fetchone()
+
+    if not existing:
+
+        db.close()
+
+        return jsonify({
+            "error": "Job not found"
+        }), 404
+
+    # Remove related records first
+    db.execute(
+        """
+        DELETE FROM saved_jobs
+        WHERE job_id = ?
+        """,
+        (job_id,)
+    )
+
+    db.execute(
+        """
+        DELETE FROM applications
+        WHERE job_id = ?
+        """,
+        (job_id,)
+    )
+
+    db.execute(
+        """
+        DELETE FROM job_ai_analysis
+        WHERE job_id = ?
+        """,
+        (job_id,)
+    )
+
+    db.execute(
+        """
+        DELETE FROM jobs
+        WHERE id = ?
+        """,
         (job_id,)
     )
 
     db.commit()
-
-    deleted = cursor.rowcount
-
     db.close()
 
-    if deleted == 0:
-
-        return jsonify({
-            "error": "Job not found."
-        }), 404
-
     return jsonify({
-        "message": "Job deleted successfully."
+        "message": "Job deleted successfully"
     })
 
 
 # =========================================================
-# SAVED JOBS - GET
+# SAVED JOBS - CREATE
 # =========================================================
 
-@app.route("/saved", methods=["GET"])
+@app.route(
+    "/saved/<int:job_id>",
+    methods=["POST"]
+)
+def save_job(job_id):
+
+    db = get_db()
+
+    job = db.execute(
+        """
+        SELECT id
+        FROM jobs
+        WHERE id = ?
+        """,
+        (job_id,)
+    ).fetchone()
+
+    if not job:
+
+        db.close()
+
+        return jsonify({
+            "error": "Job not found"
+        }), 404
+
+    db.execute(
+        """
+        INSERT OR IGNORE INTO saved_jobs
+        (job_id)
+        VALUES (?)
+        """,
+        (job_id,)
+    )
+
+    db.commit()
+    db.close()
+
+    return jsonify({
+        "message": "Job saved successfully"
+    })
+
+
+# =========================================================
+# SAVED JOBS - READ
+# =========================================================
+
+@app.route(
+    "/saved",
+    methods=["GET"]
+)
 def get_saved_jobs():
 
     db = get_db()
@@ -337,7 +491,7 @@ def get_saved_jobs():
         """
         SELECT jobs.*
         FROM jobs
-        INNER JOIN saved_jobs
+        JOIN saved_jobs
             ON jobs.id = saved_jobs.job_id
         ORDER BY saved_jobs.saved_at DESC
         """
@@ -352,54 +506,18 @@ def get_saved_jobs():
 
 
 # =========================================================
-# SAVED JOB - CREATE
+# SAVED JOBS - DELETE
 # =========================================================
 
-@app.route("/saved/<int:job_id>", methods=["POST"])
-def save_job(job_id):
-
-    db = get_db()
-
-    job = db.execute(
-        "SELECT id FROM jobs WHERE id = ?",
-        (job_id,)
-    ).fetchone()
-
-    if not job:
-
-        db.close()
-
-        return jsonify({
-            "error": "Job not found."
-        }), 404
-
-    db.execute(
-        """
-        INSERT OR IGNORE INTO saved_jobs(job_id)
-        VALUES (?)
-        """,
-        (job_id,)
-    )
-
-    db.commit()
-
-    db.close()
-
-    return jsonify({
-        "message": "Job saved successfully."
-    })
-
-
-# =========================================================
-# SAVED JOB - DELETE
-# =========================================================
-
-@app.route("/saved/<int:job_id>", methods=["DELETE"])
+@app.route(
+    "/saved/<int:job_id>",
+    methods=["DELETE"]
+)
 def unsave_job(job_id):
 
     db = get_db()
 
-    cursor = db.execute(
+    db.execute(
         """
         DELETE FROM saved_jobs
         WHERE job_id = ?
@@ -408,27 +526,21 @@ def unsave_job(job_id):
     )
 
     db.commit()
-
-    deleted = cursor.rowcount
-
     db.close()
 
-    if deleted == 0:
-
-        return jsonify({
-            "error": "Saved job not found."
-        }), 404
-
     return jsonify({
-        "message": "Job removed from saved jobs."
+        "message": "Job removed from saved jobs"
     })
 
 
 # =========================================================
-# PREFERENCES - GET
+# PREFERENCES - READ
 # =========================================================
 
-@app.route("/preferences", methods=["GET"])
+@app.route(
+    "/preferences",
+    methods=["GET"]
+)
 def get_preferences():
 
     db = get_db()
@@ -447,22 +559,31 @@ def get_preferences():
     if not preferences:
         return jsonify({})
 
-    return jsonify(dict(preferences))
+    return jsonify(
+        dict(preferences)
+    )
 
 
 # =========================================================
-# PREFERENCES - CREATE/UPDATE
+# PREFERENCES - CREATE / UPDATE
 # =========================================================
 
-@app.route("/preferences", methods=["POST"])
+@app.route(
+    "/preferences",
+    methods=["POST"]
+)
 def save_preferences():
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
     db = get_db()
 
     db.execute(
-        "DELETE FROM career_preferences"
+        """
+        DELETE FROM career_preferences
+        """
     )
 
     db.execute(
@@ -487,11 +608,10 @@ def save_preferences():
     )
 
     db.commit()
-
     db.close()
 
     return jsonify({
-        "message": "Preferences saved successfully."
+        "message": "Preferences saved successfully"
     })
 
 
@@ -499,153 +619,36 @@ def save_preferences():
 # PREFERENCES - DELETE
 # =========================================================
 
-@app.route("/preferences", methods=["DELETE"])
+@app.route(
+    "/preferences",
+    methods=["DELETE"]
+)
 def delete_preferences():
 
     db = get_db()
 
     db.execute(
-        "DELETE FROM career_preferences"
+        """
+        DELETE FROM career_preferences
+        """
     )
 
     db.commit()
-
     db.close()
 
     return jsonify({
-        "message": "Preferences cleared."
+        "message": "Preferences deleted"
     })
 
 
 # =========================================================
-# RECOMMENDATIONS
+# APPLICATIONS - READ
 # =========================================================
 
-@app.route("/recommendations", methods=["GET"])
-def recommendations():
-
-    db = get_db()
-
-    preferences = db.execute(
-        """
-        SELECT *
-        FROM career_preferences
-        ORDER BY id DESC
-        LIMIT 1
-        """
-    ).fetchone()
-
-    jobs = db.execute(
-        """
-        SELECT *
-        FROM jobs
-        ORDER BY created_at DESC
-        """
-    ).fetchall()
-
-    db.close()
-
-    if not preferences:
-
-        return jsonify([])
-
-    preferences = dict(preferences)
-
-    locations = (
-        preferences.get("locations") or ""
-    ).lower()
-
-    industries = (
-        preferences.get("industries") or ""
-    ).lower()
-
-    job_types = (
-        preferences.get("job_types") or ""
-    ).lower()
-
-    skills = (
-        preferences.get("skills") or ""
-    ).lower()
-
-    recommendations = []
-
-    for job in jobs:
-
-        job_dict = dict(job)
-
-        score = 0
-
-        location = (
-            job_dict.get("location") or ""
-        ).lower()
-
-        industry = (
-            job_dict.get("industry") or ""
-        ).lower()
-
-        job_type = (
-            job_dict.get("job_type") or ""
-        ).lower()
-
-        text = (
-            f"{job_dict.get('title', '')} "
-            f"{job_dict.get('description', '')} "
-            f"{job_dict.get('requirements', '')}"
-        ).lower()
-
-        if locations:
-
-            for location_preference in locations.split(","):
-
-                if location_preference.strip() in location:
-
-                    score += 3
-
-        if industries:
-
-            for industry_preference in industries.split(","):
-
-                if industry_preference.strip() in industry:
-
-                    score += 3
-
-        if job_types:
-
-            for type_preference in job_types.split(","):
-
-                if type_preference.strip() in job_type:
-
-                    score += 3
-
-        if skills:
-
-            for skill in skills.split(","):
-
-                skill = skill.strip()
-
-                if skill and skill in text:
-
-                    score += 2
-
-        if score > 0:
-
-            job_dict["match_score"] = score
-
-            recommendations.append(job_dict)
-
-    recommendations.sort(
-        key=lambda job: job["match_score"],
-        reverse=True
-    )
-
-    return jsonify(recommendations)
-
-
-# =========================================================
-# APPLICATIONS - GET
-# =========================================================
-
-@app.route("/applications", methods=["GET"])
+@app.route(
+    "/applications",
+    methods=["GET"]
+)
 def get_applications():
 
     db = get_db()
@@ -657,9 +660,12 @@ def get_applications():
             jobs.title,
             jobs.company,
             jobs.location
+
         FROM applications
-        INNER JOIN jobs
+
+        JOIN jobs
             ON applications.job_id = jobs.id
+
         ORDER BY applications.id DESC
         """
     ).fetchall()
@@ -676,23 +682,32 @@ def get_applications():
 # APPLICATIONS - CREATE
 # =========================================================
 
-@app.route("/applications", methods=["POST"])
+@app.route(
+    "/applications",
+    methods=["POST"]
+)
 def create_application():
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
     job_id = data.get("job_id")
 
     if not job_id:
 
         return jsonify({
-            "error": "job_id is required."
+            "error": "job_id is required"
         }), 400
 
     db = get_db()
 
     job = db.execute(
-        "SELECT id FROM jobs WHERE id = ?",
+        """
+        SELECT id
+        FROM jobs
+        WHERE id = ?
+        """,
         (job_id,)
     ).fetchone()
 
@@ -701,40 +716,43 @@ def create_application():
         db.close()
 
         return jsonify({
-            "error": "Job not found."
+            "error": "Job not found"
         }), 404
 
-    cursor = db.execute(
+    db.execute(
         """
         INSERT INTO applications
         (
             job_id,
             status,
-            notes
+            notes,
+            applied_at
         )
-        VALUES (?, ?, ?)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
         """,
         (
             job_id,
-            data.get("status", "Applied"),
-            data.get("notes", "")
+            data.get(
+                "status",
+                "Applied"
+            ),
+            data.get(
+                "notes",
+                ""
+            )
         )
     )
 
     db.commit()
-
-    application_id = cursor.lastrowid
-
     db.close()
 
     return jsonify({
-        "message": "Application created.",
-        "application_id": application_id
+        "message": "Application added successfully"
     }), 201
 
 
 # =========================================================
-# APPLICATIONS - UPDATE
+# APPLICATION - UPDATE
 # =========================================================
 
 @app.route(
@@ -743,44 +761,62 @@ def create_application():
 )
 def update_application(application_id):
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
     db = get_db()
 
-    cursor = db.execute(
+    application = db.execute(
+        """
+        SELECT id
+        FROM applications
+        WHERE id = ?
+        """,
+        (application_id,)
+    ).fetchone()
+
+    if not application:
+
+        db.close()
+
+        return jsonify({
+            "error": "Application not found"
+        }), 404
+
+    db.execute(
         """
         UPDATE applications
+
         SET
             status = ?,
             notes = ?
+
         WHERE id = ?
         """,
         (
-            data.get("status", "Applied"),
-            data.get("notes", ""),
+            data.get(
+                "status",
+                "Applied"
+            ),
+            data.get(
+                "notes",
+                ""
+            ),
             application_id
         )
     )
 
     db.commit()
-
-    updated = cursor.rowcount
-
     db.close()
 
-    if updated == 0:
-
-        return jsonify({
-            "error": "Application not found."
-        }), 404
-
     return jsonify({
-        "message": "Application updated."
+        "message": "Application updated successfully"
     })
 
 
 # =========================================================
-# APPLICATIONS - DELETE
+# APPLICATION - DELETE
 # =========================================================
 
 @app.route(
@@ -791,7 +827,7 @@ def delete_application(application_id):
 
     db = get_db()
 
-    cursor = db.execute(
+    db.execute(
         """
         DELETE FROM applications
         WHERE id = ?
@@ -800,24 +836,15 @@ def delete_application(application_id):
     )
 
     db.commit()
-
-    deleted = cursor.rowcount
-
     db.close()
 
-    if deleted == 0:
-
-        return jsonify({
-            "error": "Application not found."
-        }), 404
-
     return jsonify({
-        "message": "Application deleted."
+        "message": "Application deleted successfully"
     })
 
 
 # =========================================================
-# AI ANALYSIS
+# AI JOB ANALYSIS
 # =========================================================
 
 @app.route(
@@ -842,12 +869,12 @@ def analyse(job_id):
         db.close()
 
         return jsonify({
-            "error": "Job not found."
+            "error": "Job not found"
         }), 404
 
     result = analyse_job(
-        job["description"],
-        job["requirements"]
+        job["description"] or "",
+        job["requirements"] or ""
     )
 
     db.execute(
@@ -865,43 +892,271 @@ def analyse(job_id):
         """,
         (
             job_id,
-            result["skills"],
-            result["qualifications"],
-            result["experience"],
-            result["ats_keywords"],
-            result["summary"]
+            result.get("skills", ""),
+            result.get("qualifications", ""),
+            result.get("experience", ""),
+            result.get("ats_keywords", ""),
+            result.get("summary", "")
         )
     )
 
     db.commit()
-
     db.close()
 
     return jsonify(result)
 
 
 # =========================================================
-# AI CHAT
+# AI CAREER AGENT
 # =========================================================
 
-@app.route("/ai/chat", methods=["POST"])
+@app.route(
+    "/ai/chat",
+    methods=["POST"]
+)
 def ai_chat():
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
-    message = data.get("message", "")
+    message = data.get(
+        "message",
+        ""
+    ).strip()
 
     if not message:
 
         return jsonify({
-            "error": "Message is required."
+            "error": "Message is required"
         }), 400
 
-    response = chat(message)
+    response = chat(
+        message
+    )
 
     return jsonify({
         "response": response
     })
+
+
+# =========================================================
+# CAREER AGENT / JOB MATCHING
+# =========================================================
+
+@app.route(
+    "/api/career-agent",
+    methods=["POST"]
+)
+def career_agent():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    db = get_db()
+
+    preferences = db.execute(
+        """
+        SELECT *
+        FROM career_preferences
+        ORDER BY id DESC
+        LIMIT 1
+        """
+    ).fetchone()
+
+    jobs = db.execute(
+        """
+        SELECT *
+        FROM jobs
+        ORDER BY created_at DESC
+        """
+    ).fetchall()
+
+    db.close()
+
+    if not preferences:
+
+        return jsonify({
+            "message": "Please add your career preferences first.",
+            "matches": []
+        })
+
+    preferences = dict(preferences)
+
+    locations = (
+        preferences.get("locations")
+        or ""
+    ).lower()
+
+    industries = (
+        preferences.get("industries")
+        or ""
+    ).lower()
+
+    job_types = (
+        preferences.get("job_types")
+        or ""
+    ).lower()
+
+    skills = (
+        preferences.get("skills")
+        or ""
+    ).lower()
+
+    matches = []
+
+    for job in jobs:
+
+        job_dict = dict(job)
+
+        score = 0
+        reasons = []
+
+        job_location = (
+            job_dict.get("location")
+            or ""
+        ).lower()
+
+        job_industry = (
+            job_dict.get("industry")
+            or ""
+        ).lower()
+
+        job_type = (
+            job_dict.get("job_type")
+            or ""
+        ).lower()
+
+        job_text = (
+            f"{job_dict.get('title', '')} "
+            f"{job_dict.get('description', '')} "
+            f"{job_dict.get('requirements', '')}"
+        ).lower()
+
+        if locations:
+
+            for location in locations.split(","):
+
+                location = location.strip()
+
+                if location and location in job_location:
+
+                    score += 30
+
+                    reasons.append(
+                        "Matches your preferred location"
+                    )
+
+                    break
+
+        if industries:
+
+            for industry in industries.split(","):
+
+                industry = industry.strip()
+
+                if industry and industry in job_industry:
+
+                    score += 25
+
+                    reasons.append(
+                        "Matches your preferred industry"
+                    )
+
+                    break
+
+        if job_types:
+
+            for selected_type in job_types.split(","):
+
+                selected_type = selected_type.strip()
+
+                if (
+                    selected_type
+                    and selected_type in job_type
+                ):
+
+                    score += 20
+
+                    reasons.append(
+                        "Matches your preferred job type"
+                    )
+
+                    break
+
+        skill_matches = 0
+
+        if skills:
+
+            for skill in skills.split(","):
+
+                skill = skill.strip()
+
+                if skill and skill in job_text:
+
+                    skill_matches += 1
+
+            if skill_matches:
+
+                score += min(
+                    skill_matches * 5,
+                    25
+                )
+
+                reasons.append(
+                    f"Matches {skill_matches} of your listed skills"
+                )
+
+        if score > 0:
+
+            job_dict["match_score"] = min(
+                score,
+                100
+            )
+
+            job_dict["match_reasons"] = reasons
+
+            matches.append(job_dict)
+
+    matches.sort(
+        key=lambda item: item["match_score"],
+        reverse=True
+    )
+
+    return jsonify({
+        "message": "Career Agent completed matching",
+        "matches": matches[:10]
+    })
+
+
+# =========================================================
+# ERROR HANDLERS
+# =========================================================
+
+@app.errorhandler(404)
+def not_found(error):
+
+    if request.path.startswith("/api") or request.path.startswith(
+        ("/jobs", "/saved", "/applications", "/preferences")
+    ):
+
+        return jsonify({
+            "error": "API endpoint not found"
+        }), 404
+
+    return render_template(
+        "index.html"
+    )
+
+
+@app.errorhandler(500)
+def server_error(error):
+
+    return jsonify({
+        "error": "Internal server error",
+        "details": str(error)
+    }), 500
 
 
 # =========================================================

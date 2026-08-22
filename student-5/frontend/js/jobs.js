@@ -1,5 +1,17 @@
+// ============================================================
+// Jobs + Career Agent
+// ============================================================
+
+const jobContainer = document.getElementById("job-list");
+
+const agentForm = document.getElementById("career-agent-form");
+
+// ============================================================
+// Search jobs
+// ============================================================
+
 async function searchJobs() {
-  const search = document.getElementById("search").value;
+  const search = document.getElementById("search").value.trim();
 
   const location = document.getElementById("location").value;
 
@@ -7,80 +19,214 @@ async function searchJobs() {
 
   const jobType = document.getElementById("job-type").value;
 
-  let params = "?";
+  const params = new URLSearchParams();
 
-  params += `search=${encodeURIComponent(search)}`;
+  if (search) {
+    params.set("search", search);
+  }
 
-  params += `&location=${encodeURIComponent(location)}`;
+  if (location) {
+    params.set("location", location);
+  }
 
-  params += `&industry=${encodeURIComponent(industry)}`;
+  if (industry) {
+    params.set("industry", industry);
+  }
 
-  params += `&job_type=${encodeURIComponent(jobType)}`;
-
-  const message = document.getElementById("jobs-message");
+  if (jobType) {
+    params.set("job_type", jobType);
+  }
 
   try {
-    const jobs = await getJobs(params);
+    const jobs = await getJobs(`?${params.toString()}`);
 
     displayJobs(jobs);
-
-    message.className = "message";
-
-    message.textContent = `${jobs.length} opportunity(s) found.`;
   } catch (error) {
-    message.className = "message error";
-
-    message.textContent = error.message;
+    jobContainer.innerHTML = `
+            <div class="message error">
+                Could not load jobs.
+                ${error.message}
+            </div>
+        `;
   }
 }
 
+// ============================================================
+// Display jobs
+// ============================================================
+
 function displayJobs(jobs) {
-  const container = document.getElementById("job-list");
+  jobContainer.innerHTML = "";
 
-  container.innerHTML = "";
+  if (!jobs || jobs.length === 0) {
+    jobContainer.innerHTML = `
+            <div class="empty-state">
 
-  if (jobs.length === 0) {
-    container.innerHTML = `<div class="empty-state">
-                No jobs found.
-            </div>`;
+                <h3>
+                    No opportunities found
+                </h3>
+
+                <p>
+                    Try changing your search or career profile.
+                </p>
+
+            </div>
+        `;
 
     return;
   }
 
   jobs.forEach((job) => {
-    container.innerHTML += `
+    jobContainer.innerHTML += `
 
             <article class="job-card">
 
-                <h3>${job.title}</h3>
+                <div class="job-card-top">
+
+                    <span class="tag">
+                        ${job.job_type || "Opportunity"}
+                    </span>
+
+                </div>
+
+
+                <h3>
+                    ${job.title}
+                </h3>
+
 
                 <p class="company">
                     ${job.company}
                 </p>
 
-                <p>
-                    📍 ${job.location || "Not specified"}
+
+                <p class="job-location">
+                    📍 ${job.location || "Location not specified"}
                 </p>
 
-                <p>
-                    ${job.industry || "General"}
+
+                <p class="job-industry">
+                    ${job.industry || "Industry not specified"}
                 </p>
 
-                <span class="tag">
-                    ${job.job_type || "Not specified"}
-                </span>
 
-                <p>
-                    ${(job.description || "").substring(0, 150)}...
+                <p class="job-description">
+
+                    ${(job.description || "").substring(0, 150)}
+
+                    ...
+
                 </p>
 
-                <a href="/job.html?id=${job.id}">
-                    View Details →
-                </a>
+
+                <div class="job-card-footer">
+
+                    <a
+                        href="/job.html?id=${job.id}"
+                        class="view-link"
+                    >
+                        View Details →
+                    </a>
+
+                </div>
 
             </article>
+
         `;
   });
 }
 
-searchJobs();
+// ============================================================
+// Career Agent
+// ============================================================
+
+async function runCareerAgent(event) {
+  event.preventDefault();
+
+  const message = document.getElementById("agent-message");
+
+  message.className = "message";
+
+  message.textContent = "Career Agent is matching your profile...";
+
+  const locations = document.getElementById("agent-locations").value.trim();
+
+  const industries = document.getElementById("agent-industries").value.trim();
+
+  const jobType = document.getElementById("agent-job-types").value;
+
+  const skills = document.getElementById("agent-skills").value.trim();
+
+  const goals = document.getElementById("agent-goals").value.trim();
+
+  try {
+    // Save profile first
+
+    await savePreferencesAPI({
+      locations,
+
+      industries,
+
+      job_types: jobType,
+
+      skills,
+
+      career_goals: goals,
+    });
+
+    // Build matching query
+
+    const params = new URLSearchParams();
+
+    if (locations) {
+      const firstLocation = locations.split(",")[0].trim();
+
+      params.set("location", firstLocation);
+    }
+
+    if (industries) {
+      const firstIndustry = industries.split(",")[0].trim();
+
+      params.set("industry", firstIndustry);
+    }
+
+    if (jobType) {
+      params.set("job_type", jobType);
+    }
+
+    // Get matching jobs
+
+    const jobs = await getJobs(`?${params.toString()}`);
+
+    displayJobs(jobs);
+
+    document.getElementById("recommendation-text").textContent =
+      `The Career Agent found ${jobs.length} ` +
+      `opportunities based on your profile.`;
+
+    message.className = "message success";
+
+    message.textContent = "Career profile saved and opportunities matched.";
+  } catch (error) {
+    message.className = "message error";
+
+    message.textContent =
+      "The Career Agent could not complete the request: " + error.message;
+  }
+}
+
+// ============================================================
+// Event listener
+// ============================================================
+
+if (agentForm) {
+  agentForm.addEventListener("submit", runCareerAgent);
+}
+
+// ============================================================
+// Initial jobs
+// ============================================================
+
+if (jobContainer) {
+  searchJobs();
+}

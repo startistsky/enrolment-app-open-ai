@@ -5,7 +5,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Dashboard</title>
+    <title>Dashboard | CareerConnect</title>
 
     <link
       rel="stylesheet"
@@ -14,33 +14,60 @@
   </head>
 
   <body>
-    <nav>
-      <h2>Career&Internship</h2>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark"></span>
 
-      <div>
+        <span>CareerConnect</span>
+      </a>
+
+      <nav class="nav">
         <a href="/">Jobs</a>
-        <a href="/dashboard.html">Dashboard</a>
-        <a href="/preferences.html">Preferences</a>
-        <a href="/admin.html">Admin</a>
-      </div>
-    </nav>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/admin.html"> Admin </a>
+      </nav>
+    </header>
 
     <main>
-      <h1>Career Dashboard</h1>
+      <section class="hero small-hero">
+        <span class="eyebrow"> YOUR CAREER </span>
 
-      <div id="dashboard-message" class="message"></div>
+        <h1>Career Dashboard</h1>
+
+        <p>Manage saved opportunities and track your applications.</p>
+      </section>
+
+      <!-- Saved Jobs -->
 
       <section>
-        <h2>Saved Jobs</h2>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> SAVED </span>
+
+            <h2>Saved Jobs</h2>
+          </div>
+        </div>
 
         <div id="saved-jobs" class="job-grid"></div>
       </section>
 
+      <!-- Applications -->
+
       <section>
-        <h2>My Applications</h2>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> APPLICATIONS </span>
+
+            <h2>My Applications</h2>
+          </div>
+        </div>
 
         <div id="applications"></div>
       </section>
+
+      <p id="dashboard-message"></p>
     </main>
 
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>

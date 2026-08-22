@@ -5,7 +5,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Career and Internship</title>
+    <title>CareerConnect</title>
 
     <link
       rel="stylesheet"
@@ -14,72 +14,176 @@
   </head>
 
   <body>
-    <nav>
-      <h2>Career&Internship</h2>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark"></span>
+        <span>CareerConnect</span>
+      </a>
 
-      <div>
+      <nav class="nav">
         <a href="/">Jobs</a>
-
         <a href="/dashboard.html"> Dashboard </a>
-
-        <a href="/preferences.html"> Preferences </a>
-
         <a href="/admin.html"> Admin </a>
-      </div>
-    </nav>
+      </nav>
+    </header>
 
     <main>
-      <section class="hero">
-        <h1>Find your next opportunity</h1>
+      <!-- Hero -->
 
-        <p>
-          Discover jobs and internships that match your skills and career goals.
-        </p>
+      <section class="hero">
+        <div>
+          <span class="eyebrow"> CAREER & INTERNSHIP AGENT </span>
+
+          <h1>Find opportunities that fit your career.</h1>
+
+          <p>
+            Tell our agent what you are looking for. It will match your skills,
+            goals and preferences with available jobs and internships.
+          </p>
+        </div>
       </section>
+
+      <!-- Career Agent -->
+
+      <section class="agent-panel">
+        <div class="section-head">
+          <div>
+            <span class="section-label"> AI CAREER MATCHING </span>
+
+            <h2>Build your career profile</h2>
+
+            <p>The agent uses your profile to find relevant opportunities.</p>
+          </div>
+
+          <div class="agent-status">
+            <span class="status-dot"></span>
+
+            Agent ready
+          </div>
+        </div>
+
+        <form id="career-agent-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="agent-locations"> Preferred locations </label>
+
+              <input id="agent-locations" placeholder="Sydney, Melbourne" />
+            </div>
+
+            <div class="form-group">
+              <label for="agent-industries"> Industries </label>
+
+              <input id="agent-industries" placeholder="Technology, Finance" />
+            </div>
+
+            <div class="form-group">
+              <label for="agent-job-types"> Opportunity type </label>
+
+              <select id="agent-job-types">
+                <option value="">Any type</option>
+
+                <option value="Internship">Internship</option>
+
+                <option value="Graduate">Graduate</option>
+
+                <option value="Part-time">Part-time</option>
+
+                <option value="Full-time">Full-time</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="agent-skills"> Your skills </label>
+
+              <input id="agent-skills" placeholder="Python, SQL, JavaScript" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="agent-goals"> Career goals </label>
+
+            <textarea
+              id="agent-goals"
+              placeholder="Become a software engineer and gain experience in web development..."
+            ></textarea>
+          </div>
+
+          <div class="agent-actions">
+            <button type="submit" class="primary-button">
+              Find My Opportunities
+            </button>
+
+            <span id="agent-message"></span>
+          </div>
+        </form>
+      </section>
+
+      <!-- Search -->
 
       <section class="search-section">
-        <input id="search" placeholder="Search jobs..." />
+        <div class="search-title">
+          <span class="section-label"> EXPLORE </span>
 
-        <select id="location">
-          <option value="">All Locations</option>
+          <h2>Search all opportunities</h2>
+        </div>
 
-          <option>Sydney</option>
-          <option>Melbourne</option>
-          <option>Brisbane</option>
-        </select>
+        <div class="search-controls">
+          <input type="text" id="search" placeholder="Search jobs..." />
 
-        <select id="industry">
-          <option value="">All Industries</option>
+          <select id="location">
+            <option value="">All Locations</option>
 
-          <option>Technology</option>
-          <option>Finance</option>
-          <option>Marketing</option>
-          <option>Education</option>
-        </select>
+            <option value="Sydney">Sydney</option>
 
-        <select id="job-type">
-          <option value="">All Types</option>
+            <option value="Melbourne">Melbourne</option>
 
-          <option>Internship</option>
-          <option>Graduate</option>
-          <option>Part-time</option>
-          <option>Full-time</option>
-        </select>
+            <option value="Brisbane">Brisbane</option>
+          </select>
 
-        <button onclick="searchJobs()">Search</button>
+          <select id="industry">
+            <option value="">All Industries</option>
+
+            <option value="Technology">Technology</option>
+
+            <option value="Finance">Finance</option>
+
+            <option value="Marketing">Marketing</option>
+          </select>
+
+          <select id="job-type">
+            <option value="">All Types</option>
+
+            <option value="Internship">Internship</option>
+
+            <option value="Graduate">Graduate</option>
+
+            <option value="Part-time">Part-time</option>
+
+            <option value="Full-time">Full-time</option>
+          </select>
+
+          <button type="button" onclick="searchJobs()">Search</button>
+        </div>
       </section>
 
-      <div id="jobs-message" class="message"></div>
+      <!-- Agent Recommendations -->
 
       <section>
-        <h2>Available Opportunities</h2>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> RECOMMENDED FOR YOU </span>
+
+            <h2>Career opportunities</h2>
+
+            <p id="recommendation-text">Browse available opportunities.</p>
+          </div>
+        </div>
 
         <div id="job-list" class="job-grid"></div>
       </section>
     </main>
 
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
-
     <script src="{{ url_for('static', filename='js/jobs.js') }}"></script>
   </body>
 </html>

@@ -5,7 +5,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Job Details</title>
+    <title>Job Details | CareerConnect</title>
 
     <link
       rel="stylesheet"
@@ -14,40 +14,53 @@
   </head>
 
   <body>
-    <nav>
-      <h2>Career&Internship</h2>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark"></span>
 
-      <div>
+        <span>CareerConnect</span>
+      </a>
+
+      <nav class="nav">
         <a href="/">Jobs</a>
-        <a href="/dashboard.html">Dashboard</a>
-        <a href="/preferences.html">Preferences</a>
-        <a href="/admin.html">Admin</a>
-      </div>
-    </nav>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/admin.html"> Admin </a>
+      </nav>
+    </header>
 
     <main>
-      <div id="job-details">Loading job...</div>
-
-      <div id="job-message" class="message"></div>
-
-      <div class="actions">
-        <button onclick="saveJob()">Save Job</button>
-
-        <button onclick="applyJob()">Apply</button>
-
-        <button onclick="analyseJob()">Analyse with AI</button>
+      <div id="job-details">
+        <p>Loading job...</p>
       </div>
 
+      <div class="actions">
+        <button onclick="saveJob()" class="secondary-button">Save Job</button>
+
+        <button onclick="applyJob()" class="primary-button">Apply</button>
+
+        <button onclick="analyseJob()" class="primary-button">
+          Analyse with AI
+        </button>
+      </div>
+
+      <p id="job-action-message"></p>
+
       <section class="ai-section">
-        <h2>AI Job Analysis</h2>
+        <span class="section-label"> AI ANALYSIS </span>
+
+        <h2>Job Analysis</h2>
 
         <div id="ai-analysis">
-          <p>Click "Analyse with AI".</p>
+          <p>Select "Analyse with AI" to analyse the job requirements.</p>
         </div>
       </section>
 
       <section class="chat">
-        <h2>AI Career Assistant</h2>
+        <span class="section-label"> CAREER ASSISTANT </span>
+
+        <h2>Ask the Career Agent</h2>
 
         <div id="chat-messages"></div>
 
@@ -56,6 +69,8 @@
 
           <button onclick="sendMessage()">Send</button>
         </div>
+
+        <p id="chat-message"></p>
       </section>
     </main>
 

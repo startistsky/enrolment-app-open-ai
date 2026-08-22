@@ -1,9 +1,15 @@
-import sqlite3
 import os
+import sqlite3
 
+
+# =========================================================
+# DATABASE PATH
+# =========================================================
 
 BASE_DIR = os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
 )
 
 DATABASE_DIR = os.path.join(
@@ -17,121 +23,138 @@ DATABASE = os.path.join(
 )
 
 
-def get_db():
-    os.makedirs(DATABASE_DIR, exist_ok=True)
+# =========================================================
+# CONNECTION
+# =========================================================
 
-    db = sqlite3.connect(DATABASE)
+def get_db():
+
+    os.makedirs(
+        DATABASE_DIR,
+        exist_ok=True
+    )
+
+    db = sqlite3.connect(
+        DATABASE
+    )
 
     db.row_factory = sqlite3.Row
 
-    db.execute("PRAGMA foreign_keys = ON")
-
     return db
 
+
+# =========================================================
+# INITIALISE
+# =========================================================
 
 def init_db():
 
     db = get_db()
 
-    db.executescript("""
-    
-    CREATE TABLE IF NOT EXISTS jobs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+    db.executescript(
+        """
 
-        title TEXT NOT NULL,
+        CREATE TABLE IF NOT EXISTS jobs (
 
-        company TEXT NOT NULL,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        location TEXT,
+            title TEXT NOT NULL,
 
-        industry TEXT,
+            company TEXT NOT NULL,
 
-        job_type TEXT,
+            location TEXT,
 
-        description TEXT,
+            industry TEXT,
 
-        requirements TEXT,
+            job_type TEXT,
 
-        salary TEXT,
+            description TEXT,
 
-        application_url TEXT,
+            requirements TEXT,
 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+            salary TEXT,
 
+            application_url TEXT,
 
-    CREATE TABLE IF NOT EXISTS career_preferences (
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        locations TEXT,
-
-        industries TEXT,
-
-        job_types TEXT,
-
-        skills TEXT,
-
-        career_goals TEXT,
-
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+            created_at
+                TIMESTAMP
+                DEFAULT CURRENT_TIMESTAMP
+        );
 
 
-    CREATE TABLE IF NOT EXISTS saved_jobs (
+        CREATE TABLE IF NOT EXISTS career_preferences (
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        job_id INTEGER NOT NULL UNIQUE,
+            locations TEXT,
 
-        saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            industries TEXT,
 
-        FOREIGN KEY (job_id)
-            REFERENCES jobs(id)
-            ON DELETE CASCADE
-    );
+            job_types TEXT,
 
+            skills TEXT,
 
-    CREATE TABLE IF NOT EXISTS applications (
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        job_id INTEGER NOT NULL,
-
-        status TEXT DEFAULT 'Interested',
-
-        notes TEXT,
-
-        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (job_id)
-            REFERENCES jobs(id)
-            ON DELETE CASCADE
-    );
+            career_goals TEXT
+        );
 
 
-    CREATE TABLE IF NOT EXISTS job_ai_analysis (
+        CREATE TABLE IF NOT EXISTS saved_jobs (
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        job_id INTEGER UNIQUE NOT NULL,
+            job_id INTEGER NOT NULL,
 
-        skills TEXT,
+            saved_at
+                TIMESTAMP
+                DEFAULT CURRENT_TIMESTAMP,
 
-        qualifications TEXT,
+            UNIQUE(job_id),
 
-        experience TEXT,
+            FOREIGN KEY(job_id)
+                REFERENCES jobs(id)
+        );
 
-        ats_keywords TEXT,
 
-        summary TEXT,
+        CREATE TABLE IF NOT EXISTS applications (
 
-        FOREIGN KEY (job_id)
-            REFERENCES jobs(id)
-            ON DELETE CASCADE
-    );
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    """)
+            job_id INTEGER NOT NULL,
+
+            status TEXT
+                DEFAULT 'Interested',
+
+            notes TEXT,
+
+            applied_at TIMESTAMP,
+
+            FOREIGN KEY(job_id)
+                REFERENCES jobs(id)
+        );
+
+
+        CREATE TABLE IF NOT EXISTS job_ai_analysis (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            job_id INTEGER UNIQUE NOT NULL,
+
+            skills TEXT,
+
+            qualifications TEXT,
+
+            experience TEXT,
+
+            ats_keywords TEXT,
+
+            summary TEXT,
+
+            FOREIGN KEY(job_id)
+                REFERENCES jobs(id)
+        );
+
+        """
+    )
 
     db.commit()
 

@@ -5,7 +5,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Career Preferences</title>
+    <title>Career Profile | CareerConnect</title>
 
     <link
       rel="stylesheet"
@@ -14,70 +14,77 @@
   </head>
 
   <body>
-    <nav>
-      <h2>Career&Internship</h2>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark"></span>
 
-      <div>
+        <span>CareerConnect</span>
+      </a>
+
+      <nav class="nav">
         <a href="/">Jobs</a>
-        <a href="/dashboard.html">Dashboard</a>
-        <a href="/preferences.html">Preferences</a>
-        <a href="/admin.html">Admin</a>
-      </div>
-    </nav>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/admin.html"> Admin </a>
+      </nav>
+    </header>
 
     <main>
-      <h1>Career Preferences</h1>
+      <section class="hero small-hero">
+        <span class="eyebrow"> CAREER PROFILE </span>
 
-      <p>Tell us what opportunities you are looking for.</p>
-
-      <div id="preferences-message" class="message"></div>
-
-      <form id="preferences-form">
-        <label> Preferred Locations </label>
-
-        <input id="locations" placeholder="Sydney, Melbourne" />
-
-        <label> Preferred Industries </label>
-
-        <input id="industries" placeholder="Technology, Finance" />
-
-        <label> Job Types </label>
-
-        <input id="job-types" placeholder="Internship, Graduate" />
-
-        <label> Your Skills </label>
-
-        <textarea id="skills" placeholder="Python, SQL, JavaScript"></textarea>
-
-        <label> Career Goals </label>
-
-        <textarea
-          id="career-goals"
-          placeholder="Become a software engineer"
-        ></textarea>
-
-        <div class="actions">
-          <button type="submit">Save Preferences</button>
-
-          <button
-            type="button"
-            class="secondary-button"
-            onclick="clearPreferences()"
-          >
-            Clear
-          </button>
-        </div>
-      </form>
-
-      <section>
-        <h2>Recommended For You</h2>
+        <h1>Your Career Profile</h1>
 
         <p>
-          These opportunities are matched against your preferences and skills.
+          Update the information used by the Career Agent to find suitable
+          opportunities.
         </p>
-
-        <div id="recommendations" class="job-grid"></div>
       </section>
+
+      <form id="preferences-form">
+        <div class="form-group">
+          <label> Preferred Locations </label>
+
+          <input id="locations" placeholder="Sydney, Melbourne" />
+        </div>
+
+        <div class="form-group">
+          <label> Preferred Industries </label>
+
+          <input id="industries" placeholder="Technology, Finance" />
+        </div>
+
+        <div class="form-group">
+          <label> Job Types </label>
+
+          <input id="job-types" placeholder="Internship, Graduate" />
+        </div>
+
+        <div class="form-group">
+          <label> Skills </label>
+
+          <textarea
+            id="skills"
+            placeholder="Python, SQL, JavaScript..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label> Career Goals </label>
+
+          <textarea
+            id="career-goals"
+            placeholder="Become a software engineer..."
+          ></textarea>
+        </div>
+
+        <button type="submit" class="primary-button">
+          Save Career Profile
+        </button>
+
+        <p id="preferences-message"></p>
+      </form>
     </main>
 
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>

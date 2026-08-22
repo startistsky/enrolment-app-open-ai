@@ -5,7 +5,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Add Job</title>
+    <title>CareerConnect Admin</title>
 
     <link
       rel="stylesheet"
@@ -14,85 +14,82 @@
   </head>
 
   <body>
-    <nav>
-      <h2>Career&Internship</h2>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark"></span>
+        <span>CareerConnect</span>
+      </a>
 
-      <div>
+      <nav class="nav">
         <a href="/">Jobs</a>
-        <a href="/dashboard.html">Dashboard</a>
-        <a href="/preferences.html">Preferences</a>
-        <a href="/admin.html">Admin</a>
-      </div>
-    </nav>
+        <a href="/dashboard.html"> Dashboard </a>
+        <a href="/admin.html"> Admin </a>
+      </nav>
+    </header>
 
     <main>
-      <h1>Add Job Opportunity</h1>
+      <section class="hero">
+        <h1>Admin Job Management</h1>
 
-      <p>Add a job or internship to the dashboard.</p>
+        <p>Create, edit and delete career opportunities.</p>
+      </section>
 
-      <p id="status-message" class="status-message" aria-live="polite"></p>
+      <!-- Status -->
+
+      <div id="admin-status" class="status-message" style="display: none"></div>
+
+      <!-- Job Form -->
 
       <form id="job-form">
+        <h2>Add / Edit Job</h2>
+
         <label> Job Title </label>
 
-        <input id="title" required placeholder="Graduate Software Engineer" />
+        <input
+          id="title"
+          type="text"
+          required
+          placeholder="Frontend Developer"
+        />
 
         <label> Company </label>
 
-        <input id="company" required placeholder="Example Technologies" />
+        <input
+          id="company"
+          type="text"
+          required
+          placeholder="Example Company"
+        />
 
         <label> Location </label>
 
-        <input id="location" placeholder="Sydney" />
+        <input id="location" type="text" placeholder="Sydney" />
 
         <label> Industry </label>
 
-        <select id="industry">
-          <option value="">Select Industry</option>
-
-          <option value="Technology">Technology</option>
-
-          <option value="Finance">Finance</option>
-
-          <option value="Marketing">Marketing</option>
-
-          <option value="Healthcare">Healthcare</option>
-
-          <option value="Education">Education</option>
-        </select>
+        <input id="industry" type="text" placeholder="Technology" />
 
         <label> Job Type </label>
 
-        <select id="job-type">
-          <option value="">Select Type</option>
-
-          <option value="Internship">Internship</option>
-
-          <option value="Graduate">Graduate</option>
-
-          <option value="Part-time">Part-time</option>
-
-          <option value="Full-time">Full-time</option>
-        </select>
-
-        <label> Salary </label>
-
-        <input id="salary" placeholder="$70,000 - $80,000" />
+        <input id="job-type" type="text" placeholder="Internship" />
 
         <label> Description </label>
 
         <textarea
           id="description"
-          placeholder="Describe the opportunity..."
-          required
+          placeholder="Describe the role..."
         ></textarea>
 
         <label> Requirements </label>
 
         <textarea
           id="requirements"
-          placeholder="Python, SQL, communication..."
+          placeholder="HTML, CSS, JavaScript..."
         ></textarea>
+
+        <label> Salary </label>
+
+        <input id="salary" type="text" placeholder="$60,000 - $70,000" />
 
         <label> Application URL </label>
 
@@ -102,11 +99,31 @@
           placeholder="https://example.com/apply"
         />
 
-        <button type="submit">Add Job</button>
+        <div class="admin-actions">
+          <button id="job-submit" type="submit">Create Job</button>
+
+          <button
+            id="cancel-edit"
+            type="button"
+            style="display: none"
+            onclick="cancelEdit()"
+          >
+            Cancel Edit
+          </button>
+        </div>
       </form>
+
+      <!-- Existing Jobs -->
+
+      <section>
+        <h2>Existing Jobs</h2>
+
+        <div id="admin-jobs" class="job-grid"></div>
+      </section>
     </main>
 
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
   </body>
 </html>

@@ -1,10 +1,18 @@
-const form = document.getElementById("preferences-form");
+// ============================================================
+// Career Profile
+// ============================================================
+
+const preferencesForm = document.getElementById("preferences-form");
+
+// ============================================================
+// Load preferences
+// ============================================================
 
 async function loadPreferences() {
   try {
     const data = await getPreferences();
 
-    if (!data || !data.id) {
+    if (!data) {
       return;
     }
 
@@ -18,19 +26,15 @@ async function loadPreferences() {
 
     document.getElementById("career-goals").value = data.career_goals || "";
   } catch (error) {
-    showMessage(error.message, "error");
+    showPreferenceMessage("Could not load career profile.", true);
   }
 }
 
-function showMessage(text, type = "success") {
-  const message = document.getElementById("preferences-message");
+// ============================================================
+// Save
+// ============================================================
 
-  message.className = `message ${type}`;
-
-  message.textContent = text;
-}
-
-form.addEventListener("submit", async function (event) {
+async function savePreferences(event) {
   event.preventDefault();
 
   const data = {
@@ -48,85 +52,30 @@ form.addEventListener("submit", async function (event) {
   try {
     await savePreferencesAPI(data);
 
-    showMessage("Preferences saved successfully.", "success");
-
-    loadRecommendations();
+    showPreferenceMessage("Career profile saved successfully.", false);
   } catch (error) {
-    showMessage(error.message, "error");
-  }
-});
-
-async function clearPreferences() {
-  try {
-    await deletePreferencesAPI();
-
-    form.reset();
-
-    showMessage("Preferences cleared.", "success");
-
-    document.getElementById("recommendations").innerHTML = "";
-  } catch (error) {
-    showMessage(error.message, "error");
+    showPreferenceMessage("Could not save profile: " + error.message, true);
   }
 }
 
-async function loadRecommendations() {
-  const container = document.getElementById("recommendations");
+// ============================================================
+// Message
+// ============================================================
 
-  try {
-    const jobs = await getRecommendations();
+function showPreferenceMessage(text, error) {
+  const element = document.getElementById("preferences-message");
 
-    container.innerHTML = "";
+  element.className = error ? "message error" : "message success";
 
-    if (jobs.length === 0) {
-      container.innerHTML = `<div class="empty-state">
-                    No matching opportunities yet.
-                </div>`;
-
-      return;
-    }
-
-    jobs.forEach((job) => {
-      container.innerHTML += `
-
-                <article class="job-card">
-
-                    <span class="tag">
-                        ${job.match_score}
-                        point match
-                    </span>
-
-                    <h3>
-                        ${job.title}
-                    </h3>
-
-                    <p class="company">
-                        ${job.company}
-                    </p>
-
-                    <p>
-                        📍 ${job.location}
-                    </p>
-
-                    <p>
-                        ${job.industry}
-                    </p>
-
-                    <a href="/job.html?id=${job.id}">
-                        View Opportunity →
-                    </a>
-
-                </article>
-            `;
-    });
-  } catch (error) {
-    container.innerHTML = `
-            <div class="message error">
-                ${error.message}
-            </div>
-        `;
-  }
+  element.textContent = text;
 }
 
-loadPreferences();
-loadRecommendations();
+// ============================================================
+// Events
+// ============================================================
+
+if (preferencesForm) {
+  preferencesForm.addEventListener("submit", savePreferences);
+
+  loadPreferences();
+}

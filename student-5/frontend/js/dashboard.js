@@ -1,30 +1,44 @@
+// ============================================================
+// Dashboard
+// ============================================================
+
 async function loadDashboard() {
   const savedContainer = document.getElementById("saved-jobs");
 
   const applicationContainer = document.getElementById("applications");
-
-  const message = document.getElementById("dashboard-message");
 
   try {
     const savedJobs = await getSavedJobs();
 
     const applications = await getApplications();
 
-    // =========================
-    // Saved Jobs
-    // =========================
+    // ====================================================
+    // Saved jobs
+    // ====================================================
 
     savedContainer.innerHTML = "";
 
     if (savedJobs.length === 0) {
-      savedContainer.innerHTML = `<div class="empty-state">
-                    No saved jobs yet.
-                </div>`;
+      savedContainer.innerHTML = `
+                <div class="empty-state">
+                    <h3>
+                        No saved jobs
+                    </h3>
+
+                    <p>
+                        Save opportunities from the jobs page.
+                    </p>
+                </div>
+            `;
     } else {
       savedJobs.forEach((job) => {
         savedContainer.innerHTML += `
 
                     <article class="job-card">
+
+                        <span class="tag">
+                            ${job.job_type || "Opportunity"}
+                        </span>
 
                         <h3>
                             ${job.title}
@@ -38,167 +52,161 @@ async function loadDashboard() {
                             📍 ${job.location}
                         </p>
 
-                        <a href="/job.html?id=${job.id}">
+                        <a
+                            href="/job.html?id=${job.id}"
+                            class="view-link"
+                        >
                             View Job →
                         </a>
 
-                        <button
-                            class="secondary-button"
-                            onclick="removeSaved(${job.id})"
-                        >
-                            Remove
-                        </button>
-
                     </article>
+
                 `;
       });
     }
 
-    // =========================
+    // ====================================================
     // Applications
-    // =========================
+    // ====================================================
 
     applicationContainer.innerHTML = "";
 
     if (applications.length === 0) {
-      applicationContainer.innerHTML = `<div class="empty-state">
-                    No applications yet.
-                </div>`;
+      applicationContainer.innerHTML = `
+                <div class="empty-state">
+
+                    <h3>
+                        No applications yet
+                    </h3>
+
+                    <p>
+                        Apply to a job and it will appear here.
+                    </p>
+
+                </div>
+            `;
     } else {
       applications.forEach((application) => {
         applicationContainer.innerHTML += `
 
-                    <article class="application">
+                    <div
+                        class="application"
+                        id="application-${application.id}"
+                    >
 
-                        <h3>
-                            ${application.title}
-                        </h3>
+                        <div>
 
-                        <p>
-                            ${application.company}
-                        </p>
+                            <h3>
+                                ${application.title}
+                            </h3>
 
-                        <label>Status</label>
+                            <p class="company">
+                                ${application.company}
+                            </p>
 
-                        <select
-                            id="status-${application.id}"
-                        >
-                            <option
-                                ${
-                                  application.status === "Interested"
-                                    ? "selected"
-                                    : ""
-                                }
+                        </div>
+
+
+                        <div class="application-controls">
+
+                            <select
+                                id="status-${application.id}"
                             >
-                                Interested
-                            </option>
 
-                            <option
-                                ${
-                                  application.status === "Applied"
-                                    ? "selected"
-                                    : ""
-                                }
-                            >
-                                Applied
-                            </option>
+                                <option
+                                    ${
+                                      application.status === "Applied"
+                                        ? "selected"
+                                        : ""
+                                    }
+                                >
+                                    Applied
+                                </option>
 
-                            <option
-                                ${
-                                  application.status === "Interview"
-                                    ? "selected"
-                                    : ""
-                                }
-                            >
-                                Interview
-                            </option>
+                                <option
+                                    ${
+                                      application.status === "Interview"
+                                        ? "selected"
+                                        : ""
+                                    }
+                                >
+                                    Interview
+                                </option>
 
-                            <option
-                                ${
-                                  application.status === "Rejected"
-                                    ? "selected"
-                                    : ""
-                                }
-                            >
-                                Rejected
-                            </option>
+                                <option
+                                    ${
+                                      application.status === "Offer"
+                                        ? "selected"
+                                        : ""
+                                    }
+                                >
+                                    Offer
+                                </option>
 
-                            <option
-                                ${
-                                  application.status === "Offer"
-                                    ? "selected"
-                                    : ""
-                                }
-                            >
-                                Offer
-                            </option>
-                        </select>
+                                <option
+                                    ${
+                                      application.status === "Rejected"
+                                        ? "selected"
+                                        : ""
+                                    }
+                                >
+                                    Rejected
+                                </option>
 
-                        <label>Notes</label>
+                            </select>
 
-                        <textarea
-                            id="notes-${application.id}"
-                        >${application.notes || ""}</textarea>
-
-                        <div class="admin-actions">
 
                             <button
-                                onclick="updateApplication(
-                                    ${application.id}
-                                )"
+                                onclick="updateApplication(${application.id})"
+                                class="secondary-button"
                             >
-                                Save
+                                Update
                             </button>
 
+
                             <button
+                                onclick="deleteApplication(${application.id})"
                                 class="danger-button"
-                                onclick="deleteApplication(
-                                    ${application.id}
-                                )"
                             >
                                 Delete
                             </button>
 
                         </div>
 
-                    </article>
+
+                        <p>
+                            ${application.notes || ""}
+                        </p>
+
+
+                        <p
+                            id="application-message-${application.id}"
+                        ></p>
+
+                    </div>
+
                 `;
       });
     }
   } catch (error) {
-    message.className = "message error";
+    document.getElementById("dashboard-message").className = "message error";
 
-    message.textContent = error.message;
+    document.getElementById("dashboard-message").textContent =
+      "Could not load dashboard: " + error.message;
   }
 }
 
-async function removeSaved(id) {
-  const message = document.getElementById("dashboard-message");
-
-  try {
-    await removeSavedJobAPI(id);
-
-    message.className = "message success";
-
-    message.textContent = "Saved job removed.";
-
-    loadDashboard();
-  } catch (error) {
-    message.className = "message error";
-
-    message.textContent = error.message;
-  }
-}
+// ============================================================
+// Update application
+// ============================================================
 
 async function updateApplication(id) {
   const status = document.getElementById(`status-${id}`).value;
 
-  const notes = document.getElementById(`notes-${id}`).value;
-
-  const message = document.getElementById("dashboard-message");
+  const message = document.getElementById(`application-message-${id}`);
 
   try {
-    await updateApplicationAPI(id, status, notes);
+    await updateApplicationAPI(id, status, "");
 
     message.className = "message success";
 
@@ -206,9 +214,13 @@ async function updateApplication(id) {
   } catch (error) {
     message.className = "message error";
 
-    message.textContent = error.message;
+    message.textContent = "Update failed: " + error.message;
   }
 }
+
+// ============================================================
+// Delete application
+// ============================================================
 
 async function deleteApplication(id) {
   const message = document.getElementById("dashboard-message");
@@ -224,7 +236,7 @@ async function deleteApplication(id) {
   } catch (error) {
     message.className = "message error";
 
-    message.textContent = error.message;
+    message.textContent = "Delete failed: " + error.message;
   }
 }
 
