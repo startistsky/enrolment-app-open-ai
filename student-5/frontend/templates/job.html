@@ -15,57 +15,38 @@
 
   <body>
     <nav>
-      <a class="nav-brand" href="/"> Career&Internship </a>
+      <h2>Career&Internship</h2>
 
-      <div class="nav-links">
-        <a href="/"> Jobs </a>
-
-        <a href="/dashboard.html"> Dashboard </a>
-
-        <a href="/preferences.html"> Preferences </a>
+      <div>
+        <a href="/">Jobs</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/preferences.html">Preferences</a>
+        <a href="/admin.html">Admin</a>
       </div>
     </nav>
 
     <main>
-      <div id="job-details"></div>
+      <div id="job-details">Loading job...</div>
+
+      <div id="job-message" class="message"></div>
 
       <div class="actions">
         <button onclick="saveJob()">Save Job</button>
 
         <button onclick="applyJob()">Apply</button>
 
-        <button class="secondary-button" onclick="analyseJob()">
-          Analyse with AI
-        </button>
+        <button onclick="analyseJob()">Analyse with AI</button>
       </div>
 
       <section class="ai-section">
-        <span class="eyebrow"> AI ASSISTANT </span>
-
         <h2>AI Job Analysis</h2>
 
         <div id="ai-analysis">
-          <div class="empty-state">
-            <p>Click "Analyse with AI" to see:</p>
-
-            <ul>
-              <li>Required skills</li>
-
-              <li>Qualifications</li>
-
-              <li>Experience</li>
-
-              <li>ATS keywords</li>
-
-              <li>Job summary</li>
-            </ul>
-          </div>
+          <p>Click "Analyse with AI".</p>
         </div>
       </section>
 
       <section class="chat">
-        <span class="eyebrow"> CAREER ASSISTANT </span>
-
         <h2>AI Career Assistant</h2>
 
         <div id="chat-messages"></div>

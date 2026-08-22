@@ -1,905 +1,706 @@
 :root {
-  --green: #0a9b43;
-  --green-dark: #087a36;
-  --green-soft: #eaf8ef;
+    --green: #0a9b43;
+    --green-dark: #087a36;
+    --green-soft: #eaf8ef;
 
-  --text: #111827;
-  --muted: #667085;
+    --text: #111827;
+    --muted: #667085;
 
-  --line: #e5e7eb;
+    --line: #e5e7eb;
+    --card: #ffffff;
 
-  --card: #ffffff;
+    --shadow:
+        0 12px 30px rgba(17, 24, 39, 0.1);
 
-  --shadow: 0 12px 30px rgba(17, 24, 39, 0.1);
-
-  --radius: 18px;
+    --radius: 18px;
 }
 
-/* ========================================
-   BASE
-======================================== */
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
+
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }
+
 
 body {
-  margin: 0;
+    margin: 0;
 
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
-  color: var(--text);
+    color: var(--text);
 
-  background: #ffffff;
+    background: #ffffff;
 }
+
 
 a {
-  color: inherit;
-  text-decoration: none;
+    color: inherit;
+    text-decoration: none;
 }
 
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-}
-
-/* ========================================
-   NAVIGATION
-======================================== */
 
 nav {
-  height: 86px;
+    min-height: 86px;
 
-  display: flex;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-  align-items: center;
+    padding: 18px 5vw;
 
-  justify-content: space-between;
+    border-bottom: 1px solid var(--line);
 
-  padding: 0 5vw;
+    position: sticky;
+    top: 0;
 
-  border-bottom: 1px solid var(--line);
+    z-index: 20;
 
-  position: sticky;
+    background:
+        rgba(255, 255, 255, 0.96);
 
-  top: 0;
-
-  z-index: 20;
-
-  background: rgba(255, 255, 255, 0.96);
-
-  backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 }
 
-.nav-brand {
-  color: var(--green);
 
-  font-size: 24px;
+nav h2 {
+    margin: 0;
 
-  font-weight: 800;
+    color: var(--green);
 
-  letter-spacing: -0.5px;
+    font-size: 24px;
+    font-weight: 800;
 }
 
-.nav-links {
-  display: flex;
 
-  align-items: center;
+nav div {
+    display: flex;
 
-  gap: 28px;
+    align-items: center;
+
+    gap: 28px;
 }
 
-.nav-links a {
-  color: var(--text);
 
-  font-size: 15px;
+nav a {
+    color: var(--text);
 
-  font-weight: 600;
+    font-size: 15px;
 
-  transition: color 0.2s ease;
+    font-weight: 600;
+
+    transition:
+        color 0.2s ease;
 }
 
-.nav-links a:hover {
-  color: var(--green);
+
+nav a:hover {
+    color: var(--green);
 }
 
-/* ========================================
-   MAIN
-======================================== */
 
 main {
-  width: 90%;
+    width: 90%;
 
-  max-width: 1200px;
+    max-width: 1200px;
 
-  margin: 0 auto;
-
-  padding: 44px 0 70px;
+    margin: 40px auto;
 }
 
-/* ========================================
-   HERO
-======================================== */
+
+h1 {
+    margin: 0 0 12px;
+
+    font-size: 40px;
+
+    line-height: 1.1;
+
+    letter-spacing: -1px;
+}
+
+
+h2 {
+    color: var(--text);
+}
+
+
+p {
+    color: var(--muted);
+
+    line-height: 1.6;
+}
+
+
+/* Hero */
 
 .hero {
-  padding: 44px 5vw 42px;
+    padding: 50px;
 
-  margin-bottom: 28px;
+    margin-bottom: 35px;
 
-  border-radius: var(--radius);
+    border-radius: var(--radius);
 
-  background: linear-gradient(135deg, #eaf8ef, #ffffff);
+    background:
+        linear-gradient(
+            135deg,
+            var(--green-soft),
+            #ffffff
+        );
 
-  border: 1px solid rgba(10, 155, 67, 0.12);
+    border: 1px solid
+        rgba(10, 155, 67, 0.15);
 }
 
-.hero-label,
-.eyebrow {
-  display: inline-block;
-
-  color: var(--green-dark);
-
-  font-size: 11px;
-
-  font-weight: 800;
-
-  letter-spacing: 1.1px;
-}
 
 .hero h1 {
-  margin: 10px 0 12px;
-
-  font-size: 44px;
-
-  line-height: 1;
-
-  letter-spacing: -1.4px;
-
-  color: var(--text);
+    color: var(--text);
 }
 
-.hero p {
-  max-width: 650px;
 
-  margin: 0;
-
-  color: var(--muted);
-
-  font-size: 17px;
-
-  line-height: 1.5;
-}
-
-/* ========================================
-   PAGE HEADER
-======================================== */
-
-.page-header {
-  margin-bottom: 35px;
-}
-
-.page-header h1 {
-  margin: 10px 0 12px;
-
-  font-size: 40px;
-
-  line-height: 1.1;
-
-  letter-spacing: -1px;
-}
-
-.page-header p {
-  margin: 0;
-
-  color: var(--muted);
-
-  font-size: 16px;
-
-  line-height: 1.5;
-}
-
-/* ========================================
-   SECTION
-======================================== */
-
-section {
-  margin-bottom: 40px;
-}
-
-.section-heading {
-  margin-bottom: 20px;
-}
-
-.section-heading h2 {
-  margin: 8px 0 0;
-
-  font-size: 28px;
-
-  letter-spacing: -0.5px;
-}
-
-/* ========================================
-   SEARCH
-======================================== */
+/* Search */
 
 .search-section {
-  background: var(--card);
+    display: flex;
 
-  padding: 20px;
+    gap: 10px;
 
-  border: 1px solid var(--line);
+    padding: 20px;
 
-  border-radius: var(--radius);
+    margin-bottom: 35px;
 
-  display: flex;
+    background: var(--card);
 
-  gap: 10px;
+    border:
+        1px solid var(--line);
 
-  margin-bottom: 40px;
+    border-radius: var(--radius);
 
-  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.06);
+    box-shadow:
+        0 6px 20px
+        rgba(17, 24, 39, 0.06);
 }
 
-.search-section input {
-  flex: 2;
-}
-
-.search-section select {
-  flex: 1;
-}
-
-/* ========================================
-   INPUTS
-======================================== */
 
 input,
 select,
 textarea {
-  padding: 12px 14px;
+    padding: 12px;
 
-  border: 1px solid var(--line);
+    border:
+        1px solid var(--line);
 
-  border-radius: 10px;
+    border-radius: 8px;
 
-  font-size: 14px;
+    font-family: inherit;
 
-  color: var(--text);
+    font-size: 14px;
 
-  background: #ffffff;
+    color: var(--text);
 
-  outline: none;
+    background: #ffffff;
 
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    outline: none;
 }
+
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--green);
+    border-color: var(--green);
 
-  box-shadow: 0 0 0 3px rgba(10, 155, 67, 0.12);
+    box-shadow:
+        0 0 0 3px
+        rgba(10, 155, 67, 0.12);
 }
 
-input::placeholder,
-textarea::placeholder {
-  color: #98a2b3;
-}
 
 textarea {
-  min-height: 120px;
+    min-height: 100px;
 
-  resize: vertical;
+    resize: vertical;
 }
 
-/* ========================================
-   BUTTONS
-======================================== */
 
 button {
-  background: var(--green);
+    background: var(--green);
 
-  color: white;
+    color: white;
 
-  border: none;
+    border: none;
 
-  padding: 12px 20px;
+    padding: 12px 20px;
 
-  border-radius: 10px;
+    border-radius: 8px;
 
-  cursor: pointer;
+    cursor: pointer;
 
-  font-size: 14px;
+    font-family: inherit;
 
-  font-weight: 700;
+    font-size: 14px;
 
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    font-weight: 700;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
+
 
 button:hover {
-  background: var(--green-dark);
+    background: var(--green-dark);
 
-  transform: translateY(-1px);
+    transform: translateY(-1px);
 
-  box-shadow: 0 5px 12px rgba(10, 155, 67, 0.2);
+    box-shadow:
+        0 5px 12px
+        rgba(10, 155, 67, 0.2);
 }
+
 
 .secondary-button {
-  background: var(--green-soft);
+    background: #f3f4f6;
 
-  color: var(--green-dark);
+    color: var(--text);
 }
+
 
 .secondary-button:hover {
-  background: #d9f3e2;
+    background: #e5e7eb;
 
-  color: var(--green-dark);
-
-  box-shadow: none;
+    color: var(--text);
 }
 
-/* ========================================
-   JOB GRID
-======================================== */
+
+.danger-button {
+    background: #dc2626;
+}
+
+
+.danger-button:hover {
+    background: #b91c1c;
+}
+
+
+/* Jobs */
 
 .job-grid {
-  display: grid;
+    display: grid;
 
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(280px, 1fr)
+        );
 
-  gap: 16px;
+    gap: 20px;
 }
 
-/* ========================================
-   JOB CARD
-======================================== */
 
 .job-card {
-  min-width: 0;
+    background: var(--card);
 
-  background: var(--card);
+    padding: 25px;
 
-  padding: 22px;
+    border:
+        1px solid #edf0f2;
 
-  border: 1px solid #edf0f2;
+    border-radius: var(--radius);
 
-  border-radius: var(--radius);
-
-  transition:
-    transform 0.22s ease,
-    box-shadow 0.22s ease,
-    border-color 0.22s ease;
+    transition:
+        transform 0.22s ease,
+        box-shadow 0.22s ease,
+        border-color 0.22s ease;
 }
+
 
 .job-card:hover {
-  transform: translateY(-5px);
+    transform: translateY(-5px);
 
-  border-color: rgba(10, 155, 67, 0.2);
+    border-color:
+        rgba(10, 155, 67, 0.2);
 
-  box-shadow: var(--shadow);
+    box-shadow: var(--shadow);
 }
 
-.job-card-top {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  margin-bottom: 16px;
-}
-
-.job-icon {
-  width: 42px;
-
-  height: 42px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  border-radius: 12px;
-
-  background: var(--green-soft);
-
-  font-size: 20px;
-}
 
 .job-card h3 {
-  margin: 0 0 8px;
+    margin-top: 0;
 
-  font-size: 20px;
-
-  line-height: 1.25;
-
-  letter-spacing: -0.3px;
+    color: var(--text);
 }
+
 
 .company {
-  margin: 0 0 8px;
+    color: var(--muted);
 
-  color: var(--muted);
-
-  font-weight: 700;
+    font-weight: 700;
 }
 
-.job-location,
-.job-industry {
-  color: var(--muted);
-
-  font-size: 14px;
-}
-
-.job-description {
-  color: var(--muted);
-
-  font-size: 14px;
-
-  line-height: 1.5;
-}
 
 .tag {
-  display: inline-block;
+    display: inline-block;
 
-  background: var(--green-soft);
+    background: var(--green-soft);
 
-  color: var(--green-dark);
+    color: var(--green-dark);
 
-  padding: 5px 10px;
+    padding: 5px 10px;
 
-  border-radius: 999px;
+    border-radius: 999px;
 
-  font-size: 11px;
+    font-size: 13px;
 
-  font-weight: 800;
+    font-weight: 700;
 }
 
-.job-link {
-  display: inline-block;
 
-  margin-top: 12px;
+.job-card a {
+    display: inline-block;
 
-  color: var(--green);
+    margin-top: 15px;
 
-  font-size: 14px;
+    color: var(--green);
 
-  font-weight: 750;
+    font-weight: 700;
 }
 
-.job-link:hover {
-  color: var(--green-dark);
+
+.job-card a:hover {
+    color: var(--green-dark);
 }
 
-/* ========================================
-   JOB DETAILS
-======================================== */
 
-.job-details-card {
-  background: var(--card);
+/* Job details */
 
-  padding: 32px;
+#job-details {
+    background: var(--card);
 
-  border: 1px solid var(--line);
+    padding: 30px;
 
-  border-radius: var(--radius);
+    border:
+        1px solid var(--line);
 
-  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.06);
+    border-radius: var(--radius);
 
-  margin-bottom: 25px;
+    box-shadow:
+        0 6px 20px
+        rgba(17, 24, 39, 0.06);
+
+    margin-bottom: 25px;
 }
 
-.job-details-card h1 {
-  margin: 10px 0 8px;
-
-  font-size: 40px;
-}
-
-.detail-company {
-  margin: 0 0 20px;
-
-  color: var(--muted);
-
-  font-size: 20px;
-}
-
-.job-meta {
-  display: flex;
-
-  flex-wrap: wrap;
-
-  gap: 10px;
-
-  margin-bottom: 30px;
-}
-
-.job-meta span {
-  padding: 8px 12px;
-
-  background: var(--green-soft);
-
-  color: var(--green-dark);
-
-  border-radius: 999px;
-
-  font-size: 13px;
-
-  font-weight: 700;
-}
-
-.detail-section {
-  margin-top: 30px;
-}
-
-.detail-section h2 {
-  font-size: 22px;
-
-  margin-bottom: 10px;
-}
-
-.detail-section p {
-  color: var(--muted);
-
-  line-height: 1.7;
-
-  white-space: pre-line;
-}
-
-/* ========================================
-   ACTIONS
-======================================== */
 
 .actions {
-  display: flex;
+    display: flex;
 
-  gap: 12px;
+    gap: 12px;
 
-  margin-bottom: 30px;
+    margin-bottom: 30px;
 }
 
-/* ========================================
-   AI
-======================================== */
+
+/* AI */
 
 .ai-section,
 .chat {
-  background: var(--card);
+    background: var(--card);
 
-  padding: 25px;
+    padding: 25px;
 
-  border: 1px solid var(--line);
+    border:
+        1px solid var(--line);
 
-  border-radius: var(--radius);
+    border-radius: var(--radius);
 
-  margin-top: 30px;
+    margin-top: 30px;
 
-  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.06);
+    box-shadow:
+        0 6px 20px
+        rgba(17, 24, 39, 0.06);
 }
 
-.ai-section h2,
-.chat h2 {
-  margin: 8px 0 20px;
-}
-
-.analysis-item {
-  padding: 15px 0;
-
-  border-bottom: 1px solid var(--line);
-}
-
-.analysis-item:last-child {
-  border-bottom: none;
-}
-
-.analysis-item h3 {
-  margin: 0 0 6px;
-
-  color: var(--green-dark);
-
-  font-size: 15px;
-}
-
-.analysis-item p {
-  margin: 0;
-
-  line-height: 1.6;
-}
-
-/* ========================================
-   CHAT
-======================================== */
-
-#chat-messages {
-  max-height: 400px;
-
-  overflow-y: auto;
-}
-
-.chat-input {
-  display: flex;
-
-  gap: 10px;
-
-  margin-top: 15px;
-}
-
-.chat-input input {
-  flex: 1;
-}
-
-.user-message {
-  background: #f3f4f6;
-
-  color: var(--text);
-
-  padding: 12px 15px;
-
-  margin: 10px 0;
-
-  border-radius: 12px;
-}
 
 .ai-message {
-  background: var(--green-soft);
+    background: var(--green-soft);
 
-  color: var(--text);
+    color: var(--text);
 
-  padding: 12px 15px;
+    padding: 14px;
 
-  margin: 10px 0;
+    margin: 10px 0;
 
-  border-radius: 12px;
+    border-radius: 10px;
 
-  border-left: 3px solid var(--green);
+    border-left:
+        3px solid var(--green);
 }
 
-.ai-message p {
-  margin: 6px 0 0;
+
+.user-message {
+    background: #f3f4f6;
+
+    color: var(--text);
+
+    padding: 12px;
+
+    margin: 10px 0;
+
+    border-radius: 10px;
 }
 
-/* ========================================
-   FORMS
-======================================== */
+
+.chat-input {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+
+.chat-input input {
+    flex: 1;
+}
+
+
+/* Forms */
 
 form {
-  background: var(--card);
+    background: var(--card);
 
-  padding: 30px;
+    padding: 30px;
 
-  border: 1px solid var(--line);
+    border:
+        1px solid var(--line);
 
-  border-radius: var(--radius);
+    border-radius: var(--radius);
 
-  max-width: 700px;
+    max-width: 700px;
 
-  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.06);
+    box-shadow:
+        0 6px 20px
+        rgba(17, 24, 39, 0.06);
 }
+
 
 form label {
-  display: block;
+    display: block;
 
-  margin: 20px 0 7px;
+    margin-top: 20px;
 
-  color: var(--text);
+    margin-bottom: 7px;
 
-  font-weight: 700;
+    color: var(--text);
+
+    font-weight: 700;
 }
+
 
 form label:first-child {
-  margin-top: 0;
+    margin-top: 0;
 }
+
 
 form input,
 form textarea,
 form select {
-  width: 100%;
+    width: 100%;
 }
 
-/* ========================================
-   APPLICATION
-======================================== */
+
+/* Applications */
 
 .application {
-  background: var(--card);
+    background: var(--card);
 
-  padding: 20px;
+    padding: 20px;
 
-  margin: 15px 0;
+    margin: 15px 0;
 
-  border: 1px solid var(--line);
+    border:
+        1px solid var(--line);
 
-  border-left: 5px solid var(--green);
+    border-left:
+        5px solid var(--green);
 
-  border-radius: var(--radius);
+    border-radius: var(--radius);
 
-  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.05);
-
-  display: flex;
-
-  align-items: flex-start;
-
-  justify-content: space-between;
-
-  gap: 20px;
+    box-shadow:
+        0 4px 14px
+        rgba(17, 24, 39, 0.05);
 }
 
-.application h3 {
-  margin: 0 0 5px;
+
+.application label {
+    display: block;
+
+    margin:
+        15px 0 7px;
+
+    font-weight: 700;
 }
 
-.status {
-  display: inline-block;
 
-  padding: 6px 10px;
-
-  background: var(--green-soft);
-
-  color: var(--green-dark);
-
-  border-radius: 999px;
-
-  font-size: 12px;
-
-  font-weight: 800;
-
-  white-space: nowrap;
+.application textarea,
+.application select {
+    width: 100%;
 }
 
-/* ========================================
-   EMPTY / ERROR
-======================================== */
+
+/* Admin */
+
+.admin-actions {
+    display: flex;
+
+    gap: 10px;
+
+    align-items: center;
+
+    margin-top: 15px;
+}
+
+
+/* Messages */
+
+.message {
+    min-height: 20px;
+
+    margin:
+        12px 0;
+
+    padding: 0;
+}
+
+
+.message.success {
+    color: var(--green-dark);
+
+    background: var(--green-soft);
+
+    border:
+        1px solid
+        rgba(10, 155, 67, 0.2);
+
+    padding: 12px 15px;
+
+    border-radius: 8px;
+}
+
+
+.message.error {
+    color: #b42318;
+
+    background: #fef3f2;
+
+    border:
+        1px solid #fecdca;
+
+    padding: 12px 15px;
+
+    border-radius: 8px;
+}
+
 
 .empty-state {
-  padding: 30px;
+    padding: 30px;
 
-  background: #fafafa;
+    color: var(--muted);
 
-  border: 1px dashed var(--line);
+    background: #f9fafb;
 
-  border-radius: var(--radius);
+    border:
+        1px dashed var(--line);
 
-  color: var(--muted);
+    border-radius: var(--radius);
+
+    text-align: center;
 }
 
-.empty-state h3 {
-  margin-top: 0;
 
-  color: var(--text);
+section {
+    margin-bottom: 40px;
 }
 
-.error-message {
-  padding: 16px;
 
-  background: #fff1f1;
-
-  border: 1px solid #ffd5d5;
-
-  border-radius: 12px;
-
-  color: #b42318;
-}
-
-.loading {
-  padding: 20px;
-
-  color: var(--muted);
-}
-
-/* ========================================
-   RESPONSIVE
-======================================== */
-
-@media (max-width: 850px) {
-  .search-section {
-    flex-direction: column;
-  }
-
-  .search-section input,
-  .search-section select {
-    width: 100%;
-  }
-
-  .hero h1 {
-    font-size: 38px;
-  }
-
-  .job-details-card h1 {
-    font-size: 34px;
-  }
-}
+/* Responsive */
 
 @media (max-width: 700px) {
-  nav {
-    height: auto;
 
-    padding: 18px;
+    nav {
+        flex-direction: column;
 
-    flex-direction: column;
+        gap: 15px;
 
-    gap: 15px;
-  }
+        padding: 18px;
+    }
 
-  .nav-links {
-    gap: 16px;
 
-    flex-wrap: wrap;
+    nav div {
+        gap: 16px;
 
-    justify-content: center;
-  }
+        flex-wrap: wrap;
 
-  main {
-    width: auto;
+        justify-content: center;
+    }
 
-    margin: 0 18px;
 
-    padding-top: 25px;
-  }
+    main {
+        width: auto;
 
-  .hero {
-    padding: 30px 24px;
-  }
+        margin:
+            25px 18px;
+    }
 
-  .hero h1 {
-    font-size: 34px;
-  }
 
-  .page-header h1 {
-    font-size: 32px;
-  }
+    h1 {
+        font-size: 32px;
+    }
 
-  .actions {
-    flex-direction: column;
-  }
 
-  .actions button {
-    width: 100%;
-  }
+    .hero {
+        padding: 30px;
+    }
 
-  .chat-input {
-    flex-direction: column;
-  }
 
-  .chat-input button {
-    width: 100%;
-  }
+    .search-section {
+        flex-direction: column;
+    }
 
-  .application {
-    flex-direction: column;
-  }
-}
 
-@media (max-width: 520px) {
-  .nav-brand {
-    font-size: 21px;
-  }
+    .actions {
+        flex-direction: column;
+    }
 
-  .job-grid {
-    grid-template-columns: 1fr;
-  }
 
-  .job-details-card {
-    padding: 22px;
-  }
+    .actions button {
+        width: 100%;
+    }
 
-  form {
-    padding: 22px;
-  }
+
+    .chat-input {
+        flex-direction: column;
+    }
+
+
+    .chat-input button {
+        width: 100%;
+    }
+
+
+    .admin-actions {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
 }

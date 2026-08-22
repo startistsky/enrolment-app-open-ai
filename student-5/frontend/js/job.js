@@ -1,45 +1,38 @@
-const params = new URLSearchParams(window.location.search);
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
 
-const jobId = params.get("id");
+const jobId =
+    params.get("id");
+
 
 async function loadJob() {
-  const container = document.getElementById("job-details");
 
-  if (!jobId) {
-    container.innerHTML = `
-            <p>
-                No job selected.
-            </p>
-        `;
+    const container =
+        document.getElementById("job-details");
 
-    return;
-  }
+    try {
 
-  try {
-    const job = await getJob(jobId);
+        const job =
+            await getJob(jobId);
 
-    container.innerHTML = `
+        container.innerHTML = `
 
-            <h1>
-                ${job.title}
-            </h1>
+            <h1>${job.title}</h1>
 
-            <h2>
-                ${job.company}
-            </h2>
+            <h2>${job.company}</h2>
 
-            <p>
-                📍 ${job.location || "Not specified"}
-            </p>
+            <p>📍 ${job.location}</p>
 
             <p>
                 <strong>Industry:</strong>
-                ${job.industry || "Not specified"}
+                ${job.industry}
             </p>
 
             <p>
                 <strong>Type:</strong>
-                ${job.job_type || "Not specified"}
+                ${job.job_type}
             </p>
 
             <p>
@@ -47,181 +40,175 @@ async function loadJob() {
                 ${job.salary || "Not specified"}
             </p>
 
-            <h2>
-                Job Description
-            </h2>
+            <h2>Job Description</h2>
 
             <p>
-                ${job.description || "No description provided."}
+                ${job.description}
             </p>
 
-            <h2>
-                Requirements
-            </h2>
+            <h2>Requirements</h2>
 
             <p>
-                ${job.requirements || "No requirements provided."}
+                ${job.requirements}
             </p>
-
-            ${
-              job.application_url
-                ? `
-                    <a
-                        class="external-link"
-                        href="${job.application_url}"
-                        target="_blank"
-                    >
-                        Apply on company website →
-                    </a>
-                `
-                : ""
-            }
 
         `;
-  } catch (error) {
-    console.error(error);
 
-    container.innerHTML = `
-            <p>
-                Could not load this job.
-            </p>
+    } catch (error) {
+
+        container.innerHTML = `
+            <div class="message error">
+                ${error.message}
+            </div>
         `;
-  }
+    }
 }
+
 
 async function saveJob() {
-  try {
-    await saveJobAPI(jobId);
 
-    alert("Job saved!");
-  } catch (error) {
-    alert(error.message);
-  }
+    const message =
+        document.getElementById("job-message");
+
+    try {
+
+        await saveJobAPI(jobId);
+
+        message.className =
+            "message success";
+
+        message.textContent =
+            "Job saved successfully.";
+
+    } catch (error) {
+
+        message.className =
+            "message error";
+
+        message.textContent =
+            error.message;
+    }
 }
+
 
 async function applyJob() {
-  try {
-    await createApplication(jobId);
 
-    alert("Application added to your dashboard!");
-  } catch (error) {
-    alert(error.message);
-  }
+    const message =
+        document.getElementById("job-message");
+
+    try {
+
+        await createApplication(jobId);
+
+        message.className =
+            "message success";
+
+        message.textContent =
+            "Application added to your dashboard.";
+
+    } catch (error) {
+
+        message.className =
+            "message error";
+
+        message.textContent =
+            error.message;
+    }
 }
+
 
 async function analyseJob() {
-  const container = document.getElementById("ai-analysis");
 
-  container.innerHTML = `
-        <p>
-            Analysing this job...
-        </p>
-    `;
+    const container =
+        document.getElementById("ai-analysis");
 
-  try {
-    const result = await analyseJobAPI(jobId);
+    container.innerHTML =
+        `<p>Analysing this job...</p>`;
 
-    container.innerHTML = `
+    try {
 
-            <div class="ai-result">
+        const result =
+            await analyseJobAPI(jobId);
 
-                <h3>
-                    Skills
-                </h3>
+        container.innerHTML = `
 
-                <p>
-                    ${result.skills}
-                </p>
+            <div class="ai-message">
 
+                <h3>Skills</h3>
+                <p>${result.skills}</p>
 
-                <h3>
-                    Qualifications
-                </h3>
+                <h3>Qualifications</h3>
+                <p>${result.qualifications}</p>
 
-                <p>
-                    ${result.qualifications}
-                </p>
+                <h3>Experience</h3>
+                <p>${result.experience}</p>
 
+                <h3>ATS Keywords</h3>
+                <p>${result.ats_keywords}</p>
 
-                <h3>
-                    Experience
-                </h3>
-
-                <p>
-                    ${result.experience}
-                </p>
-
-
-                <h3>
-                    ATS Keywords
-                </h3>
-
-                <p>
-                    ${result.ats_keywords}
-                </p>
-
-
-                <h3>
-                    Summary
-                </h3>
-
-                <p>
-                    ${result.summary}
-                </p>
+                <h3>Summary</h3>
+                <p>${result.summary}</p>
 
             </div>
+        `;
 
-        `;
-  } catch (error) {
-    container.innerHTML = `
-            <p>
-                AI analysis failed:
+    } catch (error) {
+
+        container.innerHTML = `
+            <div class="message error">
                 ${error.message}
-            </p>
+            </div>
         `;
-  }
+    }
 }
 
+
 async function sendMessage() {
-  const input = document.getElementById("chat-input");
 
-  const message = input.value.trim();
+    const input =
+        document.getElementById("chat-input");
 
-  if (!message) return;
+    const message =
+        input.value.trim();
 
-  const chat = document.getElementById("chat-messages");
+    if (!message) {
+        return;
+    }
 
-  chat.innerHTML += `
+    const chat =
+        document.getElementById("chat-messages");
+
+    chat.innerHTML += `
 
         <div class="user-message">
             ${message}
         </div>
-
     `;
 
-  input.value = "";
+    input.value = "";
 
-  try {
-    const result = await sendChatMessage(message);
+    try {
 
-    chat.innerHTML += `
+        const result =
+            await sendChatMessage(message);
+
+        chat.innerHTML += `
 
             <div class="ai-message">
                 ${result.response}
             </div>
-
         `;
 
-    chat.scrollTop = chat.scrollHeight;
-  } catch (error) {
-    chat.innerHTML += `
+    } catch (error) {
 
-            <div class="ai-message">
-                Sorry, I couldn't respond.
+        chat.innerHTML += `
+
+            <div class="message error">
+                ${error.message}
             </div>
-
         `;
-  }
+    }
 }
 
-document.addEventListener("DOMContentLoaded", loadJob);
+
+loadJob();

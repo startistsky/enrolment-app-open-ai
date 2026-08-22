@@ -2,17 +2,10 @@ import sqlite3
 import os
 
 
-# Project root:
-# student-5/
 BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.abspath(__file__)
-    )
+    os.path.dirname(os.path.abspath(__file__))
 )
 
-
-# Database:
-# student-5/database/career.db
 DATABASE_DIR = os.path.join(
     BASE_DIR,
     "database"
@@ -25,27 +18,13 @@ DATABASE = os.path.join(
 
 
 def get_db():
-    """
-    Open SQLite database connection.
-    """
+    os.makedirs(DATABASE_DIR, exist_ok=True)
 
-    # Make sure database folder exists
-    os.makedirs(
-        DATABASE_DIR,
-        exist_ok=True
-    )
+    db = sqlite3.connect(DATABASE)
 
-    db = sqlite3.connect(
-        DATABASE
-    )
-
-    # Return rows as dictionary-like objects
     db.row_factory = sqlite3.Row
 
-    # Enable foreign keys
-    db.execute(
-        "PRAGMA foreign_keys = ON"
-    )
+    db.execute("PRAGMA foreign_keys = ON")
 
     return db
 
@@ -55,151 +34,105 @@ def init_db():
     db = get_db()
 
     db.executescript("""
+    
+    CREATE TABLE IF NOT EXISTS jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        /* =========================
-           JOBS
-        ========================= */
+        title TEXT NOT NULL,
 
-        CREATE TABLE IF NOT EXISTS jobs (
+        company TEXT NOT NULL,
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        location TEXT,
 
-            title TEXT NOT NULL,
+        industry TEXT,
 
-            company TEXT NOT NULL,
+        job_type TEXT,
 
-            location TEXT,
+        description TEXT,
 
-            industry TEXT,
+        requirements TEXT,
 
-            job_type TEXT,
+        salary TEXT,
 
-            description TEXT,
+        application_url TEXT,
 
-            requirements TEXT,
-
-            salary TEXT,
-
-            application_url TEXT,
-
-            created_at
-                TIMESTAMP
-                DEFAULT CURRENT_TIMESTAMP
-        );
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 
 
-        /* =========================
-           CAREER PREFERENCES
-        ========================= */
+    CREATE TABLE IF NOT EXISTS career_preferences (
 
-        CREATE TABLE IF NOT EXISTS career_preferences (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        locations TEXT,
 
-            locations TEXT,
+        industries TEXT,
 
-            industries TEXT,
+        job_types TEXT,
 
-            job_types TEXT,
+        skills TEXT,
 
-            skills TEXT,
+        career_goals TEXT,
 
-            career_goals TEXT,
-
-            created_at
-                TIMESTAMP
-                DEFAULT CURRENT_TIMESTAMP,
-
-            updated_at
-                TIMESTAMP
-                DEFAULT CURRENT_TIMESTAMP
-        );
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 
 
-        /* =========================
-           SAVED JOBS
-        ========================= */
+    CREATE TABLE IF NOT EXISTS saved_jobs (
 
-        CREATE TABLE IF NOT EXISTS saved_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id INTEGER NOT NULL UNIQUE,
 
-            job_id INTEGER NOT NULL UNIQUE,
+        saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-            saved_at
-                TIMESTAMP
-                DEFAULT CURRENT_TIMESTAMP,
-
-            FOREIGN KEY (job_id)
-                REFERENCES jobs(id)
-                ON DELETE CASCADE
-        );
+        FOREIGN KEY (job_id)
+            REFERENCES jobs(id)
+            ON DELETE CASCADE
+    );
 
 
-        /* =========================
-           APPLICATIONS
-        ========================= */
+    CREATE TABLE IF NOT EXISTS applications (
 
-        CREATE TABLE IF NOT EXISTS applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id INTEGER NOT NULL,
 
-            job_id INTEGER NOT NULL,
+        status TEXT DEFAULT 'Interested',
 
-            status TEXT
-                DEFAULT 'Interested',
+        notes TEXT,
 
-            notes TEXT,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-            applied_at
-                TIMESTAMP
-                DEFAULT CURRENT_TIMESTAMP,
-
-            FOREIGN KEY (job_id)
-                REFERENCES jobs(id)
-                ON DELETE CASCADE
-        );
+        FOREIGN KEY (job_id)
+            REFERENCES jobs(id)
+            ON DELETE CASCADE
+    );
 
 
-        /* =========================
-           AI JOB ANALYSIS
-        ========================= */
+    CREATE TABLE IF NOT EXISTS job_ai_analysis (
 
-        CREATE TABLE IF NOT EXISTS job_ai_analysis (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id INTEGER UNIQUE NOT NULL,
 
-            job_id INTEGER NOT NULL UNIQUE,
+        skills TEXT,
 
-            skills TEXT,
+        qualifications TEXT,
 
-            qualifications TEXT,
+        experience TEXT,
 
-            experience TEXT,
+        ats_keywords TEXT,
 
-            ats_keywords TEXT,
+        summary TEXT,
 
-            summary TEXT,
-
-            created_at
-                TIMESTAMP
-                DEFAULT CURRENT_TIMESTAMP,
-
-            FOREIGN KEY (job_id)
-                REFERENCES jobs(id)
-                ON DELETE CASCADE
-        );
+        FOREIGN KEY (job_id)
+            REFERENCES jobs(id)
+            ON DELETE CASCADE
+    );
 
     """)
 
     db.commit()
+
     db.close()
-
-
-if __name__ == "__main__":
-
-    init_db()
-
-    print(
-        f"Database ready: {DATABASE}"
-    )

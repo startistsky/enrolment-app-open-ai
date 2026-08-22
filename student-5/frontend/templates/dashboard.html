@@ -5,7 +5,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Career Dashboard</title>
+    <title>Dashboard</title>
 
     <link
       rel="stylesheet"
@@ -15,46 +15,29 @@
 
   <body>
     <nav>
-      <a class="nav-brand" href="/"> Career&Internship </a>
+      <h2>Career&Internship</h2>
 
-      <div class="nav-links">
-        <a href="/"> Jobs </a>
-
-        <a href="/dashboard.html"> Dashboard </a>
-
-        <a href="/preferences.html"> Preferences </a>
+      <div>
+        <a href="/">Jobs</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/preferences.html">Preferences</a>
+        <a href="/admin.html">Admin</a>
       </div>
     </nav>
 
     <main>
-      <section class="page-header">
-        <span class="eyebrow"> YOUR CAREER </span>
+      <h1>Career Dashboard</h1>
 
-        <h1>Career Dashboard</h1>
-
-        <p>Manage saved opportunities and track your applications.</p>
-      </section>
+      <div id="dashboard-message" class="message"></div>
 
       <section>
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow"> SAVED </span>
-
-            <h2>Saved Jobs</h2>
-          </div>
-        </div>
+        <h2>Saved Jobs</h2>
 
         <div id="saved-jobs" class="job-grid"></div>
       </section>
 
       <section>
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow"> APPLICATIONS </span>
-
-            <h2>My Applications</h2>
-          </div>
-        </div>
+        <h2>My Applications</h2>
 
         <div id="applications"></div>
       </section>

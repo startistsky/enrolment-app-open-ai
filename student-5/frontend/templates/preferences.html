@@ -15,65 +15,73 @@
 
   <body>
     <nav>
-      <a class="nav-brand" href="/"> Career&Internship </a>
+      <h2>Career&Internship</h2>
 
-      <div class="nav-links">
-        <a href="/"> Jobs </a>
-
-        <a href="/dashboard.html"> Dashboard </a>
-
-        <a href="/preferences.html"> Preferences </a>
+      <div>
+        <a href="/">Jobs</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/preferences.html">Preferences</a>
+        <a href="/admin.html">Admin</a>
       </div>
     </nav>
 
     <main>
-      <section class="page-header">
-        <span class="eyebrow"> PERSONALISE </span>
+      <h1>Career Preferences</h1>
 
-        <h1>Career Preferences</h1>
+      <p>Tell us what opportunities you are looking for.</p>
 
-        <p>Tell us what kind of opportunities you're looking for.</p>
-      </section>
+      <div id="preferences-message" class="message"></div>
 
       <form id="preferences-form">
-        <label for="locations"> Preferred Locations </label>
+        <label> Preferred Locations </label>
 
         <input id="locations" placeholder="Sydney, Melbourne" />
 
-        <label for="industries"> Preferred Industries </label>
+        <label> Preferred Industries </label>
 
         <input id="industries" placeholder="Technology, Finance" />
 
-        <label for="job-types"> Job Types </label>
+        <label> Job Types </label>
 
         <input id="job-types" placeholder="Internship, Graduate" />
 
-        <label for="skills"> Your Skills </label>
+        <label> Your Skills </label>
 
-        <textarea
-          id="skills"
-          placeholder="Python, SQL, JavaScript..."
-        ></textarea>
+        <textarea id="skills" placeholder="Python, SQL, JavaScript"></textarea>
 
-        <label for="career-goals"> Career Goals </label>
+        <label> Career Goals </label>
 
         <textarea
           id="career-goals"
-          placeholder="Become a software engineer..."
+          placeholder="Become a software engineer"
         ></textarea>
 
-        <button type="submit">Save Preferences</button>
-        <button
-          type="button"
-          class="secondary-button"
-          onclick="deleteAllPreferences()"
-        >
-          Clear Preferences
-        </button>
+        <div class="actions">
+          <button type="submit">Save Preferences</button>
+
+          <button
+            type="button"
+            class="secondary-button"
+            onclick="clearPreferences()"
+          >
+            Clear
+          </button>
+        </div>
       </form>
+
+      <section>
+        <h2>Recommended For You</h2>
+
+        <p>
+          These opportunities are matched against your preferences and skills.
+        </p>
+
+        <div id="recommendations" class="job-grid"></div>
+      </section>
     </main>
 
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
     <script src="{{ url_for('static', filename='js/preferences.js') }}"></script>
   </body>
 </html>

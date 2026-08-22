@@ -1,5 +1,5 @@
 async function searchJobs() {
-  const search = document.getElementById("search").value.trim();
+  const search = document.getElementById("search").value;
 
   const location = document.getElementById("location").value;
 
@@ -7,30 +7,30 @@ async function searchJobs() {
 
   const jobType = document.getElementById("job-type").value;
 
-  const params = new URLSearchParams();
+  let params = "?";
 
-  if (search) params.set("search", search);
+  params += `search=${encodeURIComponent(search)}`;
 
-  if (location) params.set("location", location);
+  params += `&location=${encodeURIComponent(location)}`;
 
-  if (industry) params.set("industry", industry);
+  params += `&industry=${encodeURIComponent(industry)}`;
 
-  if (jobType) params.set("job_type", jobType);
+  params += `&job_type=${encodeURIComponent(jobType)}`;
+
+  const message = document.getElementById("jobs-message");
 
   try {
-    const jobs = await getJobs(params.toString() ? `?${params}` : "");
+    const jobs = await getJobs(params);
 
     displayJobs(jobs);
-  } catch (error) {
-    console.error(error);
 
-    document.getElementById("job-list").innerHTML = `
-            <p>
-                Could not load jobs.
-                Make sure Flask is running
-                on port 5005.
-            </p>
-        `;
+    message.className = "message";
+
+    message.textContent = `${jobs.length} opportunity(s) found.`;
+  } catch (error) {
+    message.className = "message error";
+
+    message.textContent = error.message;
   }
 }
 
@@ -39,26 +39,20 @@ function displayJobs(jobs) {
 
   container.innerHTML = "";
 
-  if (!jobs.length) {
-    container.innerHTML = `
-            <div class="empty-state">
+  if (jobs.length === 0) {
+    container.innerHTML = `<div class="empty-state">
                 No jobs found.
-            </div>
-        `;
+            </div>`;
 
     return;
   }
 
   jobs.forEach((job) => {
-    const description = job.description || "";
-
     container.innerHTML += `
 
             <article class="job-card">
 
-                <h3>
-                    ${job.title}
-                </h3>
+                <h3>${job.title}</h3>
 
                 <p class="company">
                     ${job.company}
@@ -73,12 +67,11 @@ function displayJobs(jobs) {
                 </p>
 
                 <span class="tag">
-                    ${job.job_type || "Opportunity"}
+                    ${job.job_type || "Not specified"}
                 </span>
 
                 <p>
-                    ${description.substring(0, 150)}
-                    ${description.length > 150 ? "..." : ""}
+                    ${(job.description || "").substring(0, 150)}...
                 </p>
 
                 <a href="/job.html?id=${job.id}">
@@ -90,4 +83,4 @@ function displayJobs(jobs) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", searchJobs);
+searchJobs();
