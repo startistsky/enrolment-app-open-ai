@@ -1,4 +1,4 @@
-name: Student 4 CI
+name: Student 4 Campus Event Management CI
 
 on:
   push:
