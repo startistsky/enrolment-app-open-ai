@@ -25,6 +25,7 @@ def create():
         data["date"],
         data["location"],
         data["description"],
+        data.get("emoji", ""),
     )
 
     return jsonify({"id": event_id}), 201
@@ -41,6 +42,7 @@ def update(event_id):
         data["date"],
         data["location"],
         data["description"],
+        data.get("emoji", ""),
     )
 
     if not updated:

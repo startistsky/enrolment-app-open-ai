@@ -74,7 +74,8 @@ def test_create_event():
         "category": "Technology",
         "date": "2026-08-30",
         "location": "Room 101",
-        "description": "Learn Python basics"
+        "description": "Learn Python basics",
+        "emoji": "🐍"
     }
 
     with patch(
@@ -101,7 +102,8 @@ def test_create_event():
             "Technology",
             "2026-08-30",
             "Room 101",
-            "Learn Python basics"
+            "Learn Python basics",
+            "🐍"
         )
 
 
@@ -116,7 +118,8 @@ def test_update_event():
         "category": "Technology",
         "date": "2026-08-31",
         "location": "Room 202",
-        "description": "Updated workshop information"
+        "description": "Updated workshop information",
+        "emoji": "💻"
     }
 
     with patch(
@@ -143,7 +146,8 @@ def test_update_event():
             "Technology",
             "2026-08-31",
             "Room 202",
-            "Updated workshop information"
+            "Updated workshop information",
+             "💻"
         )
 
 
