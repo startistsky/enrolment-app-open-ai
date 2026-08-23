@@ -1,79 +1,171 @@
 from flask import Blueprint, jsonify, request
-import os
 import requests
 
+from config import AI_SERVICE_URL, MODEL_NAME, AI_TIMEOUT
 from database_api import get_events
+from prompts import build_plan_prompt, build_adapt_prompt
 
 
 ai_bp = Blueprint("ai", __name__)
 
-AI_SERVICE_URL = os.getenv(
-    "AI_SERVICE_URL",
-    "http://ollama:11434/api/generate"
-)
+
+def call_llm(prompt):
+    """
+    Send a prompt to the Ollama LLM service
+    and return the generated response text.
+    """
+
+    try:
+        response = requests.post(
+            AI_SERVICE_URL,
+            json={
+                "model": MODEL_NAME,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=AI_TIMEOUT
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
+
+        return result.get("response", "").strip()
+
+    except requests.exceptions.RequestException as error:
+        raise RuntimeError(
+            f"Failed to communicate with AI service: {error}"
+        )
+
+
+def build_observation(events):
+    """
+    Convert database event records into an observation
+    that can be used by the Agentic AI workflow.
+    """
+
+    if not events:
+        return "The database returned no campus events."
+
+    event_text = "\n".join(
+        [
+            (
+                f"Title: {event.get('title', '')}, "
+                f"Date: {event.get('date', '')}, "
+                f"Category: {event.get('category', '')}, "
+                f"Location: {event.get('location', '')}, "
+                f"Description: {event.get('description', '')}"
+            )
+            for event in events
+        ]
+    )
+
+    observation = (
+        f"The database returned {len(events)} campus events.\n"
+        f"{event_text}"
+    )
+
+    return observation
 
 
 @ai_bp.route("/api/ai", methods=["POST"])
 def ai_assistant():
+    """
+    Agentic AI workflow:
+
+    Plan -> Act -> Observe -> Adapt
+    """
+
     data = request.get_json() or {}
 
     user_message = data.get("message", "").strip()
 
     if not user_message:
         return jsonify({
-            "error": "Message is required"
+            "error": "Message is required."
         }), 400
 
-    events = get_events()
+    try:
 
-    event_text = "\n".join(
-        [
-            (
-                f"Title: {event['title']}, "
-                f"Date: {event['date']}, "
-                f"Category: {event['category']}, "
-                f"Location: {event['location']}, "
-                f"Description: {event['description']}"
-            )
-            for event in events
-        ]
-    )
+        # =====================================================
+        # PLAN
+        # =====================================================
+        # The AI first decides what information it needs
+        # to answer the user's request.
 
-    prompt = f"""
-You are a campus event assistant.
+        plan_prompt = build_plan_prompt(user_message)
 
-Here are the ONLY real events currently available in the campus events database:
+        plan = call_llm(plan_prompt)
 
-{event_text}
 
-User question:
-{user_message}
+        # =====================================================
+        # ACT
+        # =====================================================
+        # The system performs an action by retrieving
+        # real event information from the database service.
 
-IMPORTANT RULES:
-1. You must only use events listed above.
-2. Never invent, suggest, or mention any event that is not listed above.
-3. If no event matches the user's request, simply say that no matching event is currently available.
-4. Do not provide hypothetical events.
-5. Do not suggest events from your own knowledge.
-6. Keep the answer concise.
+        events = get_events()
 
-Answer based only on the database events above.
-"""
+        if events is None:
+            events = []
 
-    response = requests.post(
-        AI_SERVICE_URL,
-        json={
-            "model": "qwen2.5:0.5b",
-            "prompt": prompt,
-            "stream": False
-        },
-        timeout=60
-    )
 
-    response.raise_for_status()
+        # =====================================================
+        # OBSERVE
+        # =====================================================
+        # The system examines the result of the database action.
 
-    result = response.json()
+        observation = build_observation(events)
 
-    return jsonify({
-        "response": result.get("response", "")
-    })
+
+        # =====================================================
+        # ADAPT
+        # =====================================================
+        # The AI uses the original user request,
+        # its plan, and the observed database information
+        # to generate the final grounded response.
+
+        adapt_prompt = build_adapt_prompt(
+            user_message,
+            plan,
+            observation
+        )
+
+        final_answer = call_llm(adapt_prompt)
+
+
+        # =====================================================
+        # RESPONSE
+        # =====================================================
+
+        return jsonify({
+            "response": final_answer,
+
+            "agentic_workflow": {
+                "plan": plan,
+
+                "act": (
+                    f"Retrieved {len(events)} events "
+                    f"from the database service."
+                ),
+
+                "observe": observation,
+
+                "adapt": final_answer
+            }
+        }), 200
+
+
+    except RuntimeError as error:
+
+        return jsonify({
+            "error": str(error)
+        }), 503
+
+
+    except Exception as error:
+
+        return jsonify({
+            "error": "An unexpected error occurred.",
+            "details": str(error)
+        }), 500
