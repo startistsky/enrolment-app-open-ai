@@ -1,0 +1,58 @@
+name: Student 4 CI
+
+on:
+  push:
+    paths:
+      - "student-4/**"
+      - ".github/workflows/student-4.yml"
+
+  pull_request:
+    paths:
+      - "student-4/**"
+      - ".github/workflows/student-4.yml"
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install backend dependencies
+        working-directory: student-4
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest
+
+      - name: Run Student 4 tests
+        working-directory: student-4
+        run: |
+          pytest tests/ -v
+
+      - name: Build Student 4 backend image
+        run: |
+          docker build \
+            -f student-4/backend/Dockerfile \
+            -t student4-backend:test \
+            .
+
+      - name: Build Student 4 database image
+        run: |
+          docker build \
+            -f student-4/database/Dockerfile \
+            -t student4-database:test \
+            .
+
+      - name: Build Student 4 frontend image
+        run: |
+          docker build \
+            -f student-4/frontend/Dockerfile \
+            -t student4-frontend:test \
+            .
