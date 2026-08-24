@@ -26,6 +26,7 @@ def create_event():
     date = data.get("date", "").strip()
     location = data.get("location", "").strip()
     description = data.get("description", "").strip()
+    emoji = data.get("emoji", "").strip()
 
     if not all([
         title,
@@ -43,7 +44,8 @@ def create_event():
         category,
         date,
         location,
-        description
+        description,
+        emoji
     )
 
     return jsonify({
@@ -61,6 +63,7 @@ def update_event(event_id):
     date = data.get("date", "").strip()
     location = data.get("location", "").strip()
     description = data.get("description", "").strip()
+    emoji = data.get("emoji", "").strip()
 
     if not all([
         title,
@@ -79,7 +82,8 @@ def update_event(event_id):
         category,
         date,
         location,
-        description
+        description,
+        emoji
     )
 
     if not updated:

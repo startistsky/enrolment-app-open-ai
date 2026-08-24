@@ -1,6 +1,47 @@
+# Integrated Docker Compose Configuration
 
-# Student 4 Docker Compose Configuration  
 services:
+
+  # Student 3 - Campus Resource Management
+
+  student3-database:
+    build:
+      context: .
+      dockerfile: student-3/database/Dockerfile
+
+    ports:
+      - "5004:5004"
+
+  student3-backend:
+    build:
+      context: .
+      dockerfile: student-3/backend/Dockerfile
+
+    ports:
+      - "8003:8000"
+
+    environment:
+      AI_SERVICE_URL: http://ollama:11434/api/generate
+      DATABASE_API_URL: http://student3-database:5004
+
+    depends_on:
+      - student3-database
+      - ollama
+
+  student3-frontend:
+    build:
+      context: .
+      dockerfile: student-3/frontend/Dockerfile
+
+    ports:
+      - "8083:80"
+
+    depends_on:
+      - student3-backend
+
+
+  # Student 4 Docker Compose Configuration
+
   database:
     build:
       context: .
@@ -42,6 +83,57 @@ services:
     depends_on:
       - backend
 
+  student1-database:
+    build:
+      context: ./student-1/database
+
+    ports:
+      - "5001:5001"
+
+    environment:
+      DATABASE_PATH: /data/courses.db
+
+    volumes:
+      - student1-course-data:/data
+
+  student1-backend:
+    build:
+      context: ./student-1/backend
+
+    ports:
+      - "8001:8001"
+
+    environment:
+      DATABASE_SERVICE_URL: http://student1-database:5001
+      AI_SERVICE_URL: http://ollama:11434/api/generate
+
+    depends_on:
+      - student1-database
+      - ollama
+
+  student1-frontend:
+    build:
+      context: ./student-1/frontend
+
+    ports:
+      - "8081:80"
+
+    depends_on:
+      - student1-backend
+
+  # Shared Frontend
+
+  shared-frontend:
+    build:
+      context: ./shared/frontend
+      dockerfile: Dockerfile
+
+    ports:
+      - "8888:80"
+
+
+  # Shared Ollama
+
   ollama:
     image: ollama/ollama:latest
 
@@ -50,7 +142,25 @@ services:
 
     volumes:
       - ollama_data:/root/.ollama
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: >
+      sh -c "
+      until ollama list >/dev/null 2>&1;
+      do
+        echo 'Waiting for Ollama...';
+        sleep 2;
+      done;
+      echo 'Ensuring qwen2.5:0.5b is available...';
+      ollama pull qwen2.5:0.5b;
+      echo 'Ollama model is ready.';
+      "
 
 volumes:
   database_data:
   ollama_data:
+  student1-course-data:
