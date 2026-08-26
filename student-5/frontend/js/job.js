@@ -18,9 +18,7 @@ function displayAnalysis(value) {
 
   if (Array.isArray(value)) {
     return `
-
       <ul>
-
         ${value
           .map(
             (item) => `
@@ -30,18 +28,14 @@ function displayAnalysis(value) {
             `,
           )
           .join("")}
-
       </ul>
-
     `;
   }
 
   return `
-
     <p>
       ${escapeHtml(value)}
     </p>
-
   `;
 }
 
@@ -56,7 +50,6 @@ function renderAIAnalysis(result) {
   container.innerHTML = `
 
     <div class="analysis-grid">
-
 
       <div class="analysis-card">
 
@@ -114,7 +107,6 @@ function renderAIAnalysis(result) {
 
       </div>
 
-
     </div>
 
   `;
@@ -154,7 +146,6 @@ async function loadJob() {
       <article
         class="job-detail-card"
       >
-
 
         <span class="tag">
 
@@ -270,7 +261,6 @@ async function loadJob() {
             `
             : ""
         }
-
 
       </article>
 
@@ -397,6 +387,311 @@ async function analyseJob() {
   }
 }
 
+// Render AI Approval
+function renderAIApproval(chat, result) {
+  if (!chat || !result) {
+    return;
+  }
+
+  const approvalId = result.approval_id;
+
+  if (!approvalId) {
+    console.error("No approval ID returned by backend.");
+
+    return;
+  }
+
+  chat.innerHTML += `
+
+    <div
+      class="ai-approval"
+      data-approval-id="${escapeHtml(approvalId)}"
+    >
+
+      <div class="ai-approval-response">
+
+        <strong>
+          Career Agent:
+        </strong>
+
+        <p>
+          ${escapeHtml(result.response || "No response received.")}
+        </p>
+
+      </div>
+
+
+      <div class="ai-approval-review">
+
+        <p>
+
+          <strong>
+            Human Review Required
+          </strong>
+
+        </p>
+
+
+        <p>
+          Is this AI response acceptable?
+        </p>
+
+
+        <div
+          class="ai-approval-buttons"
+        >
+
+          <button
+            type="button"
+            class="primary-button"
+            onclick="approveAIResponse('${escapeHtml(approvalId)}')"
+          >
+            Approve
+          </button>
+
+
+          <button
+            type="button"
+            class="secondary-button"
+            onclick="showAIRejection('${escapeHtml(approvalId)}')"
+          >
+            Reject
+          </button>
+
+        </div>
+
+
+        <div
+          id="ai-rejection-${escapeHtml(approvalId)}"
+          class="ai-rejection-form"
+          style="display: none;"
+        >
+
+          <label
+            for="ai-feedback-${escapeHtml(approvalId)}"
+          >
+            What should be improved?
+          </label>
+
+
+          <textarea
+            id="ai-feedback-${escapeHtml(approvalId)}"
+            rows="3"
+            placeholder="Enter feedback for the Career Agent..."
+          ></textarea>
+
+
+          <button
+            type="button"
+            class="primary-button"
+            onclick="rejectAIResponse('${escapeHtml(approvalId)}')"
+          >
+            Submit Feedback
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// Approve AI Response
+async function approveAIResponse(approvalId) {
+  const status = document.getElementById("chat-message");
+
+  const approval = document.querySelector(
+    `[data-approval-id="${CSS.escape(approvalId)}"]`,
+  );
+
+  if (status) {
+    status.className = "status-message info";
+
+    status.textContent = "Submitting approval...";
+  }
+
+  try {
+    const result = await submitAIApproval(approvalId, true);
+
+    if (!result.success) {
+      throw new Error(result.error || "Approval failed.");
+    }
+
+    // Keep the AI response.
+    // Only replace the review controls.
+    if (approval) {
+      const review = approval.querySelector(".ai-approval-review");
+
+      if (review) {
+        review.innerHTML = `
+
+          <div
+            class="status-message success"
+          >
+
+            <strong>
+              ✓ AI response approved
+            </strong>
+
+          </div>
+
+        `;
+      }
+    }
+
+    if (status) {
+      status.className = "status-message success";
+
+      status.textContent = "AI response approved.";
+    }
+  } catch (error) {
+    console.error("AI approval error:", error);
+
+    if (status) {
+      status.className = "status-message error";
+
+      status.textContent = `Could not approve AI response: ${error.message}`;
+    }
+  }
+}
+
+// Show AI rejection form
+function showAIRejection(approvalId) {
+  const form = document.getElementById(`ai-rejection-${approvalId}`);
+
+  if (!form) {
+    return;
+  }
+
+  form.style.display = "block";
+
+  const feedback = document.getElementById(`ai-feedback-${approvalId}`);
+
+  if (feedback) {
+    feedback.focus();
+  }
+}
+
+async function rejectAIResponse(approvalId) {
+  const feedbackElement = document.getElementById(`ai-feedback-${approvalId}`);
+
+  const status = document.getElementById("chat-message");
+
+  const approval = document.querySelector(
+    `[data-approval-id="${CSS.escape(approvalId)}"]`,
+  );
+
+  if (!feedbackElement) {
+    return;
+  }
+
+  const feedback = feedbackElement.value.trim();
+
+  if (!feedback) {
+    feedbackElement.focus();
+
+    if (status) {
+      status.className = "status-message error";
+
+      status.textContent =
+        "Please provide feedback before rejecting the response.";
+    }
+
+    return;
+  }
+
+  if (status) {
+    status.className = "status-message info";
+
+    status.textContent = "Sending feedback to Career Agent...";
+  }
+
+  // Disable buttons while processing.
+  if (approval) {
+    const buttons = approval.querySelectorAll("button");
+
+    buttons.forEach((button) => {
+      button.disabled = true;
+    });
+  }
+
+  try {
+    const result = await submitAIApproval(approvalId, false, feedback);
+
+    if (!result.success) {
+      throw new Error(result.error || "Could not submit feedback.");
+    }
+
+    // Mark it as rejected - keep all repsonses
+    if (approval) {
+      const review = approval.querySelector(".ai-approval-review");
+
+      if (review) {
+        review.innerHTML = `
+
+          <div
+            class="status-message error"
+          >
+
+            <strong>
+              ✕ AI response rejected
+            </strong>
+
+            <p>
+              <strong>
+                Human feedback:
+              </strong>
+            </p>
+
+            <p>
+              ${escapeHtml(feedback)}
+            </p>
+
+          </div>
+
+        `;
+      }
+    }
+
+    // Append new response
+    if (result.status === "awaiting_approval") {
+      const chat = document.getElementById("chat-messages");
+
+      if (chat) {
+        renderAIApproval(chat, result);
+      }
+    }
+
+    if (status) {
+      status.className = "status-message info";
+
+      status.textContent =
+        "New AI response generated. Please review the new response.";
+    }
+  } catch (error) {
+    console.error("AI rejection error:", error);
+
+    // Re-enable buttons if something failed.
+    if (approval) {
+      const buttons = approval.querySelectorAll("button");
+
+      buttons.forEach((button) => {
+        button.disabled = false;
+      });
+    }
+
+    if (status) {
+      status.className = "status-message error";
+
+      status.textContent = `Could not submit feedback: ${error.message}`;
+    }
+  }
+}
+
 // Agent chat
 async function sendMessage() {
   const input = document.getElementById("chat-input");
@@ -415,12 +710,15 @@ async function sendMessage() {
     return;
   }
 
-  // Show user message
-
+  // Add user message
   chat.innerHTML += `
+
     <div class="user-message">
+
       ${escapeHtml(message)}
+
     </div>
+
   `;
 
   input.value = "";
@@ -436,11 +734,21 @@ async function sendMessage() {
       throw new Error(result.error || "AI request failed.");
     }
 
-    chat.innerHTML += `
-      <div class="ai-message">
-        ${escapeHtml(result.response || "No response received.")}
-      </div>
-    `;
+    //Human review approvals in the loop
+    if (result.status === "awaiting_approval") {
+      renderAIApproval(chat, result);
+    } else {
+      // Normal AI response
+      chat.innerHTML += `
+
+        <div class="ai-message">
+
+          ${escapeHtml(result.response || "No response received.")}
+
+        </div>
+
+      `;
+    }
 
     status.className = "status-message";
 

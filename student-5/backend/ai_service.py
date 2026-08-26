@@ -91,10 +91,7 @@ def extract_json(text):
     return {}
 
 # Ollama Request
-def ask_ollama(
-    prompt,
-    model=None
-):
+def ask_ollama(prompt,model=None):
     """
     Send a prompt to Ollama and return
     the generated text response.
@@ -260,10 +257,7 @@ def check_ollama():
         }
 
 # Job Analysis
-def analyse_job(
-    description,
-    requirements
-):
+def analyse_job(description,requirements):
     """
     Analyse a selected job using AI.
 
@@ -385,10 +379,7 @@ Do not return explanations outside JSON.
     }
 
 # Career Agent Chat
-def career_chat(
-    message,
-    job=None
-):
+def career_chat(message,job=None):
     """
     Provide AI career and application guidance
     for a selected job.
@@ -484,3 +475,69 @@ Return a normal text response.
     return ask_smart(
         prompt
     )
+
+
+# eevaluate result for adapt 
+def evaluate_agent_result(message, tool_result):
+    """
+    OBSERVE:
+    Ask the LLM whether the tool result contains
+    enough information to answer the user's question.
+    """
+
+    prompt = f"""
+You are evaluating an AI agent tool result.
+
+USER QUESTION:
+{message}
+
+TOOL RESULT:
+{tool_result}
+
+Determine whether the tool result contains enough
+relevant information to answer the user's question.
+
+Return ONLY valid JSON:
+
+{{
+    "adequate": true,
+    "reason": "short explanation"
+}}
+
+Rules:
+
+- adequate must be true or false.
+- Set adequate to false if important information
+  is missing.
+- Do not invent information.
+"""
+
+    response = ask_fast(prompt)
+
+    from json import loads
+
+    try:
+
+        result = loads(response)
+
+        return {
+            "adequate": bool(
+                result.get(
+                    "adequate",
+                    False
+                )
+            ),
+            "reason": str(
+                result.get(
+                    "reason",
+                    ""
+                )
+            )
+        }
+
+    except Exception:
+
+        return {
+            "adequate": False,
+            "reason": "Could not evaluate tool result."
+        }

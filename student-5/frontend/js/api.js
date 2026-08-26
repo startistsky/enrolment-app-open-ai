@@ -119,6 +119,24 @@ async function sendChatMessage(message, jobId = null) {
   });
 }
 
+// AI human approval
+async function submitAIApproval(approvalId, approved, feedback = "") {
+  return apiRequest("/ai/approval", {
+    method: "POST",
+
+    body: JSON.stringify({
+      approval_id: approvalId,
+      approved: approved,
+      feedback: feedback,
+    }),
+  });
+}
+
+// AI status
+async function getAIStatus() {
+  return apiRequest("/ai/status");
+}
+
 // AI status
 async function getAIStatus() {
   return apiRequest("/ai/status");

@@ -16,6 +16,8 @@ ai_routes = Blueprint(
     __name__
 )
 
+# Add human review state - pending approvals
+pending_approvals = {}
 
 # AI status
 @ai_routes.route(
@@ -286,8 +288,17 @@ def job_agent(job_id):
             message
         )
 
-        if not result.get("success"):
+        # Store AI generated response and waiting for human approvals
+        if result.get("success") and result.get("requires_human_approval"):
+            approval_id = f"{job_id}-{id(result)}"
+            pending_approvals[approval_id] = {
+                "job_id": job_id,
+                "message": message,
+                "result": result
+        }
+        result["approval_id"] = approval_id
 
+        if not result.get("success"):
             return jsonify(
                 result
             ), 500
@@ -389,6 +400,17 @@ def ai_chat():
             message
         )
 
+        # Store AI result while waiting for human approval
+        if result.get("success") and result.get("requires_human_approval"):
+            approval_id = f"{job_id}-{id(result)}" 
+            pending_approvals[approval_id] = {
+                "job_id": job_id,
+                "message": message,
+                "result": result
+                }
+            
+        result["approval_id"] = approval_id
+
         # handle error
         if not result.get("success"):
 
@@ -404,6 +426,197 @@ def ai_chat():
 
         print(
             "AI CHAT ERROR:",
+            repr(error)
+        )
+
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 500
+
+    finally:
+
+        db.close()
+
+
+# Human review route
+@ai_routes.route(
+    "/ai/approval",
+    methods=["POST"]
+)
+def ai_approval():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    approval_id = str(
+        data.get(
+            "approval_id",
+            ""
+        )
+    ).strip()
+
+    approved = data.get(
+        "approved"
+    )
+
+    feedback = str(
+        data.get(
+            "feedback",
+            ""
+        )
+    ).strip()
+
+    if not approval_id:
+
+        return jsonify({
+            "success": False,
+            "error": "Approval ID is required."
+        }), 400
+
+    if approved is None:
+
+        return jsonify({
+            "success": False,
+            "error": "Approval decision is required."
+        }), 400
+
+    pending = pending_approvals.get(
+        approval_id
+    )
+
+    if not pending:
+
+        return jsonify({
+            "success": False,
+            "error": "Approval request not found or expired."
+        }), 404
+
+    # Human approval
+    if approved is True:
+
+        pending_approvals.pop(
+            approval_id,
+            None
+        )
+
+        return jsonify({
+            "success": True,
+            "status": "approved",
+            "message": "AI response approved.",
+            "response": pending["result"]["response"]
+        }), 200
+
+    # Human reject 
+    if not feedback:
+
+        return jsonify({
+            "success": False,
+            "error": "Feedback is required when rejecting an AI response."
+        }), 400
+
+    db = get_db()
+
+    try:
+
+        job_id = pending["job_id"]
+
+        job = db.execute(
+            """
+            SELECT *
+            FROM jobs
+            WHERE id = ?
+            """,
+            (job_id,)
+        ).fetchone()
+
+        if not job:
+
+            return jsonify({
+                "success": False,
+                "error": "Job not found."
+            }), 404
+
+        original_message = pending["message"]
+
+        # Give the human feedback to the agent
+        adapted_message = f"""
+        Original user request:
+        {original_message}
+        
+        Human reviewer rejected the previous AI response.
+        
+        Human feedback:
+        {feedback}
+        
+        Please reconsider the response using the human feedback.
+        Provide an improved answer focused on the selected job.
+        """
+
+        # Run the agent again
+        result = run_career_agent(
+            dict(job),
+            adapted_message
+        )
+
+        if not result.get("success"):
+
+            return jsonify(
+                result
+            ), 500
+
+        # Create a new approval request
+        new_approval_id = (
+            f"{job_id}-{id(result)}"
+        )
+
+        pending_approvals[
+            new_approval_id
+        ] = {
+            "job_id": job_id,
+            "message": adapted_message,
+            "result": result
+        }
+
+        # Remove old approval
+        pending_approvals.pop(
+            approval_id,
+            None
+        )
+
+        result["approval_id"] = (
+            new_approval_id
+        )
+
+        return jsonify({
+            "success": True,
+            "status": "awaiting_approval",
+            "requires_human_approval": True,
+            "approval_id": new_approval_id,
+            "response": result.get(
+                "response",
+                ""
+            ),
+            "planned_action": result.get(
+                "planned_action"
+            ),
+            "action": result.get(
+                "action"
+            ),
+            "observation": result.get(
+                "observation"
+            ),
+            "adapted": result.get(
+                "adapted",
+                False
+            )
+        }), 200
+
+    except Exception as error:
+
+        print(
+            "AI APPROVAL ERROR:",
             repr(error)
         )
 
