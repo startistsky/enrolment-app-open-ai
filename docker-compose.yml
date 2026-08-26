@@ -125,22 +125,22 @@ services:
   student5-database:
     build:
       context: .
-      dockerfile: student-5/database/Dockerfile
+      dockerfile: student-5/Dockerfile
 
     ports:
       - "5005:5005"
 
     environment:
-      DATABASE_PATH: /data/database.db
+      DATABASE_PATH: /data/career.db
 
     volumes:
-      - student5-database-data:/data
+      - student5-career-data:/data
 
 
   student5-backend:
     build:
       context: .
-      dockerfile: student-5/backend/Dockerfile
+      dockerfile: student-5/Dockerfile
 
     ports:
       - "8005:8005"
@@ -157,7 +157,7 @@ services:
   student5-frontend:
     build:
       context: .
-      dockerfile: student-5/frontend/Dockerfile
+      dockerfile: student-5/Dockerfile
 
     ports:
       - "8085:80"

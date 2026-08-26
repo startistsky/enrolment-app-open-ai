@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5005";
+const API_URL = "http://localhost:5005/api";
 
 async function apiRequest(url, options = {}) {
   const response = await fetch(`${API_URL}${url}`, {
@@ -27,57 +27,57 @@ async function apiRequest(url, options = {}) {
 
 // Jobs
 async function getJobs(params = "") {
-  return apiRequest(`/api/jobs${params}`);
+  return apiRequest(`/jobs${params}`);
 }
 
 async function getJob(id) {
-  return apiRequest(`/api/jobs/${id}`);
+  return apiRequest(`/jobs/${id}`);
 }
 
 async function createJobAPI(data) {
-  return apiRequest("/api/jobs", {
+  return apiRequest("/jobs", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 async function updateJobAPI(id, data) {
-  return apiRequest(`/api/jobs/${id}`, {
+  return apiRequest(`/jobs/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
 }
 
 async function deleteJobAPI(id) {
-  return apiRequest(`/api/jobs/${id}`, {
+  return apiRequest(`/jobs/${id}`, {
     method: "DELETE",
   });
 }
 
 // Saved jobs
 async function getSavedJobs() {
-  return apiRequest("/api/saved");
+  return apiRequest("/saved");
 }
 
 async function saveJobAPI(id) {
-  return apiRequest(`/api/saved/${id}`, {
+  return apiRequest(`/saved/${id}`, {
     method: "POST",
   });
 }
 
 async function deleteSavedJobAPI(id) {
-  return apiRequest(`/api/saved/${id}`, {
+  return apiRequest(`/saved/${id}`, {
     method: "DELETE",
   });
 }
 
 // Applications
 async function getApplications() {
-  return apiRequest("/api/applications");
+  return apiRequest("/applications");
 }
 
 async function createApplication(jobId) {
-  return apiRequest("/api/applications", {
+  return apiRequest("/applications", {
     method: "POST",
 
     body: JSON.stringify({
@@ -88,28 +88,28 @@ async function createApplication(jobId) {
 }
 
 async function updateApplicationAPI(id, data) {
-  return apiRequest(`/api/applications/${id}`, {
+  return apiRequest(`/applications/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
 }
 
 async function deleteApplicationAPI(id) {
-  return apiRequest(`/api/applications/${id}`, {
+  return apiRequest(`/applications/${id}`, {
     method: "DELETE",
   });
 }
 
 // AI job analysis
 async function analyseJobAPI(id) {
-  return apiRequest(`/api/jobs/${id}/analyse`, {
+  return apiRequest(`/jobs/${id}/analyse`, {
     method: "POST",
   });
 }
 
 // AI career agent chat for a selected chat
 async function sendChatMessage(message, jobId = null) {
-  return apiRequest("/api/ai/chat", {
+  return apiRequest("/ai/chat", {
     method: "POST",
 
     body: JSON.stringify({
@@ -121,5 +121,5 @@ async function sendChatMessage(message, jobId = null) {
 
 // AI status
 async function getAIStatus() {
-  return apiRequest("/api/ai/status");
+  return apiRequest("/ai/status");
 }
