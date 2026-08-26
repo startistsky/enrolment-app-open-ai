@@ -4,7 +4,8 @@ from database import get_db
 
 from ai_service import (
     analyse_job,
-    check_ollama
+    check_ollama, 
+    career_chat
 )
 
 from agent import (
@@ -271,6 +272,91 @@ def job_agent(job_id):
             "CAREER AGENT ERROR:",
             repr(error)
         )
+
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 500
+
+    finally:
+
+        db.close()
+
+# AI chat 
+
+@ai_routes.route(
+    "/ai/chat",
+    methods=["POST"]
+)
+def ai_chat():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    message = str(
+        data.get("message", "")
+    ).strip()
+
+    job_id = data.get("job_id")
+
+    if not message:
+
+        return jsonify({
+            "success": False,
+            "error": "Message is required."
+        }), 400
+
+    if not job_id:
+
+        return jsonify({
+            "success": False,
+            "error": "Job ID is required."
+        }), 400
+
+    db = get_db()
+
+    try:
+
+        job = db.execute(
+            """
+            SELECT
+                id,
+                title,
+                company,
+                location,
+                industry,
+                job_type,
+                description,
+                requirements,
+                salary,
+                application_url
+            FROM jobs
+            WHERE id = ?
+            """,
+            (job_id,)
+        ).fetchone()
+
+        if not job:
+
+            return jsonify({
+                "success": False,
+                "error": "Job not found."
+            }), 404
+
+        job = dict(job)
+
+        result = career_chat(
+            message,
+            job
+        )
+
+        return jsonify({
+            "success": True,
+            "response": result
+        })
+
+    except Exception as error:
 
         return jsonify({
             "success": False,

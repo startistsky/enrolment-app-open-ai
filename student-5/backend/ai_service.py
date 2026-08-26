@@ -150,6 +150,7 @@ def ask_ollama(
         )
 
 # AI Modes
+# fast AI
 def ask_fast(prompt):
     """
     General-purpose AI request.
@@ -160,7 +161,7 @@ def ask_fast(prompt):
         OLLAMA_MODEL
     )
 
-
+# smart AI
 def ask_smart(prompt):
     """
     More deliberate AI request.

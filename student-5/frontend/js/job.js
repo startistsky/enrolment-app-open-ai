@@ -405,7 +405,7 @@ async function sendMessage() {
 
   const status = document.getElementById("chat-message");
 
-  if (!input || !chat || !status || !jobId) {
+  if (!input || !chat || !status) {
     return;
   }
 
@@ -415,16 +415,12 @@ async function sendMessage() {
     return;
   }
 
-  // User message
+  // Show user message
 
   chat.innerHTML += `
-
     <div class="user-message">
-
       ${escapeHtml(message)}
-
     </div>
-
   `;
 
   input.value = "";
@@ -436,16 +432,14 @@ async function sendMessage() {
   try {
     const result = await sendChatMessage(message, jobId);
 
-    const response = result.response || "No response received.";
+    if (!result.success) {
+      throw new Error(result.error || "AI request failed.");
+    }
 
     chat.innerHTML += `
-
       <div class="ai-message">
-
-        ${escapeHtml(response)}
-
+        ${escapeHtml(result.response || "No response received.")}
       </div>
-
     `;
 
     status.className = "status-message";
@@ -454,7 +448,7 @@ async function sendMessage() {
 
     chat.scrollTop = chat.scrollHeight;
   } catch (error) {
-    console.error("Career Agent chat error:", error);
+    console.error("Career Agent error:", error);
 
     status.className = "status-message error";
 

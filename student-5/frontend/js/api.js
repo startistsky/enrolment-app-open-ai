@@ -107,7 +107,7 @@ async function analyseJobAPI(id) {
   });
 }
 
-// AI career agent
+// AI career agent chat for a selected chat
 async function sendChatMessage(message, jobId = null) {
   return apiRequest("/api/ai/chat", {
     method: "POST",
