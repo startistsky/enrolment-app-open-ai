@@ -31,129 +31,26 @@
     </header>
 
     <main>
-      <!-- HERO -->
+      <!-- Hero -->
 
       <section class="hero">
-        <span class="eyebrow"> CAREER & INTERNSHIP AGENT </span>
+        <span class="eyebrow"> CAREER & INTERNSHIP PLATFORM </span>
 
         <h1>Find opportunities that fit your career.</h1>
 
         <p>
-          Build your career profile and let the Career Agent match your skills,
-          goals and experience with available jobs.
+          Browse graduate jobs, internships and early-career opportunities. Use
+          our AI tools to understand jobs and prepare your application.
         </p>
       </section>
 
-      <!-- CAREER PROFILE -->
-
-      <section class="profile-section">
-        <div class="section-head">
-          <div>
-            <span class="section-label"> CAREER PROFILE </span>
-
-            <h2>Tell the agent about yourself</h2>
-
-            <p>Your profile is used to improve job recommendations.</p>
-          </div>
-        </div>
-
-        <form id="profile-form">
-          <div class="form-grid">
-            <div class="form-group">
-              <label> Preferred Locations </label>
-
-              <input id="locations" placeholder="Sydney, Melbourne" />
-            </div>
-
-            <div class="form-group">
-              <label> Preferred Industries </label>
-
-              <input id="industries" placeholder="Technology, Finance" />
-            </div>
-
-            <div class="form-group">
-              <label> Preferred Job Types </label>
-
-              <input id="job-types" placeholder="Graduate, Internship" />
-            </div>
-
-            <div class="form-group">
-              <label> Education </label>
-
-              <input
-                id="education"
-                placeholder="Bachelor of Computer Science"
-              />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label> Skills </label>
-
-            <textarea
-              id="skills"
-              placeholder="Python, SQL, JavaScript, React..."
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label> Experience </label>
-
-            <textarea
-              id="experience"
-              placeholder="Projects, internships or previous work..."
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label> Career Goals </label>
-
-            <textarea
-              id="career-goals"
-              placeholder="Become a software engineer..."
-            ></textarea>
-          </div>
-
-          <button type="submit" class="secondary-button">
-            Save Career Profile
-          </button>
-
-          <p id="profile-message" class="status-message"></p>
-        </form>
-      </section>
-
-      <!-- CAREER AGENT -->
-
-      <section class="agent-section">
-        <div class="agent-header">
-          <div>
-            <span class="agent-label"> AI CAREER AGENT </span>
-
-            <h2>Find My Opportunities</h2>
-
-            <p>
-              The agent analyses your profile, evaluates available jobs,
-              considers ATS requirements and recommends the strongest matches.
-            </p>
-          </div>
-
-          <button id="agent-button" class="primary-button" onclick="runAgent()">
-            Find My Opportunities
-          </button>
-        </div>
-
-        <p id="agent-status" class="status-message"></p>
-
-        <div id="agent-results" class="job-grid"></div>
-      </section>
-
-      <!-- SEARCH -->
+      <!-- Search -->
 
       <section class="search-section">
         <div class="search-title">
           <span class="section-label"> JOB SEARCH </span>
 
-          <h2>Browse all opportunities</h2>
+          <h2>Browse opportunities</h2>
         </div>
 
         <div class="search-controls">
@@ -191,11 +88,13 @@
             <option>Full-time</option>
           </select>
 
-          <button onclick="searchJobs()" class="primary-button">Search</button>
+          <button type="button" onclick="searchJobs()" class="primary-button">
+            Search
+          </button>
         </div>
       </section>
 
-      <!-- JOBS -->
+      <!-- Jobs -->
 
       <section>
         <div class="section-head">
@@ -211,6 +110,8 @@
         </div>
       </section>
     </main>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
 
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
 

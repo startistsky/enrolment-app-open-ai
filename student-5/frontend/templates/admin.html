@@ -39,6 +39,8 @@
         <p>Create, edit and remove opportunities.</p>
       </section>
 
+      <!-- Job Form -->
+
       <section>
         <div class="section-head">
           <div>
@@ -51,31 +53,31 @@
         <form id="job-form">
           <div class="form-grid">
             <div class="form-group">
-              <label> Job Title </label>
+              <label for="title"> Job Title </label>
 
               <input id="title" required />
             </div>
 
             <div class="form-group">
-              <label> Company </label>
+              <label for="company"> Company </label>
 
               <input id="company" required />
             </div>
 
             <div class="form-group">
-              <label> Location </label>
+              <label for="location"> Location </label>
 
               <input id="location" />
             </div>
 
             <div class="form-group">
-              <label> Industry </label>
+              <label for="industry"> Industry </label>
 
               <input id="industry" />
             </div>
 
             <div class="form-group">
-              <label> Job Type </label>
+              <label for="job-type"> Job Type </label>
 
               <select id="job-type">
                 <option value="">Select type</option>
@@ -91,28 +93,28 @@
             </div>
 
             <div class="form-group">
-              <label> Salary </label>
+              <label for="salary"> Salary </label>
 
               <input id="salary" />
             </div>
           </div>
 
           <div class="form-group">
-            <label> Description </label>
+            <label for="description"> Description </label>
 
             <textarea id="description"></textarea>
           </div>
 
           <div class="form-group">
-            <label> Requirements </label>
+            <label for="requirements"> Requirements </label>
 
             <textarea id="requirements"></textarea>
           </div>
 
           <div class="form-group">
-            <label> Application URL </label>
+            <label for="application-url"> Application URL </label>
 
-            <input id="application-url" />
+            <input id="application-url" type="url" />
           </div>
 
           <button type="submit" class="primary-button">Save Job</button>
@@ -130,6 +132,8 @@
         </form>
       </section>
 
+      <!-- Existing Jobs -->
+
       <section>
         <div class="section-head">
           <div>
@@ -142,6 +146,8 @@
         <div id="admin-jobs" class="job-grid"></div>
       </section>
     </main>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
 
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
 

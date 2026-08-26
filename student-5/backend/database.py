@@ -1,10 +1,7 @@
 import os
 import sqlite3
 
-# ============================================================
-# DATABASE CONFIGURATION
-# ============================================================
-
+# Databse config
 BASE_DIR = os.path.dirname(
     os.path.dirname(
         os.path.abspath(__file__)
@@ -22,10 +19,7 @@ DATABASE = os.path.join(
 )
 
 
-# ============================================================
-# DATABASE CONNECTION
-# ============================================================
-
+# Database connection
 def get_db():
 
     os.makedirs(
@@ -49,9 +43,7 @@ def get_db():
     return db
 
 
-# ============================================================
-# HELPERS
-# ============================================================
+# Helpers 
 
 def column_exists(
     db,
@@ -90,19 +82,14 @@ def add_column_if_missing(
         )
 
 
-# ============================================================
-# INITIALISE DATABASE
-# ============================================================
+# Init table
+# jobs, saved jobs, applications, ai job analysis
 
 def init_db():
 
     db = get_db()
 
     try:
-
-        # ----------------------------------------------------
-        # JOBS
-        # ----------------------------------------------------
 
         db.execute(
             """
@@ -134,48 +121,6 @@ def init_db():
             """
         )
 
-
-        # ----------------------------------------------------
-        # CAREER PROFILE
-        # ----------------------------------------------------
-
-        db.execute(
-            """
-            CREATE TABLE IF NOT EXISTS career_profile (
-
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-                name TEXT,
-
-                email TEXT,
-
-                education TEXT,
-
-                skills TEXT,
-
-                experience TEXT,
-
-                interests TEXT,
-
-                career_goals TEXT,
-
-                preferred_locations TEXT,
-
-                preferred_industries TEXT,
-
-                preferred_job_types TEXT,
-
-                updated_at
-                    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-
-
-        # ----------------------------------------------------
-        # SAVED JOBS
-        # ----------------------------------------------------
-
         db.execute(
             """
             CREATE TABLE IF NOT EXISTS saved_jobs (
@@ -195,11 +140,6 @@ def init_db():
             )
             """
         )
-
-
-        # ----------------------------------------------------
-        # APPLICATIONS
-        # ----------------------------------------------------
 
         db.execute(
             """
@@ -222,11 +162,6 @@ def init_db():
             )
             """
         )
-
-
-        # ----------------------------------------------------
-        # AI JOB ANALYSIS
-        # ----------------------------------------------------
 
         db.execute(
             """
@@ -253,130 +188,7 @@ def init_db():
             """
         )
 
-
-        # ----------------------------------------------------
-        # AGENT RUNS
-        # ----------------------------------------------------
-
-        db.execute(
-            """
-            CREATE TABLE IF NOT EXISTS agent_runs (
-
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-                agent_name TEXT,
-
-                action TEXT,
-
-                input_data TEXT,
-
-                output_data TEXT,
-
-                iteration INTEGER,
-
-                created_at
-                    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-
-
-        # ====================================================
-        # DATABASE MIGRATIONS
-        # ====================================================
-
-        # This is the important part for your current error.
-        #
-        # Your existing career_profile table was created
-        # before education was added.
-        #
-        # CREATE TABLE IF NOT EXISTS does NOT modify an
-        # existing table.
-        #
-        # Therefore we explicitly add missing columns.
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "name",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "email",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "education",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "skills",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "experience",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "interests",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "career_goals",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "preferred_locations",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "preferred_industries",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "preferred_job_types",
-            "TEXT"
-        )
-
-        add_column_if_missing(
-            db,
-            "career_profile",
-            "updated_at",
-            "TIMESTAMP"
-        )
-
-
-        # ----------------------------------------------------
-        # APPLICATION MIGRATIONS
-        # ----------------------------------------------------
-
+        # Application migration
         add_column_if_missing(
             db,
             "applications",
@@ -392,10 +204,7 @@ def init_db():
         )
 
 
-        # ----------------------------------------------------
-        # JOB MIGRATIONS
-        # ----------------------------------------------------
-
+        # Job migration
         add_column_if_missing(
             db,
             "jobs",
@@ -411,10 +220,7 @@ def init_db():
         )
 
 
-        # ----------------------------------------------------
-        # COMMIT
-        # ----------------------------------------------------
-
+        # Commit
         db.commit()
 
     except Exception:

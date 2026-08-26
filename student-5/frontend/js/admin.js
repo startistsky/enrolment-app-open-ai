@@ -1,19 +1,12 @@
-// =========================================================
-// ADMIN JOB MANAGEMENT
-// =========================================================
-
 const jobForm = document.getElementById("job-form");
 
 const jobsContainer = document.getElementById("admin-jobs");
 
-const statusMessage = document.getElementById("admin-status");
+const statusMessage = document.getElementById("job-message");
 
 let editingJobId = null;
 
-// =========================================================
 // Status
-// =========================================================
-
 function showStatus(message, type = "success") {
   if (!statusMessage) {
     return;
@@ -22,8 +15,6 @@ function showStatus(message, type = "success") {
   statusMessage.textContent = message;
 
   statusMessage.className = `status-message ${type}`;
-
-  statusMessage.style.display = "block";
 }
 
 function clearStatus() {
@@ -34,14 +25,9 @@ function clearStatus() {
   statusMessage.textContent = "";
 
   statusMessage.className = "status-message";
-
-  statusMessage.style.display = "none";
 }
 
-// =========================================================
-// Get form data
-// =========================================================
-
+// Form data
 function getJobFormData() {
   return {
     title: document.getElementById("title").value.trim(),
@@ -64,10 +50,8 @@ function getJobFormData() {
   };
 }
 
-// =========================================================
-// Create / Update
-// =========================================================
 
+// Create update job
 async function saveAdminJob(event) {
   event.preventDefault();
 
@@ -83,11 +67,11 @@ async function saveAdminJob(event) {
 
   try {
     if (editingJobId) {
-      await updateJob(editingJobId, job);
+      await updateJobAPI(editingJobId, job);
 
       showStatus("Job updated successfully.", "success");
     } else {
-      await createJob(job);
+      await createJobAPI(job);
 
       showStatus("Job created successfully.", "success");
     }
@@ -106,11 +90,13 @@ async function saveAdminJob(event) {
   }
 }
 
-// =========================================================
-// Load jobs
-// =========================================================
 
+// Load Jobs
 async function loadAdminJobs() {
+  if (!jobsContainer) {
+    return;
+  }
+
   try {
     const jobs = await getJobs();
 
@@ -118,10 +104,12 @@ async function loadAdminJobs() {
 
     if (!jobs.length) {
       jobsContainer.innerHTML = `
-                <p>
-                    No jobs available.
-                </p>
-                `;
+
+        <p>
+          No jobs available.
+        </p>
+
+      `;
 
       return;
     }
@@ -129,79 +117,105 @@ async function loadAdminJobs() {
     jobs.forEach((job) => {
       jobsContainer.innerHTML += `
 
-                    <div class="job-card">
+        <article class="job-card">
 
-                        <h3>
-                            ${escapeHTML(job.title)}
-                        </h3>
 
-                        <p class="company">
-                            ${escapeHTML(job.company)}
-                        </p>
+          <h3>
 
-                        <p>
-                            📍
-                            ${escapeHTML(job.location || "Not specified")}
-                        </p>
+            ${escapeHtml(job.title)}
 
-                        <p>
-                            ${escapeHTML(job.industry || "No industry")}
-                        </p>
+          </h3>
 
-                        <span class="tag">
-                            ${escapeHTML(job.job_type || "Not specified")}
-                        </span>
 
-                        <p>
-                            ${escapeHTML(job.description || "")}
-                        </p>
+          <p class="company">
 
-                        <div
-                            class="admin-actions"
-                        >
+            ${escapeHtml(job.company)}
 
-                            <a
-                                href="/job.html?id=${job.id}"
-                            >
-                                View
-                            </a>
+          </p>
 
-                            <button
-                                type="button"
-                                onclick="editJob(${job.id})"
-                            >
-                                Edit
-                            </button>
 
-                            <button
-                                type="button"
-                                class="danger-button"
-                                onclick="removeJob(${job.id})"
-                            >
-                                Delete
-                            </button>
+          <p>
 
-                        </div>
+            📍
 
-                    </div>
-                `;
+            ${escapeHtml(job.location || "Not specified")}
+
+          </p>
+
+
+          <p>
+
+            ${escapeHtml(job.industry || "No industry")}
+
+          </p>
+
+
+          <span class="tag">
+
+            ${escapeHtml(job.job_type || "Not specified")}
+
+          </span>
+
+
+          <p>
+
+            ${escapeHtml(job.description || "")}
+
+          </p>
+
+
+          <div
+            class="admin-actions"
+          >
+
+            <a
+              href="/job.html?id=${job.id}"
+            >
+              View
+            </a>
+
+
+            <button
+              type="button"
+              onclick="editJob(${job.id})"
+            >
+              Edit
+            </button>
+
+
+            <button
+              type="button"
+              class="danger-button"
+              onclick="removeJob(${job.id})"
+            >
+              Delete
+            </button>
+
+          </div>
+
+
+        </article>
+
+      `;
     });
   } catch (error) {
     console.error(error);
 
     jobsContainer.innerHTML = `
-            <p class="error">
-                Could not load jobs:
-                ${escapeHTML(error.message)}
-            </p>
-        `;
+
+      <p class="status-message error">
+
+        Could not load jobs:
+
+        ${escapeHtml(error.message)}
+
+      </p>
+
+    `;
   }
 }
 
-// =========================================================
-// Edit
-// =========================================================
-
+// Edit Job
 async function editJob(id) {
   clearStatus();
 
@@ -236,17 +250,20 @@ async function editJob(id) {
       behavior: "smooth",
     });
 
-    showStatus(`Editing "${job.title}".`, "success");
+    showStatus(`Editing "${job.title}".`, "info");
   } catch (error) {
     showStatus(error.message || "Could not load job.", "error");
   }
 }
 
-// =========================================================
-// Delete
-// =========================================================
-
+// Delete Job
 async function removeJob(id) {
+  const confirmed = confirm("Are you sure you want to delete this job?");
+
+  if (!confirmed) {
+    return;
+  }
+
   clearStatus();
 
   try {
@@ -260,41 +277,49 @@ async function removeJob(id) {
   }
 }
 
-// =========================================================
-// Cancel edit
-// =========================================================
-
+// Cancel Edit
 function cancelEdit() {
   editingJobId = null;
 
-  jobForm.reset();
+  if (jobForm) {
+    jobForm.reset();
+  }
 
   updateFormMode();
 
   clearStatus();
 }
 
-// =========================================================
-// Form mode
-// =========================================================
-
+// Form Mode
 function updateFormMode() {
-  const submitButton = document.getElementById("job-submit");
+  const submitButton = document.querySelector(
+    "#job-form button[type='submit']",
+  );
 
   const cancelButton = document.getElementById("cancel-edit");
 
-  if (!submitButton) {
-    return;
-  }
+  const formTitle = document.getElementById("form-title");
 
   if (editingJobId) {
-    submitButton.textContent = "Update Job";
+    if (submitButton) {
+      submitButton.textContent = "Update Job";
+    }
+
+    if (formTitle) {
+      formTitle.textContent = "Edit Job";
+    }
 
     if (cancelButton) {
       cancelButton.style.display = "inline-block";
     }
   } else {
-    submitButton.textContent = "Create Job";
+    if (submitButton) {
+      submitButton.textContent = "Save Job";
+    }
+
+    if (formTitle) {
+      formTitle.textContent = "Add Job";
+    }
 
     if (cancelButton) {
       cancelButton.style.display = "none";
@@ -302,33 +327,20 @@ function updateFormMode() {
   }
 }
 
-// =========================================================
-// Basic HTML escaping
-// =========================================================
-
-function escapeHTML(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-// =========================================================
 // Events
-// =========================================================
-
 if (jobForm) {
   jobForm.addEventListener("submit", saveAdminJob);
 }
 
-// =========================================================
-// Start
-// =========================================================
+const cancelButton = document.getElementById("cancel-edit");
 
-if (jobsContainer) {
-  loadAdminJobs();
+if (cancelButton) {
+  cancelButton.addEventListener("click", cancelEdit);
 }
 
-updateFormMode();
+// Start
+document.addEventListener("DOMContentLoaded", () => {
+  loadAdminJobs();
+
+  updateFormMode();
+});
