@@ -1,0 +1,76 @@
+name: Student 5 - AI Career Agent
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test-student-5:
+    name: Student 5 AI Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # --------------------------------
+      # Checkout
+      # --------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --------------------------------
+      # Python
+      # --------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # --------------------------------
+      # Install dependencies
+      # --------------------------------
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f backend/requirements.txt ]; then
+            pip install -r backend/requirements.txt
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      # --------------------------------
+      # Python syntax check
+      # --------------------------------
+      - name: Check Python files
+        run: |
+          python -m compileall backend
+
+      # --------------------------------
+      # Import check
+      # --------------------------------
+      - name: Check AI modules
+        working-directory: backend
+        env:
+          OLLAMA_URL: http://localhost:11434
+          OLLAMA_MODEL: qwen2.5:3b
+        run: |
+          python -c "import ai_service"
+          python -c "import agent"
+          python -c "import ai_routes"
+
+      # --------------------------------
+      # Run tests if available
+      # --------------------------------
+      - name: Run tests
+        run: |
+          if [ -d tests ]; then
+            python -m pytest tests -v
+          else
+            echo "No tests directory found."
+            echo "Python compilation and AI module checks completed."
+          fi
