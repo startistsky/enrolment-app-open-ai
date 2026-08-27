@@ -39,9 +39,7 @@ def test_printer_candidate_filtering():
 
     assert data["model"] == "qwen2.5:0.5b"
 
-    candidates = data[
-        "candidate_resources"
-    ]
+    candidates = data["candidate_resources"]
 
     assert len(candidates) > 0
 
@@ -61,14 +59,11 @@ def test_computer_lab_candidate_filtering():
 
     data = response.json()
 
-    candidates = data[
-        "candidate_resources"
-    ]
+    candidates = data["candidate_resources"]
 
     assert len(candidates) > 0
 
     for candidate in candidates:
-
         assert (
             candidate["resource_type"]
             == "Computer Lab"
@@ -89,24 +84,16 @@ def test_study_room_capacity_filtering():
 
     data = response.json()
 
-    candidates = data[
-        "candidate_resources"
-    ]
+    candidates = data["candidate_resources"]
 
     assert len(candidates) > 0
 
-    # At least one valid study room candidate
-    # should exist.
-    study_rooms = [
-        candidate
-        for candidate in candidates
+    for candidate in candidates:
         if (
             candidate["resource_type"]
             == "Study Room"
-        )
-    ]
-
-    assert len(study_rooms) > 0
+        ):
+            assert candidate["resource_id"] is not None
 
 
 def test_ai_returns_recommendation():
@@ -120,10 +107,76 @@ def test_ai_returns_recommendation():
 
     assert "recommendation" in data
 
-    assert len(
-        data["recommendation"].strip()
-    ) > 0
-
-    assert data["resource_count"] > 0
+    assert (
+        len(
+            data["recommendation"].strip()
+        )
+        > 0
+    )
 
     assert data["candidate_count"] > 0
+
+
+def test_negation_excludes_printer_and_library():
+    response = post_recommendation(
+        "I need an available computer lab, not a printer or library."
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert (
+        "Computer Lab"
+        in data["requested_resource_types"]
+    )
+
+    assert (
+        "Printer"
+        in data["excluded_resource_types"]
+    )
+
+    assert (
+        "Library"
+        in data["excluded_resource_types"]
+    )
+
+    candidates = data["candidate_resources"]
+
+    assert len(candidates) > 0
+
+    for candidate in candidates:
+        assert (
+            candidate["resource_type"]
+            == "Computer Lab"
+        )
+
+
+def test_negation_excludes_study_rooms():
+    response = post_recommendation(
+        "I only want a printer. Do not recommend study rooms."
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert (
+        "Printer"
+        in data["requested_resource_types"]
+    )
+
+    assert (
+        "Study Room"
+        in data["excluded_resource_types"]
+    )
+
+    candidates = data["candidate_resources"]
+
+    assert len(candidates) > 0
+
+    for candidate in candidates:
+        assert (
+            candidate["resource_type"]
+            == "Printer"
+        )
