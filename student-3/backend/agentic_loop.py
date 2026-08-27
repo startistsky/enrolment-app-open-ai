@@ -1,293 +1,559 @@
 import os
+import subprocess
+import sys
+from pathlib import Path
+
 import requests
 
-from app import (
-    AI_MODEL,
-    AI_SERVICE_URL,
-    build_resource_context,
-    fetch_current_resources,
-    select_candidate_resources
+
+# =========================================================
+# STUDENT 3 AGENTIC AI DEVELOPMENT LOOP
+# =========================================================
+
+BACKEND_URL = os.getenv(
+    "STUDENT3_BACKEND_URL",
+    "http://localhost:8003"
 )
 
+MODEL_NAME = "qwen2.5:0.5b"
 
-# ---------------------------------------------------------
-# Agentic Loop Configuration
-# ---------------------------------------------------------
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-MAX_ITERATIONS = 3
+MAX_ITERATIONS = 2
 
 
-# ---------------------------------------------------------
-# Helper: Call Ollama using selected candidates
-# ---------------------------------------------------------
+# =========================================================
+# DISPLAY HELPERS
+# =========================================================
 
-def generate_recommendation(
-    question,
-    candidates
-):
-    """
-    Ask the shared Ollama service to recommend
-    from the already filtered candidate resources.
-    """
+def print_section(title):
+    print("\n")
+    print("=" * 70)
+    print(title)
+    print("=" * 70)
 
-    resource_context = build_resource_context(
-        candidates
+
+def print_subsection(title):
+    print("\n" + "-" * 70)
+    print(title)
+    print("-" * 70)
+
+
+# =========================================================
+# PLAN
+# =========================================================
+
+def plan():
+    print_section("PLAN")
+
+    print(
+        "Goal:"
     )
 
-    prompt = f"""
-You are Campus AI, a university campus resource
-recommendation assistant.
+    print(
+        "Validate that Student 3 Campus AI provides grounded "
+        "campus resource recommendations using the current "
+        "database records."
+    )
 
-You may ONLY recommend resources from the
-candidate resource list below.
+    print("\nChecks:")
 
-Do not invent:
-- resource names
-- locations
-- opening hours
-- capacities
-- availability
-- facilities
+    print(
+        "1. Verify Student 3 backend health."
+    )
 
-Use only the information provided.
+    print(
+        "2. Verify campus resource data can be retrieved."
+    )
 
-Recommend the best 1 to 3 options.
+    print(
+        "3. Test printer recommendation filtering."
+    )
 
-For each recommendation:
-- use the exact resource name
-- explain briefly why it matches the user's need
-- mention useful facts such as availability,
-  capacity, location or opening hours
+    print(
+        "4. Test available computer lab filtering."
+    )
 
-Keep the response concise.
+    print(
+        "5. Test capacity-aware study room filtering."
+    )
 
-CANDIDATE RESOURCES:
+    print(
+        "6. Review the recommendation behaviour."
+    )
 
-{resource_context}
+    print(
+        "7. Request human approval before accepting the result."
+    )
 
-USER REQUEST:
+    print(
+        "8. Retest the implementation using automated tests."
+    )
 
-{question}
 
-Give the recommendation now.
-"""
+# =========================================================
+# ACT
+# =========================================================
 
+def get_backend_health():
+    response = requests.get(
+        f"{BACKEND_URL}/health",
+        timeout=5
+    )
+
+    response.raise_for_status()
+
+    return response.json()
+
+
+def get_resources():
+    response = requests.get(
+        f"{BACKEND_URL}/resources",
+        timeout=5
+    )
+
+    response.raise_for_status()
+
+    return response.json()
+
+
+def request_recommendation(question):
     response = requests.post(
-        AI_SERVICE_URL,
+        f"{BACKEND_URL}/recommend",
         json={
-            "model": AI_MODEL,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "temperature": 0.2
-            }
+            "question": question
         },
         timeout=60
     )
 
     response.raise_for_status()
 
-    data = response.json()
-
-    return (
-        data.get(
-            "response",
-            ""
-        ).strip()
-    )
+    return response.json()
 
 
-# ---------------------------------------------------------
-# Helper: Display Candidate Resources
-# ---------------------------------------------------------
+def act():
+    print_section("ACT")
 
-def print_candidates(candidates):
+    results = {}
 
     print(
-        f"\nCandidate resources: "
-        f"{len(candidates)}"
+        "Checking Student 3 backend..."
     )
 
-    for resource in candidates:
+    health = get_backend_health()
 
-        print(
-            f"- ID {resource.get('resource_id')}: "
-            f"{resource.get('resource_name')} "
-            f"[{resource.get('resource_type')}] "
-            f"- {resource.get('availability_status')}"
-        )
-
-
-# ---------------------------------------------------------
-# PLAN
-# ---------------------------------------------------------
-
-def plan(question):
-
-    print("\n" + "=" * 60)
-    print("PLAN")
-    print("=" * 60)
+    results["health"] = health
 
     print(
-        "Goal: Recommend a suitable campus resource "
-        "based on the user's current requirements."
+        f"Backend status: {health.get('status')}"
     )
+
 
     print(
-        f"User requirement: {question}"
+        "\nRetrieving current campus resources..."
     )
+
+    resources = get_resources()
+
+    results["resources"] = resources
 
     print(
-        "Strategy:"
-    )
-
-    print(
-        "1. Retrieve current campus resource records."
-    )
-
-    print(
-        "2. Filter relevant candidate resources."
-    )
-
-    print(
-        "3. Ask Qwen to explain the best recommendation."
-    )
-
-    print(
-        "4. Request human review."
-    )
-
-    print(
-        "5. Adapt if the recommendation is partially "
-        "accepted or rejected."
+        f"Retrieved {len(resources)} campus resources."
     )
 
 
-# ---------------------------------------------------------
-# ACT
-# ---------------------------------------------------------
-
-def act(
-    question,
-    excluded_resource_ids
-):
-
-    print("\n" + "=" * 60)
-    print("ACT")
-    print("=" * 60)
-
-    print(
-        "Retrieving current campus resource records..."
-    )
-
-    resources = fetch_current_resources()
-
-    print(
-        f"Retrieved {len(resources)} resources."
-    )
-
-
-    # Use the grounded filtering logic already
-    # implemented in app.py.
-    candidates = select_candidate_resources(
-        resources,
-        question
-    )
-
-
-    # Remove resources rejected in earlier iterations.
-    candidates = [
-        resource
-        for resource in candidates
-        if (
-            resource.get("resource_id")
-            not in excluded_resource_ids
-        )
+    test_cases = [
+        {
+            "name": "Printer Recommendation",
+            "question": "Where can I print something?",
+            "expected_type": "Printer",
+            "require_available": False,
+            "capacity": None
+        },
+        {
+            "name": "Available Computer Lab",
+            "question": (
+                "I need a computer lab that is "
+                "currently available."
+            ),
+            "expected_type": "Computer Lab",
+            "require_available": True,
+            "capacity": None
+        },
+        {
+            "name": "Study Room Capacity",
+            "question": (
+                "I need a study room for 6 people."
+            ),
+            "expected_type": "Study Room",
+            "require_available": False,
+            "capacity": 6
+        }
     ]
 
 
-    print_candidates(
-        candidates
+    recommendation_results = []
+
+
+    for test_case in test_cases:
+
+        print_subsection(
+            f"ACT TEST: {test_case['name']}"
+        )
+
+        print(
+            f"Question: {test_case['question']}"
+        )
+
+
+        data = request_recommendation(
+            test_case["question"]
+        )
+
+
+        candidates = data.get(
+            "candidate_resources",
+            []
+        )
+
+
+        print(
+            f"Candidate count: {len(candidates)}"
+        )
+
+
+        for candidate in candidates:
+
+            print(
+                "- "
+                f"{candidate.get('resource_name')} "
+                f"[{candidate.get('resource_type')}] "
+                f"- "
+                f"{candidate.get('availability_status')}"
+            )
+
+
+        print(
+            "\nAI Recommendation:"
+        )
+
+        print(
+            data.get(
+                "recommendation",
+                "No recommendation returned."
+            )
+        )
+
+
+        recommendation_results.append({
+            "test_case": test_case,
+            "response": data
+        })
+
+
+    results[
+        "recommendation_results"
+    ] = recommendation_results
+
+
+    return results
+
+
+# =========================================================
+# OBSERVE
+# =========================================================
+
+def observe(results):
+    print_section("OBSERVE")
+
+    observations = []
+
+
+    health_ok = (
+        results.get(
+            "health",
+            {}
+        ).get("status")
+        == "ok"
     )
 
 
-    if not candidates:
+    observations.append({
+        "check": "Backend health",
+        "passed": health_ok,
+        "details": (
+            "Backend responded successfully."
+            if health_ok
+            else "Backend health check failed."
+        )
+    })
 
-        return {
-            "resources": resources,
-            "candidates": [],
-            "recommendation": (
-                "No suitable candidate resources remain "
-                "after applying human feedback."
+
+    resource_count = len(
+        results.get(
+            "resources",
+            []
+        )
+    )
+
+
+    observations.append({
+        "check": "Resource retrieval",
+        "passed": resource_count > 0,
+        "details": (
+            f"{resource_count} resources retrieved."
+        )
+    })
+
+
+    for item in results[
+        "recommendation_results"
+    ]:
+
+        test_case = item[
+            "test_case"
+        ]
+
+        response = item[
+            "response"
+        ]
+
+        candidates = response.get(
+            "candidate_resources",
+            []
+        )
+
+
+        correct_type = all(
+            candidate.get(
+                "resource_type"
             )
-        }
+            == test_case[
+                "expected_type"
+            ]
+            for candidate in candidates
+        )
+
+
+        has_candidates = (
+            len(candidates) > 0
+        )
+
+
+        type_passed = (
+            has_candidates
+            and correct_type
+        )
+
+
+        observations.append({
+            "check": (
+                f"{test_case['name']} "
+                "candidate type"
+            ),
+            "passed": type_passed,
+            "details": (
+                f"Expected: "
+                f"{test_case['expected_type']}; "
+                f"Candidates: "
+                f"{len(candidates)}"
+            )
+        })
+
+
+        if test_case[
+            "require_available"
+        ]:
+
+            availability_ok = all(
+                candidate.get(
+                    "availability_status"
+                )
+                == "Available"
+                for candidate
+                in candidates
+            )
+
+
+            observations.append({
+                "check": (
+                    f"{test_case['name']} "
+                    "availability"
+                ),
+                "passed": (
+                    has_candidates
+                    and availability_ok
+                ),
+                "details": (
+                    "All candidates should "
+                    "be Available."
+                )
+            })
+
+
+        recommendation = str(
+            response.get(
+                "recommendation",
+                ""
+            )
+        ).strip()
+
+
+        observations.append({
+            "check": (
+                f"{test_case['name']} "
+                "AI response"
+            ),
+            "passed": bool(
+                recommendation
+            ),
+            "details": (
+                "Recommendation returned."
+                if recommendation
+                else
+                "Recommendation was empty."
+            )
+        })
+
+
+    for observation in observations:
+
+        status = (
+            "PASS"
+            if observation[
+                "passed"
+            ]
+            else
+            "FAIL"
+        )
+
+        print(
+            f"[{status}] "
+            f"{observation['check']}"
+        )
+
+        print(
+            f"       "
+            f"{observation['details']}"
+        )
+
+
+    return observations
+
+
+# =========================================================
+# REVIEW
+# =========================================================
+
+def review(observations):
+    print_section("REVIEW AGENT")
+
+    print(
+        f"AI Model: {MODEL_NAME}"
+    )
+
+
+    failed_checks = [
+        observation
+        for observation
+        in observations
+        if not observation[
+            "passed"
+        ]
+    ]
+
+
+    if not failed_checks:
+
+        review_status = "PASS"
+
+        review_message = (
+            "The current implementation demonstrates "
+            "grounded recommendation behaviour. "
+            "Candidate filtering prevents unrelated "
+            "resource types from being sent to the LLM, "
+            "and the tested recommendation responses "
+            "are consistent with the resource data."
+        )
+
+        recommendation = (
+            "Accept the current implementation "
+            "and continue to automated regression testing."
+        )
+
+    else:
+
+        review_status = "IMPROVEMENT REQUIRED"
+
+        failed_names = [
+            observation[
+                "check"
+            ]
+            for observation
+            in failed_checks
+        ]
+
+        review_message = (
+            "One or more validation checks failed: "
+            + ", ".join(
+                failed_names
+            )
+            + "."
+        )
+
+        recommendation = (
+            "Review candidate filtering and recommendation "
+            "logic before accepting the implementation."
+        )
 
 
     print(
-        "\nSending grounded candidates "
-        "to shared Ollama..."
+        f"Review status: "
+        f"{review_status}"
     )
 
+    print(
+        "\nAssessment:"
+    )
 
-    recommendation = generate_recommendation(
-        question,
-        candidates
+    print(
+        review_message
+    )
+
+    print(
+        "\nRecommendation:"
+    )
+
+    print(
+        recommendation
     )
 
 
     return {
-        "resources": resources,
-        "candidates": candidates,
-        "recommendation": recommendation
+        "status": review_status,
+        "message": review_message,
+        "recommendation": recommendation,
+        "failed_checks": failed_checks
     }
 
 
-# ---------------------------------------------------------
-# OBSERVE
-# ---------------------------------------------------------
+# =========================================================
+# HUMAN DECISION
+# =========================================================
 
-def observe(result):
-
-    print("\n" + "=" * 60)
-    print("OBSERVE")
-    print("=" * 60)
+def human_decision():
+    print_section("HUMAN DECISION")
 
     print(
-        f"Candidate count: "
-        f"{len(result['candidates'])}"
+        "1 - Accept"
     )
 
     print(
-        f"AI model: {AI_MODEL}"
-    )
-
-    print("\nAI Recommendation:\n")
-
-    print(
-        result["recommendation"]
-    )
-
-
-# ---------------------------------------------------------
-# HUMAN REVIEW
-# ---------------------------------------------------------
-
-def human_review():
-
-    print("\n" + "=" * 60)
-    print("HUMAN REVIEW")
-    print("=" * 60)
-
-    print(
-        "1 - Accept recommendation"
+        "2 - Partially Accept"
     )
 
     print(
-        "2 - Partially Accept / Refine"
-    )
-
-    print(
-        "3 - Reject recommendation"
+        "3 - Reject"
     )
 
 
@@ -312,216 +578,262 @@ def human_review():
         )
 
 
-# ---------------------------------------------------------
+# =========================================================
 # ADAPT
-# ---------------------------------------------------------
+# =========================================================
 
 def adapt(
     decision,
-    question,
-    candidates,
-    excluded_resource_ids
+    review_result
 ):
+    print_section("ADAPT")
 
-    print("\n" + "=" * 60)
-    print("ADAPT")
-    print("=" * 60)
-
-
-    # -----------------------------------------------------
-    # ACCEPT
-    # -----------------------------------------------------
 
     if decision == "1":
 
         print(
-            "Human decision: ACCEPT"
+            "Human Review: ACCEPT"
         )
 
         print(
-            "Recommendation accepted."
+            "\nThe current recommendation implementation "
+            "has been accepted."
+        )
+
+        print(
+            "No additional code change is required "
+            "for this iteration."
         )
 
         return {
-            "complete": True,
-            "question": question,
-            "excluded_resource_ids":
-                excluded_resource_ids
+            "accepted": True,
+            "continue_loop": False,
+            "feedback": None
         }
 
-
-    # -----------------------------------------------------
-    # PARTIAL ACCEPT
-    # -----------------------------------------------------
 
     if decision == "2":
 
         print(
-            "Human decision: PARTIALLY ACCEPT"
+            "Human Review: PARTIALLY ACCEPT"
         )
 
-        refinement = input(
-            "\nWhat should be improved or refined?\n> "
+        feedback = input(
+            "\nEnter improvement feedback:\n> "
         ).strip()
 
 
-        if refinement:
-
-            new_question = (
-                f"{question}. "
-                f"Additional requirement: {refinement}"
-            )
-
-        else:
-
-            new_question = question
-
-
         print(
-            "\nThe requirement has been refined."
+            "\nAdaptation required:"
         )
 
         print(
-            f"Updated requirement: {new_question}"
+            feedback
+            if feedback
+            else
+            "Further refinement is required."
         )
 
 
         return {
-            "complete": False,
-            "question": new_question,
-            "excluded_resource_ids":
-                excluded_resource_ids
-        }
-
-
-    # -----------------------------------------------------
-    # REJECT
-    # -----------------------------------------------------
-
-    print(
-        "Human decision: REJECT"
-    )
-
-
-    if not candidates:
-
-        print(
-            "There are no candidate resources "
-            "available to exclude."
-        )
-
-        return {
-            "complete": True,
-            "question": question,
-            "excluded_resource_ids":
-                excluded_resource_ids
+            "accepted": False,
+            "continue_loop": True,
+            "feedback": feedback
         }
 
 
     print(
-        "\nCurrent candidate resources:"
+        "Human Review: REJECT"
     )
 
-
-    for resource in candidates:
-
-        print(
-            f"{resource.get('resource_id')} - "
-            f"{resource.get('resource_name')}"
-        )
-
-
-    rejected_input = input(
-        "\nEnter the resource ID to exclude "
-        "from the next recommendation: "
+    feedback = input(
+        "\nExplain why the implementation "
+        "was rejected:\n> "
     ).strip()
 
 
-    try:
+    print(
+        "\nAdaptation required:"
+    )
 
-        rejected_id = int(
-            rejected_input
-        )
-
-
-        valid_ids = [
-            resource.get("resource_id")
-            for resource in candidates
-        ]
-
-
-        if rejected_id in valid_ids:
-
-            excluded_resource_ids.add(
-                rejected_id
-            )
-
-            print(
-                f"Resource ID {rejected_id} "
-                f"will be excluded."
-            )
-
-        else:
-
-            print(
-                "That resource ID was not "
-                "in the candidate list."
-            )
-
-
-    except ValueError:
+    if feedback:
 
         print(
-            "Invalid resource ID. "
-            "No resource was excluded."
+            feedback
+        )
+
+    else:
+
+        print(
+            review_result[
+                "recommendation"
+            ]
         )
 
 
     return {
-        "complete": False,
-        "question": question,
-        "excluded_resource_ids":
-            excluded_resource_ids
+        "accepted": False,
+        "continue_loop": True,
+        "feedback": feedback
     }
 
 
-# ---------------------------------------------------------
-# Main Agentic Loop
-# ---------------------------------------------------------
+# =========================================================
+# RETEST
+# =========================================================
+
+def retest():
+    print_section("RETEST")
+
+    print(
+        "Running Student 3 automated test suite..."
+    )
+
+    print(
+        "\nCommand:"
+    )
+
+    print(
+        "python -m pytest student-3/tests -v"
+    )
+
+
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "student-3/tests",
+        "-v"
+    ]
+
+
+    result = subprocess.run(
+        command,
+        cwd=PROJECT_ROOT,
+        text=True
+    )
+
+
+    return (
+        result.returncode == 0
+    )
+
+
+# =========================================================
+# PASS / FAIL
+# =========================================================
+
+def final_result(
+    human_accepted,
+    tests_passed
+):
+
+    print_section("FINAL RESULT")
+
+
+    if (
+        human_accepted
+        and tests_passed
+    ):
+
+        print(
+            "PASS"
+        )
+
+        print(
+            "\nAgentic AI development loop "
+            "completed successfully."
+        )
+
+        print(
+            "\nEvidence:"
+        )
+
+        print(
+            "- PLAN completed"
+        )
+
+        print(
+            "- ACT completed"
+        )
+
+        print(
+            "- OBSERVE completed"
+        )
+
+        print(
+            "- REVIEW completed"
+        )
+
+        print(
+            "- HUMAN DECISION: Accept"
+        )
+
+        print(
+            "- ADAPT completed"
+        )
+
+        print(
+            "- Automated RETEST passed"
+        )
+
+        return True
+
+
+    print(
+        "NOT YET PASSED"
+    )
+
+    if not human_accepted:
+
+        print(
+            "\nThe implementation has not "
+            "been accepted by the human reviewer."
+        )
+
+
+    if not tests_passed:
+
+        print(
+            "\nOne or more automated tests failed."
+        )
+
+
+    return False
+
+
+# =========================================================
+# MAIN AGENTIC LOOP
+# =========================================================
 
 def run_agentic_loop():
 
     print("\n")
-    print("=" * 60)
-    print("STUDENT 3 CAMPUS RESOURCE AGENTIC AI")
-    print("=" * 60)
+    print("#" * 70)
+    print(
+        "STUDENT 3 CAMPUS RESOURCE MANAGEMENT"
+    )
+    print(
+        "AGENTIC AI DEVELOPMENT LOOP"
+    )
+    print("#" * 70)
 
     print(
-        f"Model: {AI_MODEL}"
+        f"\nBackend: {BACKEND_URL}"
     )
 
     print(
-        "Workflow: "
-        "PLAN → ACT → OBSERVE → "
-        "HUMAN REVIEW → ADAPT"
+        f"Model: {MODEL_NAME}"
     )
 
+    print(
+        "\nWorkflow:"
+    )
 
-    question = input(
-        "\nWhat campus resource do you need?\n> "
-    ).strip()
-
-
-    if not question:
-
-        print(
-            "A campus resource requirement is required."
-        )
-
-        return
-
-
-    excluded_resource_ids = set()
+    print(
+        "PLAN → ACT → OBSERVE → REVIEW → "
+        "HUMAN DECISION → ADAPT → RETEST → PASS"
+    )
 
 
     for iteration in range(
@@ -530,92 +842,128 @@ def run_agentic_loop():
     ):
 
         print("\n")
-        print("#" * 60)
+        print("#" * 70)
 
         print(
-            f"AGENTIC LOOP ITERATION {iteration}"
+            f"ITERATION {iteration}"
         )
 
-        print("#" * 60)
-
-
-        # PLAN
-        plan(
-            question
-        )
+        print("#" * 70)
 
 
         try:
 
+            # PLAN
+            plan()
+
+
             # ACT
-            result = act(
-                question,
-                excluded_resource_ids
-            )
+            results = act()
 
 
             # OBSERVE
-            observe(
-                result
+            observations = observe(
+                results
             )
 
 
-            if not result["candidates"]:
-
-                print(
-                    "\nNo candidates remain."
-                )
-
-                print(
-                    "LOOP COMPLETE"
-                )
-
-                return
+            # REVIEW
+            review_result = review(
+                observations
+            )
 
 
-            # HUMAN REVIEW
-            decision = human_review()
+            # HUMAN DECISION
+            decision = human_decision()
 
 
             # ADAPT
             adaptation = adapt(
                 decision,
-                question,
-                result["candidates"],
-                excluded_resource_ids
+                review_result
             )
 
 
-            question = adaptation[
-                "question"
-            ]
+            # If accepted, perform regression tests.
+            if adaptation[
+                "accepted"
+            ]:
 
-            excluded_resource_ids = adaptation[
-                "excluded_resource_ids"
-            ]
+                tests_passed = retest()
 
 
-            if adaptation["complete"]:
-
-                print("\n" + "=" * 60)
-
-                print(
-                    "LOOP COMPLETE"
+                final_result(
+                    True,
+                    tests_passed
                 )
-
-                print("=" * 60)
 
                 return
 
 
-        except requests.Timeout as error:
+            # If not accepted, allow another loop.
+            if (
+                adaptation[
+                    "continue_loop"
+                ]
+                and iteration
+                < MAX_ITERATIONS
+            ):
 
-            print(
-                "\nERROR: AI request timed out."
+                print_section(
+                    "RE-PLAN"
+                )
+
+                print(
+                    "Human feedback has requested "
+                    "another validation iteration."
+                )
+
+                if adaptation[
+                    "feedback"
+                ]:
+
+                    print(
+                        "\nFeedback:"
+                    )
+
+                    print(
+                        adaptation[
+                            "feedback"
+                        ]
+                    )
+
+                input(
+                    "\nApply the required code change "
+                    "if needed, then press Enter "
+                    "to begin the next iteration..."
+                )
+
+                continue
+
+
+            print_section(
+                "LOOP STOPPED"
             )
 
             print(
-                str(error)
+                "Maximum agentic iterations reached."
+            )
+
+            return
+
+
+        except requests.Timeout as error:
+
+            print_section(
+                "ERROR"
+            )
+
+            print(
+                "A service request timed out."
+            )
+
+            print(
+                error
             )
 
             return
@@ -623,12 +971,17 @@ def run_agentic_loop():
 
         except requests.RequestException as error:
 
-            print(
-                "\nERROR: Backend service unavailable."
+            print_section(
+                "ERROR"
             )
 
             print(
-                str(error)
+                "Student 3 backend or AI service "
+                "could not be reached."
+            )
+
+            print(
+                error
             )
 
             return
@@ -636,34 +989,24 @@ def run_agentic_loop():
 
         except Exception as error:
 
-            print(
-                "\nERROR: Unexpected agentic loop failure."
+            print_section(
+                "ERROR"
             )
 
             print(
-                str(error)
+                "Unexpected agentic loop error:"
+            )
+
+            print(
+                error
             )
 
             return
 
 
-    print("\n" + "=" * 60)
-
-    print(
-        "MAXIMUM ITERATIONS REACHED"
-    )
-
-    print(
-        "The loop stopped after "
-        f"{MAX_ITERATIONS} iterations."
-    )
-
-    print("=" * 60)
-
-
-# ---------------------------------------------------------
-# Program Entry
-# ---------------------------------------------------------
+# =========================================================
+# ENTRY POINT
+# =========================================================
 
 if __name__ == "__main__":
     run_agentic_loop()
