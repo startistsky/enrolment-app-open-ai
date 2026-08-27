@@ -83,6 +83,43 @@ services:
     depends_on:
       - backend
 
+  student1-database:
+    build:
+      context: ./student-1/database
+
+    ports:
+      - "5001:5001"
+
+    environment:
+      DATABASE_PATH: /data/courses.db
+
+    volumes:
+      - student1-course-data:/data
+
+  student1-backend:
+    build:
+      context: ./student-1/backend
+
+    ports:
+      - "8001:8001"
+
+    environment:
+      DATABASE_SERVICE_URL: http://student1-database:5001
+      AI_SERVICE_URL: http://ollama:11434/api/generate
+
+    depends_on:
+      - student1-database
+      - ollama
+
+  student1-frontend:
+    build:
+      context: ./student-1/frontend
+
+    ports:
+      - "8081:80"
+
+    depends_on:
+      - student1-backend
 
   # Shared Frontend
 
@@ -105,8 +142,25 @@ services:
 
     volumes:
       - ollama_data:/root/.ollama
-
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: >
+      sh -c "
+      until ollama list >/dev/null 2>&1;
+      do
+        echo 'Waiting for Ollama...';
+        sleep 2;
+      done;
+      echo 'Ensuring qwen2.5:0.5b is available...';
+      ollama pull qwen2.5:0.5b;
+      echo 'Ollama model is ready.';
+      "
 
 volumes:
   database_data:
   ollama_data:
+  student1-course-data:

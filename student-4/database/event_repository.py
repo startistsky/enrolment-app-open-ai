@@ -15,27 +15,49 @@ def get_events():
         return [dict(row) for row in rows]
 
 
-def create_event(title, category, date, location, description):
+def create_event(
+    title,
+    category,
+    date,
+    location,
+    description,
+    emoji
+):
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.execute(
             """
-            INSERT INTO events (title, category, date, location, description)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO events (
+                title,
+                category,
+                date,
+                location,
+                description,
+                emoji
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (title, category, date, location, description),
+            (title, category, date, location, description,emoji),
         )
         return cursor.lastrowid
 
 
-def update_event(event_id, title, category, date, location, description):
+def update_event(
+    event_id,
+    title,
+    category,
+    date,
+    location,
+    description,
+    emoji
+):
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.execute(
             """
             UPDATE events
-            SET title = ?, category = ?, date = ?, location = ?, description = ?
+            SET title = ?, category = ?, date = ?, location = ?, description = ?,emoji = ?
             WHERE id = ?
             """,
-            (title, category, date, location, description, event_id),
+            (title, category, date, location, description, emoji,event_id),
         )
         return cursor.rowcount > 0
 

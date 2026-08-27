@@ -676,6 +676,12 @@ async function createEvent(event) {
       .value
       .trim();
 
+  const emoji =
+  document
+    .getElementById("eventEmoji")
+    .value
+    .trim();
+
   if (
     !title ||
     !category ||
@@ -696,6 +702,7 @@ async function createEvent(event) {
     date,
     location,
     description,
+    emoji,
   };
 
   try {
