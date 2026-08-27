@@ -1,8 +1,15 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import os
 import requests
 
+
 app = Flask(__name__)
+
+# Allow the frontend running on localhost:8083
+# to access this backend API.
+CORS(app)
+
 
 DATABASE_API_URL = os.getenv(
     "DATABASE_API_URL",
