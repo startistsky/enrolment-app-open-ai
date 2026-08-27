@@ -1,43 +1,124 @@
-from flask import Flask, jsonify, request
+import os
 import sqlite3
 from pathlib import Path
 
+from flask import Flask, jsonify, request
+
+
 app = Flask(__name__)
 
-BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "campus_resources.db"
 
+# ---------------------------------------------------------
+# Database path
+# ---------------------------------------------------------
+
+# Local development:
+# student-3/database/campus_resources.db
+#
+# Docker:
+# /data/campus_resources.db
+DEFAULT_DB_PATH = (
+    Path(__file__).resolve().parent
+    / "campus_resources.db"
+)
+
+DB_PATH = Path(
+    os.getenv(
+        "DATABASE_PATH",
+        str(DEFAULT_DB_PATH)
+    )
+)
+
+
+# ---------------------------------------------------------
+# Database helpers
+# ---------------------------------------------------------
 
 def get_db_connection():
+    """
+    Create a connection to the campus resource SQLite database.
+    """
+
     conn = sqlite3.connect(DB_PATH)
+
+    # Allows rows to be accessed like dictionaries.
     conn.row_factory = sqlite3.Row
+
     return conn
 
 
-def row_to_dict(row):
-    return dict(row)
+def resource_to_dict(resource):
+    """
+    Convert a SQLite Row object into a normal dictionary.
+    """
 
+    return dict(resource)
+
+
+# ---------------------------------------------------------
+# Health Check
+# ---------------------------------------------------------
 
 @app.route("/health", methods=["GET"])
-def health():
+def health_check():
+
     return jsonify({
         "status": "ok",
-        "service": "Student 3 Campus Resource Database API"
+        "service": "Student 3 Campus Resource Database API",
+        "database": str(DB_PATH)
     }), 200
 
 
+# ---------------------------------------------------------
+# GET /resources
+#
+# Retrieve all resources.
+# Supports optional:
+#
+# ?search=
+# ?type=
+# ?building=
+# ?availability=
+# ---------------------------------------------------------
+
 @app.route("/resources", methods=["GET"])
 def get_resources():
-    search = request.args.get("search", "").strip()
-    resource_type = request.args.get("type", "").strip()
-    building = request.args.get("building", "").strip()
-    availability = request.args.get("availability", "").strip()
 
-    query = "SELECT * FROM campus_resources WHERE 1=1"
+    search = request.args.get(
+        "search",
+        ""
+    ).strip()
+
+    resource_type = request.args.get(
+        "type",
+        ""
+    ).strip()
+
+    building = request.args.get(
+        "building",
+        ""
+    ).strip()
+
+    availability = request.args.get(
+        "availability",
+        ""
+    ).strip()
+
+
+    query = """
+        SELECT *
+        FROM campus_resources
+        WHERE 1 = 1
+    """
+
     params = []
 
+
+    # Search multiple text fields.
     if search:
-        value = f"%{search}%"
+
+        search_value = f"%{search}%"
+
         query += """
             AND (
                 resource_name LIKE ?
@@ -47,52 +128,127 @@ def get_resources():
                 OR description LIKE ?
             )
         """
-        params.extend([value, value, value, value, value])
+
+        params.extend([
+            search_value,
+            search_value,
+            search_value,
+            search_value,
+            search_value
+        ])
+
 
     if resource_type:
-        query += " AND resource_type = ?"
-        params.append(resource_type)
+
+        query += """
+            AND resource_type = ?
+        """
+
+        params.append(
+            resource_type
+        )
+
 
     if building:
-        query += " AND building = ?"
-        params.append(building)
+
+        query += """
+            AND building = ?
+        """
+
+        params.append(
+            building
+        )
+
 
     if availability:
-        query += " AND availability_status = ?"
-        params.append(availability)
 
-    query += " ORDER BY resource_id"
+        query += """
+            AND availability_status = ?
+        """
+
+        params.append(
+            availability
+        )
+
+
+    query += """
+        ORDER BY resource_id
+    """
+
 
     conn = get_db_connection()
-    rows = conn.execute(query, params).fetchall()
+
+    resources = conn.execute(
+        query,
+        params
+    ).fetchall()
+
     conn.close()
 
-    return jsonify([row_to_dict(row) for row in rows]), 200
+
+    return jsonify([
+        resource_to_dict(resource)
+        for resource in resources
+    ]), 200
 
 
-@app.route("/resources/<int:resource_id>", methods=["GET"])
+# ---------------------------------------------------------
+# GET /resources/<id>
+# ---------------------------------------------------------
+
+@app.route(
+    "/resources/<int:resource_id>",
+    methods=["GET"]
+)
 def get_resource(resource_id):
+
     conn = get_db_connection()
 
-    row = conn.execute(
-        "SELECT * FROM campus_resources WHERE resource_id = ?",
+    resource = conn.execute(
+        """
+        SELECT *
+        FROM campus_resources
+        WHERE resource_id = ?
+        """,
         (resource_id,)
     ).fetchone()
 
     conn.close()
 
-    if row is None:
-        return jsonify({"error": "Campus resource not found"}), 404
 
-    return jsonify(row_to_dict(row)), 200
+    if resource is None:
+
+        return jsonify({
+            "error": "Campus resource not found"
+        }), 404
 
 
-@app.route("/resources", methods=["POST"])
+    return jsonify(
+        resource_to_dict(resource)
+    ), 200
+
+
+# ---------------------------------------------------------
+# POST /resources
+#
+# Create new resource.
+# ---------------------------------------------------------
+
+@app.route(
+    "/resources",
+    methods=["POST"]
+)
 def create_resource():
+
     data = request.get_json()
 
+
     if not data:
-        return jsonify({"error": "JSON body required"}), 400
+
+        return jsonify({
+            "error": "Request body must contain JSON data"
+        }), 400
+
 
     required_fields = [
         "resource_name",
@@ -101,18 +257,24 @@ def create_resource():
         "availability_status"
     ]
 
-    missing = [
-        field for field in required_fields
+
+    missing_fields = [
+        field
+        for field in required_fields
         if not data.get(field)
     ]
 
-    if missing:
+
+    if missing_fields:
+
         return jsonify({
             "error": "Missing required fields",
-            "missing_fields": missing
+            "missing_fields": missing_fields
         }), 400
 
+
     conn = get_db_connection()
+
 
     cursor = conn.execute(
         """
@@ -142,52 +304,163 @@ def create_resource():
         )
     )
 
+
     conn.commit()
 
-    new_id = cursor.lastrowid
 
-    row = conn.execute(
-        "SELECT * FROM campus_resources WHERE resource_id = ?",
-        (new_id,)
+    new_resource_id = cursor.lastrowid
+
+
+    new_resource = conn.execute(
+        """
+        SELECT *
+        FROM campus_resources
+        WHERE resource_id = ?
+        """,
+        (new_resource_id,)
     ).fetchone()
+
 
     conn.close()
 
-    return jsonify(row_to_dict(row)), 201
+
+    return jsonify(
+        resource_to_dict(new_resource)
+    ), 201
 
 
-@app.route("/resources/<int:resource_id>", methods=["PUT"])
+# ---------------------------------------------------------
+# PUT /resources/<id>
+#
+# Update existing resource.
+# ---------------------------------------------------------
+
+@app.route(
+    "/resources/<int:resource_id>",
+    methods=["PUT"]
+)
 def update_resource(resource_id):
+
     data = request.get_json()
 
+
     if not data:
-        return jsonify({"error": "JSON body required"}), 400
+
+        return jsonify({
+            "error": "Request body must contain JSON data"
+        }), 400
+
 
     conn = get_db_connection()
 
-    existing = conn.execute(
-        "SELECT * FROM campus_resources WHERE resource_id = ?",
+
+    existing_resource = conn.execute(
+        """
+        SELECT *
+        FROM campus_resources
+        WHERE resource_id = ?
+        """,
         (resource_id,)
     ).fetchone()
 
-    if existing is None:
-        conn.close()
-        return jsonify({"error": "Campus resource not found"}), 404
 
-    updated = {
-        "resource_name": data.get("resource_name", existing["resource_name"]),
-        "resource_type": data.get("resource_type", existing["resource_type"]),
-        "building": data.get("building", existing["building"]),
-        "floor": data.get("floor", existing["floor"]),
-        "capacity": data.get("capacity", existing["capacity"]),
-        "availability_status": data.get(
-            "availability_status",
-            existing["availability_status"]
-        ),
-        "opening_hours": data.get("opening_hours", existing["opening_hours"]),
-        "location": data.get("location", existing["location"]),
-        "description": data.get("description", existing["description"])
+    if existing_resource is None:
+
+        conn.close()
+
+        return jsonify({
+            "error": "Campus resource not found"
+        }), 404
+
+
+    updated_resource = {
+
+        "resource_name":
+            data.get(
+                "resource_name",
+                existing_resource["resource_name"]
+            ),
+
+        "resource_type":
+            data.get(
+                "resource_type",
+                existing_resource["resource_type"]
+            ),
+
+        "building":
+            data.get(
+                "building",
+                existing_resource["building"]
+            ),
+
+        "floor":
+            data.get(
+                "floor",
+                existing_resource["floor"]
+            ),
+
+        "capacity":
+            data.get(
+                "capacity",
+                existing_resource["capacity"]
+            ),
+
+        "availability_status":
+            data.get(
+                "availability_status",
+                existing_resource[
+                    "availability_status"
+                ]
+            ),
+
+        "opening_hours":
+            data.get(
+                "opening_hours",
+                existing_resource[
+                    "opening_hours"
+                ]
+            ),
+
+        "location":
+            data.get(
+                "location",
+                existing_resource["location"]
+            ),
+
+        "description":
+            data.get(
+                "description",
+                existing_resource[
+                    "description"
+                ]
+            )
     }
+
+
+    required_fields = [
+        "resource_name",
+        "resource_type",
+        "building",
+        "availability_status"
+    ]
+
+
+    missing_fields = [
+        field
+        for field in required_fields
+        if not updated_resource.get(field)
+    ]
+
+
+    if missing_fields:
+
+        conn.close()
+
+        return jsonify({
+            "error": "Required fields cannot be empty",
+            "missing_fields": missing_fields
+        }), 400
+
 
     conn.execute(
         """
@@ -206,61 +479,106 @@ def update_resource(resource_id):
         WHERE resource_id = ?
         """,
         (
-            updated["resource_name"],
-            updated["resource_type"],
-            updated["building"],
-            updated["floor"],
-            updated["capacity"],
-            updated["availability_status"],
-            updated["opening_hours"],
-            updated["location"],
-            updated["description"],
+            updated_resource["resource_name"],
+            updated_resource["resource_type"],
+            updated_resource["building"],
+            updated_resource["floor"],
+            updated_resource["capacity"],
+            updated_resource[
+                "availability_status"
+            ],
+            updated_resource["opening_hours"],
+            updated_resource["location"],
+            updated_resource["description"],
             resource_id
         )
     )
 
+
     conn.commit()
 
-    row = conn.execute(
-        "SELECT * FROM campus_resources WHERE resource_id = ?",
+
+    resource = conn.execute(
+        """
+        SELECT *
+        FROM campus_resources
+        WHERE resource_id = ?
+        """,
         (resource_id,)
     ).fetchone()
+
 
     conn.close()
 
-    return jsonify(row_to_dict(row)), 200
+
+    return jsonify(
+        resource_to_dict(resource)
+    ), 200
 
 
-@app.route("/resources/<int:resource_id>", methods=["DELETE"])
+# ---------------------------------------------------------
+# DELETE /resources/<id>
+# ---------------------------------------------------------
+
+@app.route(
+    "/resources/<int:resource_id>",
+    methods=["DELETE"]
+)
 def delete_resource(resource_id):
+
     conn = get_db_connection()
 
-    existing = conn.execute(
-        "SELECT * FROM campus_resources WHERE resource_id = ?",
+
+    existing_resource = conn.execute(
+        """
+        SELECT *
+        FROM campus_resources
+        WHERE resource_id = ?
+        """,
         (resource_id,)
     ).fetchone()
 
-    if existing is None:
+
+    if existing_resource is None:
+
         conn.close()
-        return jsonify({"error": "Campus resource not found"}), 404
+
+        return jsonify({
+            "error": "Campus resource not found"
+        }), 404
+
 
     conn.execute(
-        "DELETE FROM campus_resources WHERE resource_id = ?",
+        """
+        DELETE FROM campus_resources
+        WHERE resource_id = ?
+        """,
         (resource_id,)
     )
 
+
     conn.commit()
     conn.close()
 
+
     return jsonify({
-        "message": "Campus resource deleted successfully"
+        "message": "Campus resource deleted successfully",
+        "resource_id": resource_id
     }), 200
 
 
+# ---------------------------------------------------------
+# Start Database API
+# ---------------------------------------------------------
+
 if __name__ == "__main__":
+
+    print(
+        f"Using database: {DB_PATH}"
+    )
+
     app.run(
         host="0.0.0.0",
         port=5004,
         debug=True
     )
-    
