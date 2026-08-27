@@ -350,6 +350,48 @@
       buildingFilter.value = selectedBuilding;
     }
 
+    // ---------------------------------------------------------
+    // Improved Search Matching
+    //
+    // Instead of using text.includes(query), this function
+    // compares whole words / word prefixes.
+    //
+    // Example:
+    // "lab" matches "Lab"
+    // "print" matches "Printer" and "printing"
+    // "lab" does NOT match "collaborative"
+    // ---------------------------------------------------------
+    function matchesSearch(resource, query) {
+      if (!query) {
+        return true;
+      }
+
+      const searchableText =
+        `${resource.resource_name || ""}
+         ${resource.resource_type || ""}
+         ${resource.building || ""}
+         ${resource.location || ""}
+         ${resource.description || ""}`
+          .toLowerCase();
+
+      const searchableWords =
+        searchableText.match(/[a-z0-9]+/g) || [];
+
+      const queryWords =
+        query
+          .toLowerCase()
+          .match(/[a-z0-9]+/g) || [];
+
+      return queryWords.every(
+        queryWord =>
+          searchableWords.some(
+            word =>
+              word === queryWord ||
+              word.startsWith(queryWord)
+          )
+      );
+    }
+
     function renderResources() {
       const query =
         search.value.trim().toLowerCase();
@@ -365,16 +407,8 @@
 
       const filtered =
         resources.filter(resource => {
-          const text =
-            `${resource.resource_name}
-             ${resource.resource_type}
-             ${resource.building}
-             ${resource.location || ""}
-             ${resource.description || ""}`
-              .toLowerCase();
-
           return (
-            (!query || text.includes(query)) &&
+            matchesSearch(resource, query) &&
             (!type || resource.resource_type === type) &&
             (!building || resource.building === building) &&
             (!availability ||
@@ -971,7 +1005,6 @@
       sendMessage();
     }
 
-    // Explicit event wiring keeps button actions reliable.
     document
       .getElementById("addResourceButton")
       .addEventListener(
@@ -1085,12 +1118,13 @@
           )
       );
 
-    // Keep functions available globally for easy browser-console testing.
+    // Keep functions available globally for browser-console testing.
     window.openResourceForm = openResourceForm;
     window.openEditResourceForm = openEditResourceForm;
     window.deleteResource = deleteResource;
     window.saveResource = saveResource;
     window.loadResources = loadResources;
+    window.matchesSearch = matchesSearch;
 
     loadResources();
 
