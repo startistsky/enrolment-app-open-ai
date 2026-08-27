@@ -7,13 +7,12 @@ import requests
 
 app = Flask(__name__)
 
-# Allow Student 3 frontend to call this backend.
 CORS(app)
 
 
-# ---------------------------------------------------------
-# Service Configuration
-# ---------------------------------------------------------
+# =========================================================
+# SERVICE CONFIGURATION
+# =========================================================
 
 DATABASE_API_URL = os.getenv(
     "DATABASE_API_URL",
@@ -32,7 +31,7 @@ AI_MODEL = os.getenv(
 
 
 # =========================================================
-# HEALTH CHECK
+# HEALTH
 # =========================================================
 
 @app.route("/health", methods=["GET"])
@@ -53,11 +52,9 @@ def get_resources():
 
     try:
 
-        params = dict(request.args)
-
         response = requests.get(
             f"{DATABASE_API_URL}/resources",
-            params=params,
+            params=dict(request.args),
             timeout=5
         )
 
@@ -164,14 +161,10 @@ def delete_resource(resource_id):
 
 
 # =========================================================
-# AI RECOMMENDATION HELPERS
+# AI HELPERS
 # =========================================================
 
 def fetch_current_resources():
-    """
-    Retrieve the latest campus resources from
-    the Student 3 database service.
-    """
 
     response = requests.get(
         f"{DATABASE_API_URL}/resources",
@@ -184,10 +177,6 @@ def fetch_current_resources():
 
 
 def normalise_text(text):
-    """
-    Convert text to lowercase and remove unnecessary
-    punctuation to make keyword analysis easier.
-    """
 
     if not text:
         return ""
@@ -199,98 +188,186 @@ def normalise_text(text):
     )
 
 
-# ---------------------------------------------------------
-# Detect Resource Type
-# ---------------------------------------------------------
+# =========================================================
+# RESOURCE TYPE DEFINITIONS
+# =========================================================
 
-def detect_resource_types(question):
+RESOURCE_TYPE_KEYWORDS = {
+    "Printer": [
+        "printer",
+        "printing",
+        "print",
+        "photocopy",
+        "photocopying"
+    ],
+
+    "Computer Lab": [
+        "computer lab",
+        "computer",
+        "desktop",
+        "pc",
+        "lab"
+    ],
+
+    "Library": [
+        "library",
+        "books",
+        "reading"
+    ],
+
+    "Study Room": [
+        "study room",
+        "study space",
+        "quiet",
+        "study",
+        "group room",
+        "meeting room"
+    ],
+
+    "Parking": [
+        "parking",
+        "park my car",
+        "car park"
+    ]
+}
+
+
+# =========================================================
+# EXCLUSION / NEGATION DETECTION v0.3
+# =========================================================
+
+def detect_excluded_resource_types(question):
     """
-    Detect which campus resource types the user
-    appears to be requesting.
+    Detect resource types explicitly rejected by the user.
+
+    Examples:
+    - not a printer
+    - not a library
+    - do not recommend study rooms
+    - don't recommend parking
+    - without printers
+    - no study rooms
     """
 
     text = normalise_text(question)
 
+    excluded_types = set()
+
+
+    exclusion_patterns = [
+        "not a {keyword}",
+        "not an {keyword}",
+        "not {keyword}",
+        "no {keyword}",
+        "without {keyword}",
+        "do not recommend {keyword}",
+        "dont recommend {keyword}",
+        "do not want {keyword}",
+        "dont want {keyword}",
+        "exclude {keyword}",
+        "avoid {keyword}"
+    ]
+
+
+    for resource_type, keywords in (
+        RESOURCE_TYPE_KEYWORDS.items()
+    ):
+
+        for keyword in keywords:
+
+            for pattern in exclusion_patterns:
+
+                phrase = pattern.format(
+                    keyword=keyword
+                )
+
+                if phrase in text:
+
+                    excluded_types.add(
+                        resource_type
+                    )
+
+                    break
+
+
+            if resource_type in excluded_types:
+                break
+
+
+    return excluded_types
+
+
+# =========================================================
+# POSITIVE TYPE DETECTION
+# =========================================================
+
+def detect_resource_types(question):
+    """
+    Detect positively requested resource types.
+
+    v0.3 ignores resource types that occur only inside
+    negated phrases.
+    """
+
+    text = normalise_text(question)
+
+    excluded_types = (
+        detect_excluded_resource_types(
+            question
+        )
+    )
+
     requested_types = set()
 
-    # Printer intent
-    if any(
-        keyword in text
-        for keyword in [
-            "printer",
-            "printing",
-            "print",
-            "photocopy",
-            "photocopying"
-        ]
-    ):
-        requested_types.add("Printer")
 
-    # Computer Lab intent
-    if any(
-        keyword in text
-        for keyword in [
-            "computer lab",
-            "computer",
-            "desktop",
-            "pc",
-            "lab"
-        ]
+    for resource_type, keywords in (
+        RESOURCE_TYPE_KEYWORDS.items()
     ):
-        requested_types.add("Computer Lab")
 
-    # Library intent
-    if any(
-        keyword in text
-        for keyword in [
-            "library",
-            "books",
-            "reading"
-        ]
+        if resource_type in excluded_types:
+            continue
+
+
+        if any(
+            keyword in text
+            for keyword in keywords
+        ):
+
+            requested_types.add(
+                resource_type
+            )
+
+
+    # General study request can reasonably include
+    # Library as well as Study Room.
+    if (
+        "Study Room" in requested_types
+        and "Library" not in excluded_types
     ):
-        requested_types.add("Library")
 
-    # Study space intent
-    if any(
-        keyword in text
-        for keyword in [
-            "study room",
-            "study space",
-            "quiet",
-            "study",
-            "group room",
-            "meeting room"
-        ]
-    ):
-        requested_types.add("Study Room")
+        if any(
+            phrase in text
+            for phrase in [
+                "quiet",
+                "study",
+                "study space",
+                "place to study"
+            ]
+        ):
 
-        # Libraries can also be suitable for general
-        # quiet study requests.
-        requested_types.add("Library")
+            requested_types.add(
+                "Library"
+            )
 
-    # Parking intent
-    if any(
-        keyword in text
-        for keyword in [
-            "parking",
-            "park my car",
-            "car park"
-        ]
-    ):
-        requested_types.add("Parking")
 
     return requested_types
 
 
-# ---------------------------------------------------------
-# Detect Availability Requirement
-# ---------------------------------------------------------
+# =========================================================
+# OTHER REQUIREMENT DETECTION
+# =========================================================
 
 def requires_available_resource(question):
-    """
-    Detect whether the user explicitly asks
-    for something currently available/open/free.
-    """
 
     text = normalise_text(question)
 
@@ -309,17 +386,7 @@ def requires_available_resource(question):
     )
 
 
-# ---------------------------------------------------------
-# Detect Capacity Requirement
-# ---------------------------------------------------------
-
 def detect_capacity_requirement(question):
-    """
-    Detect requests such as:
-    - room for 6
-    - space for 10 people
-    - 5 people
-    """
 
     text = normalise_text(question)
 
@@ -328,6 +395,7 @@ def detect_capacity_requirement(question):
         r"(\d+)\s*(?:people|persons|students)",
         r"group\s+of\s+(\d+)"
     ]
+
 
     for pattern in patterns:
 
@@ -339,19 +407,18 @@ def detect_capacity_requirement(question):
         if match:
 
             try:
+
                 return int(
                     match.group(1)
                 )
 
             except ValueError:
+
                 pass
+
 
     return None
 
-
-# ---------------------------------------------------------
-# Detect Quiet Preference
-# ---------------------------------------------------------
 
 def requires_quiet_space(question):
 
@@ -372,78 +439,94 @@ def requires_quiet_space(question):
     )
 
 
-# ---------------------------------------------------------
-# Score Resource
-# ---------------------------------------------------------
+# =========================================================
+# RESOURCE SCORING
+# =========================================================
 
 def score_resource(
     resource,
     requested_types,
+    excluded_types,
     availability_required,
     capacity_required,
     quiet_required
 ):
-    """
-    Give each resource a deterministic relevance score.
-
-    Python handles factual matching.
-    Qwen only explains the final candidates.
-    """
 
     score = 0
 
+
     resource_type = (
-        resource.get("resource_type")
+        resource.get(
+            "resource_type"
+        )
         or ""
     )
 
     status = (
-        resource.get("availability_status")
+        resource.get(
+            "availability_status"
+        )
         or ""
     )
 
-    capacity = (
-        resource.get("capacity")
+    capacity = resource.get(
+        "capacity"
     )
 
     description = normalise_text(
-        resource.get("description")
+        resource.get(
+            "description"
+        )
     )
 
     resource_name = normalise_text(
-        resource.get("resource_name")
+        resource.get(
+            "resource_name"
+        )
     )
 
 
-    # ---------------------------------------------
-    # Type matching
-    # ---------------------------------------------
+    # -----------------------------------------------------
+    # EXPLICIT EXCLUSION
+    # -----------------------------------------------------
+
+    if resource_type in excluded_types:
+
+        return -1000
+
+
+    # -----------------------------------------------------
+    # TYPE MATCH
+    # -----------------------------------------------------
 
     if requested_types:
 
         if resource_type in requested_types:
+
             score += 50
 
         else:
-            # Strong penalty prevents a Printer being
-            # recommended for a Computer Lab request.
+
             score -= 100
 
 
-    # ---------------------------------------------
-    # Availability
-    # ---------------------------------------------
+    # -----------------------------------------------------
+    # AVAILABILITY
+    # -----------------------------------------------------
 
     if status == "Available":
+
         score += 20
 
     elif status == "Busy":
+
         score -= 5
 
     elif status in [
         "Unavailable",
         "Closed"
     ]:
+
         score -= 30
 
 
@@ -451,12 +534,13 @@ def score_resource(
         availability_required
         and status != "Available"
     ):
+
         score -= 100
 
 
-    # ---------------------------------------------
-    # Capacity
-    # ---------------------------------------------
+    # -----------------------------------------------------
+    # CAPACITY
+    # -----------------------------------------------------
 
     if capacity_required is not None:
 
@@ -464,13 +548,15 @@ def score_resource(
             capacity is not None
             and capacity >= capacity_required
         ):
+
             score += 20
 
-            # Prefer a capacity reasonably close
-            # to the user's requirement.
+
             difference = (
-                capacity - capacity_required
+                capacity
+                - capacity_required
             )
+
 
             score += max(
                 0,
@@ -478,12 +564,13 @@ def score_resource(
             )
 
         else:
+
             score -= 100
 
 
-    # ---------------------------------------------
-    # Quiet preference
-    # ---------------------------------------------
+    # -----------------------------------------------------
+    # QUIET PREFERENCE
+    # -----------------------------------------------------
 
     if quiet_required:
 
@@ -492,6 +579,7 @@ def score_resource(
             + " "
             + description
         )
+
 
         if any(
             word in quiet_text
@@ -502,27 +590,32 @@ def score_resource(
                 "study"
             ]
         ):
+
             score += 15
 
 
     return score
 
 
-# ---------------------------------------------------------
-# Select Candidate Resources
-# ---------------------------------------------------------
+# =========================================================
+# CANDIDATE SELECTION
+# =========================================================
 
 def select_candidate_resources(
     resources,
     question
 ):
-    """
-    Analyse the question and return only resources
-    that are realistically relevant.
-    """
 
-    requested_types = detect_resource_types(
-        question
+    requested_types = (
+        detect_resource_types(
+            question
+        )
+    )
+
+    excluded_types = (
+        detect_excluded_resource_types(
+            question
+        )
     )
 
     availability_required = (
@@ -552,10 +645,12 @@ def select_candidate_resources(
         score = score_resource(
             resource,
             requested_types,
+            excluded_types,
             availability_required,
             capacity_required,
             quiet_required
         )
+
 
         scored_resources.append(
             (
@@ -565,14 +660,12 @@ def select_candidate_resources(
         )
 
 
-    # Highest score first.
     scored_resources.sort(
         key=lambda item: item[0],
         reverse=True
     )
 
 
-    # Only keep candidates that are relevant.
     candidates = [
         resource
         for score, resource
@@ -581,8 +674,10 @@ def select_candidate_resources(
     ]
 
 
-    # If filters became too restrictive,
-    # fall back to highest-ranked available resources.
+    # -----------------------------------------------------
+    # FALLBACK
+    # -----------------------------------------------------
+
     if not candidates:
 
         available_resources = [
@@ -593,33 +688,49 @@ def select_candidate_resources(
                     "availability_status"
                 )
                 == "Available"
+                and
+                resource.get(
+                    "resource_type"
+                )
+                not in excluded_types
             )
         ]
+
 
         candidates = (
             available_resources
             if available_resources
-            else resources
+            else [
+                resource
+                for resource in resources
+                if resource.get(
+                    "resource_type"
+                )
+                not in excluded_types
+            ]
         )
 
 
-    # Limit prompt size and reduce AI confusion.
     return candidates[:5]
 
 
-# ---------------------------------------------------------
-# Convert Resources to AI Context
-# ---------------------------------------------------------
+# =========================================================
+# AI CONTEXT
+# =========================================================
 
 def build_resource_context(resources):
-    """
-    Convert only the selected candidate resources
-    into structured text for Qwen.
-    """
 
     context_lines = []
 
+
     for resource in resources:
+
+        capacity = (
+            resource.get(
+                "capacity"
+            )
+        )
+
 
         context_lines.append(
             (
@@ -639,7 +750,7 @@ def build_resource_context(resources):
                 f"{resource.get('floor') or 'N/A'}\n"
 
                 f"Capacity: "
-                f"{resource.get('capacity') if resource.get('capacity') is not None else 'N/A'}\n"
+                f"{capacity if capacity is not None else 'N/A'}\n"
 
                 f"Status: "
                 f"{resource.get('availability_status')}\n"
@@ -655,13 +766,14 @@ def build_resource_context(resources):
             )
         )
 
+
     return "\n---\n".join(
         context_lines
     )
 
 
 # =========================================================
-# AI RECOMMENDATION ENDPOINT
+# RECOMMEND ENDPOINT
 # =========================================================
 
 @app.route("/recommend", methods=["POST"])
@@ -672,7 +784,6 @@ def recommend_resource():
     )
 
 
-    # No JSON body.
     if data is None:
 
         return jsonify({
@@ -689,21 +800,15 @@ def recommend_resource():
     ).strip()
 
 
-    # JSON exists but question is missing.
     if not question:
 
         return jsonify({
-            "error": "Question is required"
+            "error":
+                "Question is required"
         }), 400
 
 
     try:
-
-        # -------------------------------------------------
-        # ACT
-        #
-        # Retrieve latest resource records.
-        # -------------------------------------------------
 
         resources = (
             fetch_current_resources()
@@ -718,9 +823,18 @@ def recommend_resource():
             }), 404
 
 
-        # -------------------------------------------------
-        # Python candidate filtering
-        # -------------------------------------------------
+        requested_types = (
+            detect_resource_types(
+                question
+            )
+        )
+
+        excluded_types = (
+            detect_excluded_resource_types(
+                question
+            )
+        )
+
 
         candidates = (
             select_candidate_resources(
@@ -737,50 +851,74 @@ def recommend_resource():
         )
 
 
-        # -------------------------------------------------
-        # Grounded AI Prompt
-        # -------------------------------------------------
+        requested_text = (
+            ", ".join(
+                sorted(
+                    requested_types
+                )
+            )
+            if requested_types
+            else
+            "No specific type detected"
+        )
+
+
+        excluded_text = (
+            ", ".join(
+                sorted(
+                    excluded_types
+                )
+            )
+            if excluded_types
+            else
+            "None"
+        )
+
 
         prompt = f"""
 You are Campus AI, a university campus resource
 recommendation assistant.
 
+The backend has already analysed the user's request.
+
+POSITIVE RESOURCE TYPES:
+{requested_text}
+
+EXCLUDED RESOURCE TYPES:
+{excluded_text}
+
 IMPORTANT RULES:
 
-You may ONLY recommend resources listed in
-CANDIDATE RESOURCES below.
+1. You may ONLY recommend resources from
+   CANDIDATE RESOURCES below.
 
-The candidates have already been filtered by the
-backend using the user's requirements.
+2. Never recommend a resource whose type appears
+   in EXCLUDED RESOURCE TYPES.
 
-Do NOT recommend any other campus resource.
+3. Do not invent:
+   - resource names
+   - locations
+   - opening hours
+   - capacities
+   - availability
+   - facilities
+   - services
 
-Do NOT invent:
-- resource names
-- locations
-- opening hours
-- capacities
-- availability
-- facilities
-- services
+4. Use only facts explicitly provided in
+   CANDIDATE RESOURCES.
 
-Use only facts explicitly shown in the candidate data.
+5. If the user asks for a specific resource type,
+   recommend only that type.
 
-If a resource is marked Busy, Closed or Unavailable,
-do not describe it as Available.
+6. If the user explicitly rejects a resource type,
+   never recommend it.
 
-If the user asks for a particular resource type,
-only recommend that resource type from the candidate list.
+7. If a resource is Busy, Closed or Unavailable,
+   do not describe it as Available.
 
-Recommend the best 1 to 3 resources.
+8. Recommend the best 1 to 3 resources.
 
-For each recommendation:
-- state the exact resource name
-- briefly explain why it matches the request
-- mention useful facts such as status, capacity,
-  location or opening hours when relevant
-
-Keep the answer concise and student-friendly.
+9. Keep the response concise and student-friendly.
 
 CANDIDATE RESOURCES:
 
@@ -794,10 +932,6 @@ Give the grounded recommendation now.
 """
 
 
-        # -------------------------------------------------
-        # Shared Ollama / Qwen
-        # -------------------------------------------------
-
         ai_response = requests.post(
             AI_SERVICE_URL,
             json={
@@ -805,8 +939,6 @@ Give the grounded recommendation now.
                 "prompt": prompt,
                 "stream": False,
 
-                # Lower temperature makes the small
-                # model less creative and more factual.
                 "options": {
                     "temperature": 0.2
                 }
@@ -839,10 +971,6 @@ Give the grounded recommendation now.
             }), 502
 
 
-        # -------------------------------------------------
-        # Return useful evidence metadata as well.
-        # -------------------------------------------------
-
         return jsonify({
 
             "question":
@@ -859,6 +987,16 @@ Give the grounded recommendation now.
 
             "candidate_count":
                 len(candidates),
+
+            "requested_resource_types":
+                sorted(
+                    requested_types
+                ),
+
+            "excluded_resource_types":
+                sorted(
+                    excluded_types
+                ),
 
             "candidate_resources": [
                 {
@@ -921,7 +1059,7 @@ Give the grounded recommendation now.
 
 
 # =========================================================
-# START BACKEND
+# START
 # =========================================================
 
 if __name__ == "__main__":
