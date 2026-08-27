@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Campus Resources</title>
+
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="css/style.css" />
 </head>
 
@@ -111,7 +110,7 @@
     <div class="chat-head">
       <div>
         <strong>Campus AI Assistant</strong><br>
-        <span>Campus resource recommendation assistant</span>
+        <span>AI-powered campus resource recommendations</span>
       </div>
 
       <button type="button" class="chat-close" id="chatCloseButton">
@@ -127,20 +126,20 @@
     </div>
 
     <div class="quick">
-      <button type="button" data-quick="I need a quiet study space">
+      <button type="button" data-quick="I need a quiet place to study.">
         Quiet study?
       </button>
 
-      <button type="button" data-quick="Where can I print?">
+      <button type="button" data-quick="Where can I print something?">
         Need a printer
       </button>
 
-      <button type="button" data-quick="I need a study room for 6 people">
+      <button type="button" data-quick="I need a study room for 6 people.">
         Room for 6
       </button>
 
-      <button type="button" data-quick="What resources are available?">
-        Available now?
+      <button type="button" data-quick="I need a computer lab that is currently available.">
+        Available computer lab?
       </button>
     </div>
 
@@ -255,6 +254,7 @@
   <script>
     let resources = [];
     let editingResourceId = null;
+    let aiRequestInProgress = false;
 
     const API_BASE_URL =
       `${window.location.protocol}//${window.location.hostname}:8003`;
@@ -266,6 +266,8 @@
     const availabilityFilter = document.getElementById("availabilityFilter");
     const resultCount = document.getElementById("resultCount");
     const resourceForm = document.getElementById("resourceForm");
+    const chatInput = document.getElementById("chatInput");
+    const chatSendButton = document.getElementById("chatSendButton");
 
     async function loadResources() {
       try {
@@ -352,14 +354,6 @@
 
     // ---------------------------------------------------------
     // Improved Search Matching
-    //
-    // Instead of using text.includes(query), this function
-    // compares whole words / word prefixes.
-    //
-    // Example:
-    // "lab" matches "Lab"
-    // "print" matches "Printer" and "printing"
-    // "lab" does NOT match "collaborative"
     // ---------------------------------------------------------
     function matchesSearch(resource, query) {
       if (!query) {
@@ -647,12 +641,12 @@
       document
         .getElementById("resourceFormTitle")
         .textContent =
-          "Add Campus Resource";
+        "Add Campus Resource";
 
       document
         .getElementById("resourceFormSubmitButton")
         .textContent =
-          "Add Resource";
+        "Add Resource";
     }
 
     function openResourceForm() {
@@ -711,12 +705,12 @@
       document
         .getElementById("resourceFormTitle")
         .textContent =
-          "Edit Campus Resource";
+        "Edit Campus Resource";
 
       document
         .getElementById("resourceFormSubmitButton")
         .textContent =
-          "Save Changes";
+        "Save Changes";
 
       closeDetail();
 
@@ -753,8 +747,8 @@
           document.getElementById("formCapacity").value === ""
             ? null
             : Number(
-                document.getElementById("formCapacity").value
-              ),
+              document.getElementById("formCapacity").value
+            ),
 
         availability_status:
           document.getElementById("formAvailability").value,
@@ -840,6 +834,10 @@
       }
     }
 
+    // =========================================================
+    // REAL CAMPUS AI CHAT
+    // =========================================================
+
     function toggleChat(force) {
       const chat =
         document.getElementById("chat");
@@ -856,10 +854,7 @@
 
       if (open) {
         setTimeout(
-          () =>
-            document
-              .getElementById("chatInput")
-              .focus(),
+          () => chatInput.focus(),
           100
         );
       }
@@ -882,97 +877,49 @@
 
       messages.scrollTop =
         messages.scrollHeight;
+
+      return message;
     }
 
-    function localAiAnswer(question) {
-      const query =
-        question.toLowerCase();
+    async function requestAiRecommendation(question) {
+      const response = await fetch(
+        `${API_BASE_URL}/recommend`,
+        {
+          method: "POST",
 
-      let matches = [];
+          headers: {
+            "Content-Type": "application/json"
+          },
 
-      if (
-        query.includes("quiet") ||
-        query.includes("study")
-      ) {
-        matches =
-          resources.filter(
-            resource =>
-              resource.resource_type === "Study Room" ||
-              resource.resource_type === "Library"
-          );
-      }
+          body: JSON.stringify({
+            question: question
+          }),
 
-      else if (
-        query.includes("printer") ||
-        query.includes("print")
-      ) {
-        matches =
-          resources.filter(
-            resource =>
-              resource.resource_type === "Printer"
-          );
-      }
+          cache: "no-store"
+        }
+      );
 
-      else if (
-        query.includes("computer") ||
-        query.includes("lab")
-      ) {
-        matches =
-          resources.filter(
-            resource =>
-              resource.resource_type === "Computer Lab"
-          );
-      }
+      const data =
+        await response.json()
+          .catch(() => ({}));
 
-      else if (
-        query.includes("parking")
-      ) {
-        matches =
-          resources.filter(
-            resource =>
-              resource.resource_type === "Parking"
-          );
-      }
-
-      else if (
-        query.includes("available")
-      ) {
-        matches =
-          resources.filter(
-            resource =>
-              resource.availability_status === "Available"
-          );
-      }
-
-      if (matches.length) {
-        const sample =
-          matches
-            .slice(0, 3)
-            .map(
-              resource =>
-                `${resource.resource_name} (${resource.location})`
-            )
-            .join("; ");
-
-        return (
-          `I found ${matches.length} suitable resource` +
-          `${matches.length === 1 ? "" : "s"}: ${sample}.`
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+          `AI request failed (${response.status})`
         );
       }
 
-      return (
-        "I can recommend study rooms, libraries, computer labs, " +
-        "printers and parking facilities. In the final system, " +
-        "this request will be sent to Ollama and an approved LLM."
-      );
+      return data;
     }
 
-    function sendMessage() {
-      const input =
-        document.getElementById("chatInput");
+    async function sendMessage() {
+      if (aiRequestInProgress) {
+        return;
+      }
 
       const text =
-        input.value.trim();
+        chatInput.value.trim();
 
       if (!text) {
         return;
@@ -983,27 +930,70 @@
         "user"
       );
 
-      input.value = "";
+      chatInput.value = "";
 
-      setTimeout(
-        () =>
-          addMessage(
-            localAiAnswer(text),
-            "bot"
-          ),
-        350
-      );
+      aiRequestInProgress = true;
+      chatSendButton.disabled = true;
+
+      const loadingMessage =
+        addMessage(
+          "Campus AI is checking the latest campus resources...",
+          "bot"
+        );
+
+      try {
+        console.log(
+          "Sending AI recommendation request:",
+          text
+        );
+
+        const data =
+          await requestAiRecommendation(
+            text
+          );
+
+        console.log(
+          "AI recommendation response:",
+          data
+        );
+
+        loadingMessage.textContent =
+          data.recommendation ||
+          "No recommendation was returned.";
+
+      } catch (error) {
+        console.error(
+          "Campus AI request failed:",
+          error
+        );
+
+        loadingMessage.textContent =
+          "Sorry, I could not get a recommendation right now. " +
+          "Please check that the backend and Ollama services are running.";
+
+      } finally {
+        aiRequestInProgress = false;
+        chatSendButton.disabled = false;
+        chatInput.focus();
+      }
     }
 
     function askQuick(text) {
+      if (aiRequestInProgress) {
+        return;
+      }
+
       toggleChat(true);
 
-      document
-        .getElementById("chatInput")
-        .value = text;
+      chatInput.value =
+        text;
 
       sendMessage();
     }
+
+    // ---------------------------------------------------------
+    // Event Wiring
+    // ---------------------------------------------------------
 
     document
       .getElementById("addResourceButton")
@@ -1033,23 +1023,20 @@
         () => toggleChat(false)
       );
 
-    document
-      .getElementById("chatSendButton")
-      .addEventListener(
-        "click",
-        sendMessage
-      );
+    chatSendButton.addEventListener(
+      "click",
+      sendMessage
+    );
 
-    document
-      .getElementById("chatInput")
-      .addEventListener(
-        "keydown",
-        event => {
-          if (event.key === "Enter") {
-            sendMessage();
-          }
+    chatInput.addEventListener(
+      "keydown",
+      event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          sendMessage();
         }
-      );
+      }
+    );
 
     document
       .getElementById("detailCloseButton")
@@ -1118,13 +1105,15 @@
           )
       );
 
-    // Keep functions available globally for browser-console testing.
+    // Keep useful functions globally available for browser console testing.
     window.openResourceForm = openResourceForm;
     window.openEditResourceForm = openEditResourceForm;
     window.deleteResource = deleteResource;
     window.saveResource = saveResource;
     window.loadResources = loadResources;
     window.matchesSearch = matchesSearch;
+    window.requestAiRecommendation = requestAiRecommendation;
+    window.sendMessage = sendMessage;
 
     loadResources();
 
