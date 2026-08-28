@@ -1,45 +1,6 @@
 # Integrated Docker Compose Configuration
 
 services:
-
-  # Student 3 - Campus Resource Management
-
-  student3-database:
-    build:
-      context: .
-      dockerfile: student-3/database/Dockerfile
-
-    ports:
-      - "5004:5004"
-
-  student3-backend:
-    build:
-      context: .
-      dockerfile: student-3/backend/Dockerfile
-
-    ports:
-      - "8003:8000"
-
-    environment:
-      AI_SERVICE_URL: http://ollama:11434/api/generate
-      DATABASE_API_URL: http://student3-database:5004
-
-    depends_on:
-      - student3-database
-      - ollama
-
-  student3-frontend:
-    build:
-      context: .
-      dockerfile: student-3/frontend/Dockerfile
-
-    ports:
-      - "8083:80"
-
-    depends_on:
-      - student3-backend
-
-
   # Student 4 Docker Compose Configuration
 
   database:
@@ -122,46 +83,37 @@ services:
       - student1-backend
 
   # Student 5 Docker Compose Configuration
+  # Student 5
   student5-database:
     build:
       context: .
-      dockerfile: student-5/Dockerfile
-
+      dockerfile: ./student-5/database/Dockerfile
     ports:
       - "5005:5005"
-
     environment:
       DATABASE_PATH: /data/career.db
-
     volumes:
       - student5-career-data:/data
-
 
   student5-backend:
     build:
       context: .
-      dockerfile: student-5/Dockerfile
-
+      dockerfile: ./student-5/backend/Dockerfile
     ports:
       - "8005:8005"
-
     environment:
       AI_SERVICE_URL: http://ollama:11434/api/generate
       DATABASE_SERVICE_URL: http://student5-database:5005
-
     depends_on:
       - student5-database
       - ollama
 
-
   student5-frontend:
     build:
       context: .
-      dockerfile: student-5/Dockerfile
-
+      dockerfile: ./student-5/frontend/Dockerfile
     ports:
       - "8085:80"
-
     depends_on:
       - student5-backend
 
@@ -184,7 +136,6 @@ services:
 
     volumes:
       - ollama_data:/root/.ollama
-
 
 volumes:
   database_data:
