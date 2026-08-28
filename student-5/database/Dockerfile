@@ -2,19 +2,17 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install Python dependencies
 COPY student-5/backend/requirements.txt ./requirements.txt
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend and frontend
-COPY student-5/backend ./backend
-COPY student-5/frontend ./frontend
+COPY student-5/backend/database.py .
+COPY student-5/backend/seed.py .
 
 ENV DATABASE_PATH=/data/career.db
 
-# Flask port
-EXPOSE 5005
+RUN mkdir -p /data
 
-# Start Flask
-CMD ["python", "backend/app.py"]
+CMD ["python", "seed.py"]
+
+#seed when db container starts

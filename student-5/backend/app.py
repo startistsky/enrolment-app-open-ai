@@ -7,6 +7,8 @@ from flask_cors import CORS
 
 from database import init_db
 
+from seed import seed
+
 from service import service
 
 from ai_routes import ai_routes
@@ -25,8 +27,10 @@ app = Flask(
 
 CORS(app)
 
+# initialise database
 init_db()
-
+# seed data 
+seed()
 
 # render frontend 
 @app.route("/")
@@ -77,7 +81,7 @@ if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
-        port=5005,
+        port=8005,
         debug=True
     )
 

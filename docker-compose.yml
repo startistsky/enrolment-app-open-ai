@@ -83,7 +83,6 @@ services:
       - student1-backend
 
   # Student 5 Docker Compose Configuration
-  # Student 5
   student5-database:
     build:
       context: .
@@ -103,7 +102,9 @@ services:
       - "8005:8005"
     environment:
       AI_SERVICE_URL: http://ollama:11434/api/generate
-      DATABASE_SERVICE_URL: http://student5-database:5005
+      DATABASE_PATH: /data/career.db
+    volumes:
+      - student5-career-data:/data
     depends_on:
       - student5-database
       - ollama
