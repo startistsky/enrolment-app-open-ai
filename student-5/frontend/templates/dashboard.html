@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Dashboard | Career&Internship</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark"></span>
+
+        <span> SmartCampus AI </span>
+      </a>
+
+      <nav class="nav">
+        <a href="/"> Jobs </a>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/admin.html"> Admin </a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="small-hero">
+        <span class="eyebrow"> DASHBOARD </span>
+
+        <h1>My Career Dashboard</h1>
+
+        <p>Manage saved opportunities and track your applications.</p>
+      </section>
+
+      <!-- Saved Jobs -->
+
+      <section>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> SAVED </span>
+
+            <h2>Saved Jobs</h2>
+          </div>
+        </div>
+
+        <p id="saved-message" class="status-message"></p>
+
+        <div id="saved-jobs" class="job-grid"></div>
+      </section>
+
+      <!-- Applications -->
+
+      <section>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> APPLICATIONS </span>
+
+            <h2>My Applications</h2>
+          </div>
+        </div>
+
+        <div id="applications"></div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  </body>
+</html>

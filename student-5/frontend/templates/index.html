@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Jobs | Career&Internship</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark"></span>
+
+        <span> SmartCampus AI </span>
+      </a>
+
+      <nav class="nav">
+        <a href="/"> Jobs </a>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/admin.html"> Admin </a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Hero -->
+
+      <section class="hero">
+        <span class="eyebrow"> CAREER & INTERNSHIP PLATFORM </span>
+
+        <h1>Find opportunities that fit your career.</h1>
+
+        <p>
+          Browse graduate jobs, internships and early-career opportunities. Use
+          our AI tools to understand jobs and prepare your application.
+        </p>
+      </section>
+
+      <!-- Search -->
+
+      <section class="search-section">
+        <div class="search-title">
+          <span class="section-label"> JOB SEARCH </span>
+
+          <h2>Browse opportunities</h2>
+        </div>
+
+        <div class="search-controls">
+          <input id="search" placeholder="Search jobs..." />
+
+          <select id="location">
+            <option value="">All Locations</option>
+
+            <option>Sydney</option>
+
+            <option>Melbourne</option>
+
+            <option>Brisbane</option>
+          </select>
+
+          <select id="industry">
+            <option value="">All Industries</option>
+
+            <option>Technology</option>
+
+            <option>Finance</option>
+
+            <option>Marketing</option>
+          </select>
+
+          <select id="job-type">
+            <option value="">All Types</option>
+
+            <option>Internship</option>
+
+            <option>Graduate</option>
+
+            <option>Part-time</option>
+
+            <option>Full-time</option>
+          </select>
+
+          <button type="button" onclick="searchJobs()" class="primary-button">
+            Search
+          </button>
+        </div>
+      </section>
+
+      <!-- Jobs -->
+
+      <section>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> OPPORTUNITIES </span>
+
+            <h2>Available Jobs</h2>
+          </div>
+        </div>
+
+        <div id="job-list" class="job-grid">
+          <p>Loading jobs...</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+  </body>
+</html>

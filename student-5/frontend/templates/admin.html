@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin | Career&Internship</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark"></span>
+
+        <span> SmartCampus AI </span>
+      </a>
+
+      <nav class="nav">
+        <a href="/"> Jobs </a>
+
+        <a href="/dashboard.html"> Dashboard </a>
+
+        <a href="/admin.html"> Admin </a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="small-hero">
+        <span class="eyebrow"> ADMIN </span>
+
+        <h1>Job Management</h1>
+
+        <p>Create, edit and remove opportunities.</p>
+      </section>
+
+      <!-- Job Form -->
+
+      <section>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> JOB MANAGEMENT </span>
+
+            <h2 id="form-title">Add Job</h2>
+          </div>
+        </div>
+
+        <form id="job-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="title"> Job Title </label>
+
+              <input id="title" required />
+            </div>
+
+            <div class="form-group">
+              <label for="company"> Company </label>
+
+              <input id="company" required />
+            </div>
+
+            <div class="form-group">
+              <label for="location"> Location </label>
+
+              <input id="location" />
+            </div>
+
+            <div class="form-group">
+              <label for="industry"> Industry </label>
+
+              <input id="industry" />
+            </div>
+
+            <div class="form-group">
+              <label for="job-type"> Job Type </label>
+
+              <select id="job-type">
+                <option value="">Select type</option>
+
+                <option>Internship</option>
+
+                <option>Graduate</option>
+
+                <option>Part-time</option>
+
+                <option>Full-time</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="salary"> Salary </label>
+
+              <input id="salary" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description"> Description </label>
+
+            <textarea id="description"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="requirements"> Requirements </label>
+
+            <textarea id="requirements"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="application-url"> Application URL </label>
+
+            <input id="application-url" type="url" />
+          </div>
+
+          <button type="submit" class="primary-button">Save Job</button>
+
+          <button
+            type="button"
+            id="cancel-edit"
+            class="secondary-button"
+            style="display: none"
+          >
+            Cancel Edit
+          </button>
+
+          <p id="job-message" class="status-message"></p>
+        </form>
+      </section>
+
+      <!-- Existing Jobs -->
+
+      <section>
+        <div class="section-head">
+          <div>
+            <span class="section-label"> DATABASE </span>
+
+            <h2>Existing Jobs</h2>
+          </div>
+        </div>
+
+        <div id="admin-jobs" class="job-grid"></div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+  </body>
+</html>
