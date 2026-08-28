@@ -1,0 +1,139 @@
+name: Student 4 Campus Event Management CI
+
+on:
+  push:
+    paths:
+      - "student-4/**"
+      - "docker-compose.yml"
+      - ".github/workflows/student-4.yml"
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "student-4/**"
+      - "docker-compose.yml"
+      - ".github/workflows/student-4.yml"
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout exact repository commit
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python for pytest
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # 3. Install backend dependencies and pytest
+      - name: Install backend dependencies
+        working-directory: student-4
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest
+
+      # 4. Run Student 4 automated tests
+      - name: Run Student 4 tests
+        working-directory: student-4
+        run: |
+          pytest tests/ -v
+
+      # 5. Build Student 4 Docker images using shared Compose configuration
+      - name: Build Student 4 Docker images
+        run: |
+          docker compose build database backend frontend
+
+      # 6. Start Student 4 services
+      - name: Start Student 4 services
+        run: |
+          docker compose up -d database ollama backend frontend
+
+      # 7. Show container status for CI evidence/debugging
+      - name: Show running containers
+        run: |
+          docker compose ps
+
+      # 8. Smoke validation - Frontend
+      - name: Validate Student 4 frontend
+        run: |
+          for i in {1..8}; do
+            echo "Frontend validation attempt $i"
+
+            if curl --fail --silent --show-error http://localhost:8080 > /dev/null; then
+              echo "Frontend is ready - HTTP validation passed"
+              exit 0
+            fi
+
+            if [ "$i" -eq 8 ]; then
+              echo "Frontend validation failed after 8 attempts"
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+      # 9. Smoke validation - Backend
+      - name: Validate Student 4 backend
+        run: |
+          for i in {1..8}; do
+            echo "Backend validation attempt $i"
+
+            if curl --fail --silent --show-error http://localhost:8000/health; then
+              echo "Backend is ready - HTTP validation passed"
+              exit 0
+            fi
+
+            if [ "$i" -eq 8 ]; then
+              echo "Backend validation failed after 8 attempts"
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+      # 10. Smoke validation - Database service
+      - name: Validate Student 4 database service
+        run: |
+          for i in {1..8}; do
+            echo "Database validation attempt $i"
+
+            if curl --fail --silent --show-error http://localhost:5002/health; then
+              echo "Database service is ready - HTTP validation passed"
+              exit 0
+            fi
+
+            if [ "$i" -eq 8 ]; then
+              echo "Database validation failed after 8 attempts"
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+      # 11. Display useful logs if any previous step fails
+      - name: Show Docker logs on failure
+        if: failure()
+        run: |
+          echo "===== DATABASE LOGS ====="
+          docker compose logs database || true
+
+          echo "===== BACKEND LOGS ====="
+          docker compose logs backend || true
+
+          echo "===== FRONTEND LOGS ====="
+          docker compose logs frontend || true
+
+          echo "===== OLLAMA LOGS ====="
+          docker compose logs ollama || true
+
+      # 12. Always clean up containers and volumes
+      - name: Tear down containers
+        if: always()
+        run: |
+          docker compose down -v

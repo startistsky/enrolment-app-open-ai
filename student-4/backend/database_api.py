@@ -17,7 +17,14 @@ def get_events():
     return response.json()
 
 
-def create_event(title, category, date, location, description):
+def create_event(
+    title,
+    category,
+    date,
+    location,
+    description,
+    emoji
+):
     response = requests.post(
         f"{DATABASE_SERVICE_URL}/events",
         json={
@@ -26,6 +33,7 @@ def create_event(title, category, date, location, description):
             "date": date,
             "location": location,
             "description": description,
+            "emoji": emoji,
         },
         timeout=10
     )
@@ -39,7 +47,8 @@ def update_event(
     category,
     date,
     location,
-    description
+    description,
+    emoji
 ):
     response = requests.put(
         f"{DATABASE_SERVICE_URL}/events/{event_id}",
@@ -49,6 +58,7 @@ def update_event(
             "date": date,
             "location": location,
             "description": description,
+            "emoji": emoji,
         },
         timeout=10
     )
