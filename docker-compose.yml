@@ -1,9 +1,7 @@
 # Integrated Docker Compose Configuration
 
 services:
-
   # Student 3 - Campus Resource Management
-
   student3-database:
     build:
       context: .
@@ -40,7 +38,6 @@ services:
       - student3-backend
 
   # Student 4 Docker Compose Configuration
-
   database:
     build:
       context: .
@@ -137,7 +134,13 @@ services:
       - "5005:5002"
 
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health')" ]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5002/health')",
+        ]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -171,6 +174,43 @@ services:
 
     depends_on:
       - student2-backend
+
+  # Student 5 Configuration
+
+  student5-database:
+    build:
+      context: .
+      dockerfile: ./student-5/database/Dockerfile
+    ports:
+      - "5006:5005"
+    environment:
+      DATABASE_PATH: /data/career.db
+    volumes:
+      - student5-career-data:/data
+
+  student5-backend:
+    build:
+      context: .
+      dockerfile: ./student-5/backend/Dockerfile
+    ports:
+      - "8005:8005"
+    environment:
+      AI_SERVICE_URL: http://ollama:11434/api/generate
+      DATABASE_PATH: /data/career.db
+    volumes:
+      - student5-career-data:/data
+    depends_on:
+      - student5-database
+      - ollama
+
+  student5-frontend:
+    build:
+      context: .
+      dockerfile: ./student-5/frontend/Dockerfile
+    ports:
+      - "8085:80"
+    depends_on:
+      - student5-backend
 
   # Shared Frontend
 
@@ -209,3 +249,4 @@ volumes:
   ollama_data:
   student1-course-data:
   assignment_data:
+  student5-career-data:
