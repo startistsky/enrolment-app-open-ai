@@ -21,7 +21,10 @@ def call_llm(prompt):
             json={
                 "model": MODEL_NAME,
                 "prompt": prompt,
-                "stream": False
+                "stream": False,
+                "options": {
+                    "num_predict": 200
+                }
             },
             timeout=AI_TIMEOUT
         )
