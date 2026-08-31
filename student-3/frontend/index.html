@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Campus Resources</title>
 
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="css/style.css" />
 </head>
 
@@ -32,7 +31,6 @@
     </div>
   </header>
 
-
   <main>
 
     <!-- Hero -->
@@ -41,7 +39,6 @@
 
         <div>
           <h1>Campus Resources</h1>
-
           <p>
             Find study spaces, libraries, computer labs,
             printers and other campus facilities.
@@ -49,11 +46,11 @@
         </div>
 
         <div class="hero-actions">
-          <button class="secondary-btn" onclick="openResourceForm()">
+          <button type="button" class="secondary-btn" id="addResourceButton">
             + Add Resource
           </button>
 
-          <button class="ask-ai" onclick="toggleChat(true)">
+          <button type="button" class="ask-ai" id="askAiButton">
             ✨ Ask Campus AI
           </button>
         </div>
@@ -61,15 +58,10 @@
       </div>
     </section>
 
-
     <!-- Search and Filters -->
     <section class="controls">
 
-      <input
-        id="search"
-        class="control"
-        placeholder="Search resources..."
-      />
+      <input id="search" class="control" placeholder="Search resources..." />
 
       <select id="typeFilter" class="control">
         <option value="">All types</option>
@@ -89,31 +81,17 @@
 
     </section>
 
-
     <!-- Resource List -->
     <section class="section">
-
       <div class="section-head">
-
         <h2>All Resources</h2>
-
-        <div
-          class="result-count"
-          id="resultCount">
-        </div>
-
+        <div class="result-count" id="resultCount"></div>
       </div>
 
-
-      <div
-        class="grid"
-        id="resourceGrid">
-      </div>
-
+      <div class="grid" id="resourceGrid"></div>
     </section>
 
   </main>
-
 
   <!-- Footer -->
   <footer class="footer">
@@ -121,120 +99,80 @@
     Campus Resource Management
   </footer>
 
-
   <!-- Floating AI Button -->
-  <button
-    class="chat-launcher"
-    onclick="toggleChat()">
+  <button type="button" class="chat-launcher" id="chatLauncher">
     💬
   </button>
 
-
   <!-- AI Chat -->
-  <aside
-    class="chat"
-    id="chat">
+  <aside class="chat" id="chat">
 
     <div class="chat-head">
-
       <div>
         <strong>Campus AI Assistant</strong><br>
-        <span>Campus resource recommendation assistant</span>
+        <span>AI-powered campus resource recommendations</span>
       </div>
 
-      <button
-        class="chat-close"
-        onclick="toggleChat(false)">
+      <button type="button" class="chat-close" id="chatCloseButton">
         ×
       </button>
-
     </div>
 
-
-    <div
-      class="messages"
-      id="messages">
-
+    <div class="messages" id="messages">
       <div class="msg bot">
         Hi! Tell me what kind of campus resource you need
         and I can recommend a suitable option.
       </div>
-
     </div>
 
-
     <div class="quick">
-
-      <button onclick="askQuick('I need a quiet study space')">
+      <button type="button" data-quick="I need a quiet place to study.">
         Quiet study?
       </button>
 
-      <button onclick="askQuick('Where can I print?')">
+      <button type="button" data-quick="Where can I print something?">
         Need a printer
       </button>
 
-      <button onclick="askQuick('I need a study room for 6 people')">
+      <button type="button" data-quick="I need a study room for 6 people.">
         Room for 6
       </button>
 
-      <button onclick="askQuick('What resources are available?')">
-        Available now?
+      <button type="button" data-quick="I need a computer lab that is currently available.">
+        Available computer lab?
       </button>
-
     </div>
 
-
     <div class="chat-input">
-
-      <input
-        id="chatInput"
-        placeholder="Ask about campus resources..."
-        onkeydown="if(event.key === 'Enter') sendMessage()"
-      />
-
-      <button onclick="sendMessage()">
+      <input id="chatInput" placeholder="Ask about campus resources..." />
+      <button type="button" id="chatSendButton">
         Send
       </button>
-
     </div>
 
   </aside>
 
-
   <!-- Resource Detail Modal -->
-  <div
-    class="modal-overlay"
-    id="detailModal">
-
+  <div class="modal-overlay" id="detailModal">
     <div class="modal">
-
-      <button
-        class="modal-close"
-        onclick="closeDetail()">
+      <button type="button" class="modal-close" id="detailCloseButton">
         ×
       </button>
 
       <div id="detailContent"></div>
-
     </div>
-
   </div>
 
-
-  <!-- Add Resource Modal -->
-  <div
-    class="modal-overlay"
-    id="resourceFormModal">
+  <!-- Add / Edit Resource Modal -->
+  <div class="modal-overlay" id="resourceFormModal">
 
     <div class="modal form-modal">
 
-      <button
-        class="modal-close"
-        onclick="closeResourceForm()">
+      <button type="button" class="modal-close" id="resourceFormCloseButton">
         ×
       </button>
 
-      <h2>Add Campus Resource</h2>
+      <h2 id="resourceFormTitle">Add Campus Resource</h2>
 
       <form id="resourceForm">
 
@@ -267,11 +205,7 @@
 
         <label>
           Capacity
-          <input
-            id="formCapacity"
-            type="number"
-            min="0"
-          />
+          <input id="formCapacity" type="number" min="0" />
         </label>
 
         <label>
@@ -286,10 +220,7 @@
 
         <label>
           Opening Hours
-          <input
-            id="formHours"
-            placeholder="8:00 AM - 10:00 PM"
-          />
+          <input id="formHours" placeholder="8:00 AM - 10:00 PM" />
         </label>
 
         <label>
@@ -299,24 +230,16 @@
 
         <label class="full-width">
           Description
-          <textarea
-            id="formDescription"
-            rows="4">
-          </textarea>
+          <textarea id="formDescription" rows="4"></textarea>
         </label>
 
         <div class="form-actions">
 
-          <button
-            type="button"
-            class="cancel-btn"
-            onclick="closeResourceForm()">
+          <button type="button" class="cancel-btn" id="resourceFormCancelButton">
             Cancel
           </button>
 
-          <button
-            type="submit"
-            class="ask-ai">
+          <button type="submit" class="ask-ai" id="resourceFormSubmitButton">
             Add Resource
           </button>
 
@@ -328,49 +251,36 @@
 
   </div>
 
-
   <script>
-
-    // Campus resources are loaded from the Student 3 backend API.
     let resources = [];
+    let editingResourceId = null;
+    let aiRequestInProgress = false;
 
-    const API_BASE_URL = "http://localhost:8003";
+    const API_BASE_URL =
+      `${window.location.protocol}//${window.location.hostname}:8003`;
 
-
-    const resourceGrid =
-      document.getElementById("resourceGrid");
-
-    const search =
-      document.getElementById("search");
-
-    const typeFilter =
-      document.getElementById("typeFilter");
-
-    const buildingFilter =
-      document.getElementById("buildingFilter");
-
-    const availabilityFilter =
-      document.getElementById("availabilityFilter");
-
-    const resultCount =
-      document.getElementById("resultCount");
-
+    const resourceGrid = document.getElementById("resourceGrid");
+    const search = document.getElementById("search");
+    const typeFilter = document.getElementById("typeFilter");
+    const buildingFilter = document.getElementById("buildingFilter");
+    const availabilityFilter = document.getElementById("availabilityFilter");
+    const resultCount = document.getElementById("resultCount");
+    const resourceForm = document.getElementById("resourceForm");
+    const chatInput = document.getElementById("chatInput");
+    const chatSendButton = document.getElementById("chatSendButton");
 
     async function loadResources() {
-
       try {
-
         resourceGrid.innerHTML =
           "<p>Loading campus resources...</p>";
 
         const response = await fetch(
-          `${API_BASE_URL}/resources`
+          `${API_BASE_URL}/resources`,
+          { cache: "no-store" }
         );
 
         if (!response.ok) {
-          throw new Error(
-            `HTTP error: ${response.status}`
-          );
+          throw new Error(`HTTP error: ${response.status}`);
         }
 
         resources = await response.json();
@@ -379,11 +289,7 @@
         renderResources();
 
       } catch (error) {
-
-        console.error(
-          "Failed to load resources:",
-          error
-        );
+        console.error("Failed to load resources:", error);
 
         resourceGrid.innerHTML = `
           <p>
@@ -393,14 +299,10 @@
         `;
 
         resultCount.textContent = "0 resources";
-
       }
-
     }
 
-
     function resourceIcon(type) {
-
       const icons = {
         "Library": "📚",
         "Study Room": "🪑",
@@ -410,24 +312,18 @@
       };
 
       return icons[type] || "🏫";
-
     }
 
-
     function seedFilters() {
-
       const types =
         [...new Set(
           resources.map(resource => resource.resource_type)
         )].sort();
 
       types.forEach(type => {
-
         typeFilter.innerHTML +=
           `<option value="${type}">${type}</option>`;
-
       });
-
 
       const buildings =
         [...new Set(
@@ -435,17 +331,62 @@
         )].sort();
 
       buildings.forEach(building => {
-
         buildingFilter.innerHTML +=
           `<option value="${building}">${building}</option>`;
-
       });
-
     }
 
+    function seedFiltersAgain() {
+      const selectedType = typeFilter.value;
+      const selectedBuilding = buildingFilter.value;
+
+      typeFilter.innerHTML =
+        `<option value="">All types</option>`;
+
+      buildingFilter.innerHTML =
+        `<option value="">All buildings</option>`;
+
+      seedFilters();
+
+      typeFilter.value = selectedType;
+      buildingFilter.value = selectedBuilding;
+    }
+
+    // ---------------------------------------------------------
+    // Improved Search Matching
+    // ---------------------------------------------------------
+    function matchesSearch(resource, query) {
+      if (!query) {
+        return true;
+      }
+
+      const searchableText =
+        `${resource.resource_name || ""}
+         ${resource.resource_type || ""}
+         ${resource.building || ""}
+         ${resource.location || ""}
+         ${resource.description || ""}`
+          .toLowerCase();
+
+      const searchableWords =
+        searchableText.match(/[a-z0-9]+/g) || [];
+
+      const queryWords =
+        query
+          .toLowerCase()
+          .match(/[a-z0-9]+/g) || [];
+
+      return queryWords.every(
+        queryWord =>
+          searchableWords.some(
+            word =>
+              word === queryWord ||
+              word.startsWith(queryWord)
+          )
+      );
+    }
 
     function renderResources() {
-
       const query =
         search.value.trim().toLowerCase();
 
@@ -458,42 +399,25 @@
       const availability =
         availabilityFilter.value;
 
-
       const filtered =
         resources.filter(resource => {
-
-          const text =
-            `${resource.resource_name}
-             ${resource.resource_type}
-             ${resource.building}
-             ${resource.location}
-             ${resource.description}`
-              .toLowerCase();
-
-
           return (
-            (!query || text.includes(query)) &&
-            (!type ||
-              resource.resource_type === type) &&
-            (!building ||
-              resource.building === building) &&
+            matchesSearch(resource, query) &&
+            (!type || resource.resource_type === type) &&
+            (!building || resource.building === building) &&
             (!availability ||
               resource.availability_status === availability)
           );
-
         });
-
 
       resultCount.textContent =
         `${filtered.length} resource${filtered.length === 1 ? "" : "s"}`;
 
-
       resourceGrid.innerHTML =
         filtered.map(resource => `
-
           <article
             class="card"
-            onclick="openDetail(${resource.resource_id})">
+            data-resource-id="${resource.resource_id}">
 
             <div class="image">
 
@@ -514,7 +438,6 @@
 
             </div>
 
-
             <div class="content">
 
               <h3>
@@ -522,14 +445,12 @@
               </h3>
 
               <p>
-                ${resource.description}
+                ${resource.description || ""}
               </p>
 
-
               <div class="meta">
-
                 <span>
-                  📍 ${resource.location}
+                  📍 ${resource.location || "Location unavailable"}
                 </span>
 
                 <span>
@@ -540,20 +461,15 @@
                 <span>
                   🕒 ${resource.opening_hours || "Hours unavailable"}
                 </span>
-
               </div>
 
             </div>
 
           </article>
-
         `).join("");
-
     }
 
-
     function openDetail(resourceId) {
-
       const resource =
         resources.find(
           item => item.resource_id === resourceId
@@ -563,19 +479,15 @@
         return;
       }
 
-
       const content =
         document.getElementById("detailContent");
 
-
       content.innerHTML = `
-
         <div class="detail-icon">
           ${resourceIcon(resource.resource_type)}
         </div>
 
         <div class="detail-tags">
-
           <span class="tag-static">
             ${resource.resource_type}
           </span>
@@ -586,22 +498,17 @@
           ">
             ${resource.availability_status}
           </span>
-
         </div>
-
 
         <h2>
           ${resource.resource_name}
         </h2>
 
-
         <p class="detail-description">
-          ${resource.description}
+          ${resource.description || ""}
         </p>
 
-
         <div class="detail-grid">
-
           <div>
             <strong>Building</strong>
             <span>${resource.building}</span>
@@ -631,211 +538,329 @@
             <strong>Status</strong>
             <span>${resource.availability_status}</span>
           </div>
-
         </div>
 
-
         <div class="detail-actions">
-
-          <button class="secondary-btn">
+          <button
+            type="button"
+            class="secondary-btn"
+            id="editResourceButton">
             Edit Resource
           </button>
 
           <button
+            type="button"
             class="delete-btn"
-            onclick="deleteResource(${resource.resource_id})">
+            id="deleteResourceButton">
             Delete Resource
           </button>
-
         </div>
-
       `;
-
 
       document
         .getElementById("detailModal")
         .classList.add("open");
 
+      document
+        .getElementById("editResourceButton")
+        .addEventListener("click", () => {
+          openEditResourceForm(resource.resource_id);
+        });
+
+      document
+        .getElementById("deleteResourceButton")
+        .addEventListener("click", () => {
+          deleteResource(resource.resource_id);
+        });
     }
 
-
     function closeDetail() {
-
       document
         .getElementById("detailModal")
         .classList.remove("open");
-
     }
 
-
-    function deleteResource(resourceId) {
-
+    async function deleteResource(resourceId) {
       const resource =
         resources.find(
           item => item.resource_id === resourceId
         );
 
-
       if (!resource) {
+        alert("Resource not found in the current list.");
         return;
       }
-
 
       const confirmed =
         confirm(
           `Are you sure you want to delete ${resource.resource_name}?`
         );
 
-
       if (!confirmed) {
         return;
       }
 
-
-      resources =
-        resources.filter(
-          item => item.resource_id !== resourceId
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/resources/${resourceId}`,
+          {
+            method: "DELETE",
+            cache: "no-store"
+          }
         );
 
+        if (!response.ok) {
+          const errorText =
+            await response.text();
 
-      closeDetail();
+          throw new Error(
+            `DELETE failed (${response.status}): ${errorText}`
+          );
+        }
 
-      renderResources();
+        closeDetail();
+        await loadResources();
 
+      } catch (error) {
+        console.error(
+          "Failed to delete resource:",
+          error
+        );
+
+        alert(
+          "Unable to delete resource. Please try again."
+        );
+      }
     }
 
+    function resetResourceFormState() {
+      editingResourceId = null;
+
+      resourceForm.reset();
+
+      document
+        .getElementById("resourceFormTitle")
+        .textContent =
+        "Add Campus Resource";
+
+      document
+        .getElementById("resourceFormSubmitButton")
+        .textContent =
+        "Add Resource";
+    }
 
     function openResourceForm() {
+      resetResourceFormState();
 
       document
         .getElementById("resourceFormModal")
         .classList.add("open");
-
     }
 
+    function openEditResourceForm(resourceId) {
+      console.log(
+        "Opening edit form for resource:",
+        resourceId
+      );
+
+      const resource =
+        resources.find(
+          item => item.resource_id === resourceId
+        );
+
+      if (!resource) {
+        alert("Resource not found.");
+        return;
+      }
+
+      editingResourceId = resourceId;
+
+      document.getElementById("formName").value =
+        resource.resource_name || "";
+
+      document.getElementById("formType").value =
+        resource.resource_type || "";
+
+      document.getElementById("formBuilding").value =
+        resource.building || "";
+
+      document.getElementById("formFloor").value =
+        resource.floor || "";
+
+      document.getElementById("formCapacity").value =
+        resource.capacity ?? "";
+
+      document.getElementById("formAvailability").value =
+        resource.availability_status || "Available";
+
+      document.getElementById("formHours").value =
+        resource.opening_hours || "";
+
+      document.getElementById("formLocation").value =
+        resource.location || "";
+
+      document.getElementById("formDescription").value =
+        resource.description || "";
+
+      document
+        .getElementById("resourceFormTitle")
+        .textContent =
+        "Edit Campus Resource";
+
+      document
+        .getElementById("resourceFormSubmitButton")
+        .textContent =
+        "Save Changes";
+
+      closeDetail();
+
+      document
+        .getElementById("resourceFormModal")
+        .classList.add("open");
+    }
 
     function closeResourceForm() {
-
       document
         .getElementById("resourceFormModal")
         .classList.remove("open");
 
+      resetResourceFormState();
     }
 
+    async function saveResource(event) {
+      event.preventDefault();
 
-    document
-      .getElementById("resourceForm")
-      .addEventListener(
-        "submit",
-        function(event) {
+      const resourceData = {
+        resource_name:
+          document.getElementById("formName").value.trim(),
 
-          event.preventDefault();
+        resource_type:
+          document.getElementById("formType").value,
 
+        building:
+          document.getElementById("formBuilding").value.trim(),
 
-          const newResource = {
+        floor:
+          document.getElementById("formFloor").value.trim(),
 
-            resource_id:
-              Math.max(
-                0,
-                ...resources.map(
-                  resource => resource.resource_id
-                )
-              ) + 1,
+        capacity:
+          document.getElementById("formCapacity").value === ""
+            ? null
+            : Number(
+              document.getElementById("formCapacity").value
+            ),
 
-            resource_name:
-              document.getElementById("formName").value,
+        availability_status:
+          document.getElementById("formAvailability").value,
 
-            resource_type:
-              document.getElementById("formType").value,
+        opening_hours:
+          document.getElementById("formHours").value.trim(),
 
-            building:
-              document.getElementById("formBuilding").value,
+        location:
+          document.getElementById("formLocation").value.trim(),
 
-            floor:
-              document.getElementById("formFloor").value,
+        description:
+          document.getElementById("formDescription").value.trim()
+      };
 
-            capacity:
-              Number(
-                document.getElementById("formCapacity").value
-              ) || null,
+      const isEditing =
+        editingResourceId !== null;
 
-            availability_status:
-              document.getElementById("formAvailability").value,
+      const url =
+        isEditing
+          ? `${API_BASE_URL}/resources/${editingResourceId}`
+          : `${API_BASE_URL}/resources`;
 
-            opening_hours:
-              document.getElementById("formHours").value,
+      const method =
+        isEditing
+          ? "PUT"
+          : "POST";
 
-            location:
-              document.getElementById("formLocation").value,
+      try {
+        console.log(
+          `${method} resource:`,
+          url,
+          resourceData
+        );
 
-            description:
-              document.getElementById("formDescription").value
+        const response = await fetch(
+          url,
+          {
+            method: method,
 
-          };
+            headers: {
+              "Content-Type": "application/json"
+            },
 
+            body:
+              JSON.stringify(resourceData),
 
-          resources.push(newResource);
+            cache:
+              "no-store"
+          }
+        );
 
-          this.reset();
+        if (!response.ok) {
+          const errorText =
+            await response.text();
 
-          closeResourceForm();
-
-          seedFiltersAgain();
-
-          renderResources();
-
+          throw new Error(
+            `${method} failed (${response.status}): ${errorText}`
+          );
         }
-      );
 
+        const savedResource =
+          await response.json();
 
-    function seedFiltersAgain() {
+        console.log(
+          isEditing
+            ? "Resource updated:"
+            : "Resource created:",
+          savedResource
+        );
 
-      typeFilter.innerHTML =
-        `<option value="">All types</option>`;
+        closeResourceForm();
+        await loadResources();
 
-      buildingFilter.innerHTML =
-        `<option value="">All buildings</option>`;
+      } catch (error) {
+        console.error(
+          "Failed to save resource:",
+          error
+        );
 
-      seedFilters();
-
+        alert(
+          `Unable to save resource. ${error.message}`
+        );
+      }
     }
 
+    // =========================================================
+    // REAL CAMPUS AI CHAT
+    // =========================================================
 
     function toggleChat(force) {
-
       const chat =
         document.getElementById("chat");
-
 
       const open =
         typeof force === "boolean"
           ? force
           : !chat.classList.contains("open");
 
-
       chat.classList.toggle(
         "open",
         open
       );
 
-
       if (open) {
-
         setTimeout(
-          () =>
-            document
-              .getElementById("chatInput")
-              .focus(),
+          () => chatInput.focus(),
           100
         );
-
       }
-
     }
 
-
     function addMessage(text, type) {
-
       const messages =
         document.getElementById("messages");
 
@@ -853,159 +878,218 @@
       messages.scrollTop =
         messages.scrollHeight;
 
+      return message;
     }
 
+    async function requestAiRecommendation(question) {
+      const response = await fetch(
+        `${API_BASE_URL}/recommend`,
+        {
+          method: "POST",
 
-    function localAiAnswer(question) {
+          headers: {
+            "Content-Type": "application/json"
+          },
 
-      const query =
-        question.toLowerCase();
+          body: JSON.stringify({
+            question: question
+          }),
 
-
-      let matches = [];
-
-
-      if (
-        query.includes("quiet") ||
-        query.includes("study")
-      ) {
-
-        matches =
-          resources.filter(
-            resource =>
-              resource.resource_type === "Study Room" ||
-              resource.resource_type === "Library"
-          );
-
-      }
-
-      else if (
-        query.includes("printer") ||
-        query.includes("print")
-      ) {
-
-        matches =
-          resources.filter(
-            resource =>
-              resource.resource_type === "Printer"
-          );
-
-      }
-
-      else if (
-        query.includes("computer") ||
-        query.includes("lab")
-      ) {
-
-        matches =
-          resources.filter(
-            resource =>
-              resource.resource_type === "Computer Lab"
-          );
-
-      }
-
-      else if (
-        query.includes("parking")
-      ) {
-
-        matches =
-          resources.filter(
-            resource =>
-              resource.resource_type === "Parking"
-          );
-
-      }
-
-      else if (
-        query.includes("available")
-      ) {
-
-        matches =
-          resources.filter(
-            resource =>
-              resource.availability_status === "Available"
-          );
-
-      }
-
-
-      if (matches.length) {
-
-        const sample =
-          matches
-            .slice(0, 3)
-            .map(
-              resource =>
-                `${resource.resource_name} (${resource.location})`
-            )
-            .join("; ");
-
-
-        return (
-          `I found ${matches.length} suitable resource` +
-          `${matches.length === 1 ? "" : "s"}: ${sample}.`
-        );
-
-      }
-
-
-      return (
-        "I can recommend study rooms, libraries, computer labs, " +
-        "printers and parking facilities. In the final system, " +
-        "this request will be sent to Ollama and an approved LLM."
+          cache: "no-store"
+        }
       );
 
+      const data =
+        await response.json()
+          .catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+          `AI request failed (${response.status})`
+        );
+      }
+
+      return data;
     }
 
-
-    function sendMessage() {
-
-      const input =
-        document.getElementById("chatInput");
+    async function sendMessage() {
+      if (aiRequestInProgress) {
+        return;
+      }
 
       const text =
-        input.value.trim();
-
+        chatInput.value.trim();
 
       if (!text) {
         return;
       }
-
 
       addMessage(
         text,
         "user"
       );
 
+      chatInput.value = "";
 
-      input.value = "";
+      aiRequestInProgress = true;
+      chatSendButton.disabled = true;
 
+      const loadingMessage =
+        addMessage(
+          "Campus AI is checking the latest campus resources...",
+          "bot"
+        );
 
-      setTimeout(
-        () =>
-          addMessage(
-            localAiAnswer(text),
-            "bot"
-          ),
-        350
-      );
+      try {
+        console.log(
+          "Sending AI recommendation request:",
+          text
+        );
 
+        const data =
+          await requestAiRecommendation(
+            text
+          );
+
+        console.log(
+          "AI recommendation response:",
+          data
+        );
+
+        loadingMessage.textContent =
+          data.recommendation ||
+          "No recommendation was returned.";
+
+      } catch (error) {
+        console.error(
+          "Campus AI request failed:",
+          error
+        );
+
+        loadingMessage.textContent =
+          "Sorry, I could not get a recommendation right now. " +
+          "Please check that the backend and Ollama services are running.";
+
+      } finally {
+        aiRequestInProgress = false;
+        chatSendButton.disabled = false;
+        chatInput.focus();
+      }
     }
 
-
     function askQuick(text) {
+      if (aiRequestInProgress) {
+        return;
+      }
 
       toggleChat(true);
 
-      document
-        .getElementById("chatInput")
-        .value = text;
+      chatInput.value =
+        text;
 
       sendMessage();
-
     }
 
+    // ---------------------------------------------------------
+    // Event Wiring
+    // ---------------------------------------------------------
+
+    document
+      .getElementById("addResourceButton")
+      .addEventListener(
+        "click",
+        openResourceForm
+      );
+
+    document
+      .getElementById("askAiButton")
+      .addEventListener(
+        "click",
+        () => toggleChat(true)
+      );
+
+    document
+      .getElementById("chatLauncher")
+      .addEventListener(
+        "click",
+        () => toggleChat()
+      );
+
+    document
+      .getElementById("chatCloseButton")
+      .addEventListener(
+        "click",
+        () => toggleChat(false)
+      );
+
+    chatSendButton.addEventListener(
+      "click",
+      sendMessage
+    );
+
+    chatInput.addEventListener(
+      "keydown",
+      event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          sendMessage();
+        }
+      }
+    );
+
+    document
+      .getElementById("detailCloseButton")
+      .addEventListener(
+        "click",
+        closeDetail
+      );
+
+    document
+      .getElementById("resourceFormCloseButton")
+      .addEventListener(
+        "click",
+        closeResourceForm
+      );
+
+    document
+      .getElementById("resourceFormCancelButton")
+      .addEventListener(
+        "click",
+        closeResourceForm
+      );
+
+    resourceForm.addEventListener(
+      "submit",
+      saveResource
+    );
+
+    document
+      .querySelectorAll("[data-quick]")
+      .forEach(button => {
+        button.addEventListener(
+          "click",
+          () => askQuick(button.dataset.quick)
+        );
+      });
+
+    resourceGrid.addEventListener(
+      "click",
+      event => {
+        const card =
+          event.target.closest(
+            "[data-resource-id]"
+          );
+
+        if (!card) {
+          return;
+        }
+
+        openDetail(
+          Number(card.dataset.resourceId)
+        );
+      }
+    );
 
     [
       search,
@@ -1021,10 +1105,20 @@
           )
       );
 
+    // Keep useful functions globally available for browser console testing.
+    window.openResourceForm = openResourceForm;
+    window.openEditResourceForm = openEditResourceForm;
+    window.deleteResource = deleteResource;
+    window.saveResource = saveResource;
+    window.loadResources = loadResources;
+    window.matchesSearch = matchesSearch;
+    window.requestAiRecommendation = requestAiRecommendation;
+    window.sendMessage = sendMessage;
 
     loadResources();
 
   </script>
 
 </body>
+
 </html>

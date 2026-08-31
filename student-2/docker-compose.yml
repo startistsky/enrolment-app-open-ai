@@ -1,0 +1,52 @@
+services:
+  assignment-database:
+    build:
+      context: ..
+      dockerfile: student-2/database/Dockerfile
+    environment:
+      DATABASE_PATH: /data/assignments.db
+    volumes:
+      - assignment_data:/data
+    ports:
+      - "5004:5002"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  assignment-backend:
+    build:
+      context: ..
+      dockerfile: student-2/backend/Dockerfile
+    environment:
+      DATABASE_SERVICE_URL: http://assignment-database:5002
+      OLLAMA_URL: http://ollama:11434/api/generate
+      OLLAMA_MODEL: qwen2.5:0.5b
+    ports:
+      - "8002:8002"
+    depends_on:
+      assignment-database:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+
+  assignment-frontend:
+    build:
+      context: ..
+      dockerfile: student-2/frontend/Dockerfile
+    ports:
+      - "8082:80"
+    depends_on:
+      - assignment-backend
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  assignment_data:
+  ollama_data:
