@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Career & Internship Management | SmartCampus AI</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark"></span>
+        <span> SmartCampus AI </span>
+      </a>
+      <!-- Navbar to other features -->
+      <nav class="nav">
+        <a href="http://localhost:8888">Home</a>
+        <a href="http://localhost:8081">Courses</a>
+        <a href="http://localhost:8082">Assignments</a>
+        <a href="http://localhost:8083">Resources</a>
+        <a href="http://localhost:8080">Events</a>
+        <a href="http://localhost:8085" class="active">Career</a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- This feature navbar -->
+      <nav class="feature-nav">
+        <a href="/"> Jobs </a>
+        <a href="/dashboard.html"> Dashboard </a>
+        <a href="/admin.html"> Admin </a>
+      </nav>
+      <!-- Job Details -->
+
+      <section id="job-details">
+        <p class="status-message info">Loading job...</p>
+      </section>
+
+      <!-- Actions -->
+
+      <section class="actions">
+        <button type="button" onclick="saveJob()" class="secondary-button">
+          Save Job
+        </button>
+
+        <button type="button" onclick="applyJob()" class="primary-button">
+          Apply
+        </button>
+
+        <button type="button" onclick="analyseJob()" class="primary-button">
+          Analyse with AI
+        </button>
+      </section>
+
+      <p id="job-action-message" class="status-message"></p>
+
+      <!-- AI Analysis -->
+
+      <section class="ai-section">
+        <span class="section-label"> ATS & AI ANALYSIS </span>
+
+        <h2>Job Analysis</h2>
+
+        <div id="ai-analysis">
+          <p>Select "Analyse with AI" to analyse this job.</p>
+        </div>
+      </section>
+
+      <!-- AI Chat -->
+
+      <section class="chat">
+        <span class="section-label"> CAREER ASSISTANT </span>
+
+        <h2>Ask the Career Agent</h2>
+
+        <div id="chat-messages" class="chat-messages"></div>
+
+        <div class="chat-input">
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="Ask about this job..."
+            autocomplete="off"
+          />
+
+          <button type="button" onclick="sendMessage()" class="primary-button">
+            Send
+          </button>
+        </div>
+
+        <p id="chat-message" class="status-message"></p>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/job.js') }}"></script>
+  </body>
+</html>

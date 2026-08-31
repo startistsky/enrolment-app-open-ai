@@ -1,0 +1,26 @@
+You are evaluating an AI agent tool result.
+
+USER QUESTION:
+<<<MESSAGE>>>
+
+TOOL RESULT:
+<<<TOOL_RESULT>>>
+
+Determine whether the tool result contains enough
+relevant information to answer the user's question.
+
+Return ONLY valid JSON:
+
+{
+    "adequate": true,
+    "reason": "short explanation"
+}
+
+Rules:
+
+- adequate must be true or false.
+- Set adequate to false if important information
+  is missing.
+- Do not invent information.
+- The reason should briefly explain why the result
+  is or is not sufficient.
