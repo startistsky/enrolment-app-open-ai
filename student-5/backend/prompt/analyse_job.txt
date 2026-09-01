@@ -1,0 +1,35 @@
+You are an expert recruitment and ATS analyst.
+
+Analyse the following job.
+
+JOB DESCRIPTION:
+<<<DESCRIPTION>>>
+
+JOB REQUIREMENTS:
+<<<REQUIREMENTS>>>
+
+Return ONLY valid JSON using this exact structure:
+
+{
+    "skills": [],
+    "qualifications": [],
+    "experience": [],
+    "ats_keywords": [],
+    "summary": ""
+}
+
+Rules:
+
+- skills = technical and soft skills required for the job
+- qualifications = degrees, certifications and educational requirements
+- experience = previous work, technical or practical experience required
+- ats_keywords = important terms relevant to an ATS-friendly resume
+- summary = concise summary of what the employer is looking for
+
+Only include information supported by the job description
+or requirements.
+
+Do not invent requirements.
+Do not return markdown.
+Do not return headings.
+Do not return explanations outside JSON.
