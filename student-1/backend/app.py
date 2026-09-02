@@ -245,6 +245,7 @@ def delete_course(course_id):
 
 @app.post("/api/courses/<int:course_id>/recommendation")
 def generate_course_recommendation(course_id):
+    print(f"PLAN: Prepare study advice for course {course_id}.", flush=True)
     agentic_trace = [{
         "phase": "plan",
         "status": "completed",
@@ -280,6 +281,7 @@ def generate_course_recommendation(course_id):
         f"Description: {course.get('course_description')}"
     )
 
+    print("ACT: Retrieve course context and request advice from Ollama.", flush=True)
     recommendation, ai_error = request_ai_recommendation(prompt)
     if ai_error:
         return ai_error
@@ -291,6 +293,7 @@ def generate_course_recommendation(course_id):
     })
 
     is_valid, observation = validate_ai_recommendation(recommendation)
+    print(f"OBSERVE: {observation}.", flush=True)
     agentic_trace.append({
         "phase": "observe",
         "status": "passed" if is_valid else "correction_required",
@@ -298,12 +301,14 @@ def generate_course_recommendation(course_id):
     })
 
     if is_valid:
+        print("ADAPT: Not required; the first response is valid.", flush=True)
         agentic_trace.append({
             "phase": "adapt",
             "status": "not_required",
             "detail": "The first response met the required structure; no retry was needed",
         })
     else:
+        print("ADAPT: Correction required; sending one corrective prompt.", flush=True)
         adapted_prompt = (
             f"{prompt}\n\n"
             "Your previous response did not match the required structure. "
@@ -333,6 +338,7 @@ def generate_course_recommendation(course_id):
             "detail": "Sent one corrective prompt and accepted the corrected response",
         })
 
+    print("PAOA workflow completed successfully.", flush=True)
     return jsonify({
         "course_id": course_id,
         "recommendation": recommendation,

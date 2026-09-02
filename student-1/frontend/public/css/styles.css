@@ -70,6 +70,12 @@ textarea:focus-visible {
     color: var(--green);
     font-size: 24px;
     font-weight: 800;
+    text-decoration: none;
+}
+
+.brand:focus-visible {
+    outline: 3px solid rgba(10, 155, 67, 0.2);
+    outline-offset: 2px;
 }
 
 .brand-mark {
