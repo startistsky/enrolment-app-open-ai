@@ -1,17 +1,20 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Assignment Management | SmartCampus AI</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
   <header class="topbar">
-    <a class="brand" href="../../shared/frontend/index.html"><span class="brand-mark"></span>SmartCampus AI</a>
+    <a class="brand" href="http://localhost:8888/"><span class="brand-mark"></span>SmartCampus AI</a>
     <nav class="nav" aria-label="Main navigation">
-      <a href="../../shared/frontend/index.html">Home</a>
-      <span>Courses</span><span class="active">Assignments</span><span>Resources</span><span>Events</span><span>Career</span>
+      <a href="http://localhost:8888/">Home</a>
+      <span>Courses</span><span
+        class="active">Assignments</span><span>Resources</span><span>Events</span><span>Career</span>
     </nav>
     <div class="student-pill">Student 2 · Juncheng Pu</div>
   </header>
@@ -30,32 +33,57 @@
     </section>
 
     <section class="summary-grid" aria-label="Assignment summary">
-      <article class="summary-card"><span>All assignments</span><strong id="totalCount">0</strong><small>Across all subjects</small></article>
-      <article class="summary-card urgent"><span>Due in 7 days</span><strong id="upcomingCount">0</strong><small>Needs attention</small></article>
-      <article class="summary-card"><span>In progress</span><strong id="inProgressCount">0</strong><small>Currently active</small></article>
-      <article class="summary-card complete"><span>Average progress</span><strong id="averageProgress">0%</strong><small>Overall completion</small></article>
+      <article class="summary-card"><span>All assignments</span><strong id="totalCount">0</strong><small>Across all
+          subjects</small></article>
+      <article class="summary-card urgent"><span>Due in 7 days</span><strong id="upcomingCount">0</strong><small>Needs
+          attention</small></article>
+      <article class="summary-card"><span>In progress</span><strong id="inProgressCount">0</strong><small>Currently
+          active</small></article>
+      <article class="summary-card complete"><span>Average progress</span><strong
+          id="averageProgress">0%</strong><small>Overall completion</small></article>
     </section>
 
     <section class="workspace">
       <div class="workspace-head">
-        <div><p class="eyebrow">YOUR WORKLOAD</p><h2>Assignment dashboard</h2></div>
+        <div>
+          <p class="eyebrow">YOUR WORKLOAD</p>
+          <h2>Assignment dashboard</h2>
+        </div>
         <div class="controls">
           <input id="studentFilter" value="25220967" aria-label="Student ID" placeholder="Student ID">
-          <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option><option>Not Started</option><option>In Progress</option><option>Completed</option></select>
-          <select id="priorityFilter" aria-label="Filter by priority"><option value="">All priorities</option><option>High</option><option>Medium</option><option>Low</option></select>
-          <select id="sortFilter" aria-label="Sort assignments"><option value="deadline">Sort: deadline</option><option value="priority">Sort: priority</option><option value="progress">Sort: progress</option><option value="created">Sort: newest</option></select>
+          <select id="statusFilter" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option>Not Started</option>
+            <option>In Progress</option>
+            <option>Completed</option>
+          </select>
+          <select id="priorityFilter" aria-label="Filter by priority">
+            <option value="">All priorities</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+          <select id="sortFilter" aria-label="Sort assignments">
+            <option value="deadline">Sort: deadline</option>
+            <option value="priority">Sort: priority</option>
+            <option value="progress">Sort: progress</option>
+            <option value="created">Sort: newest</option>
+          </select>
         </div>
       </div>
       <div id="notice" class="notice" role="status" hidden></div>
       <div id="assignmentGrid" class="assignment-grid"></div>
-      <div id="emptyState" class="empty-state" hidden><strong>No assignments found</strong><p>Change the filters or create a new assignment.</p></div>
+      <div id="emptyState" class="empty-state" hidden><strong>No assignments found</strong>
+        <p>Change the filters or create a new assignment.</p>
+      </div>
     </section>
   </main>
 
   <div class="modal-overlay" id="assignmentModal" hidden>
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
       <button class="close-button" data-close="assignmentModal" aria-label="Close">×</button>
-      <p class="eyebrow">ASSIGNMENT DETAILS</p><h2 id="formTitle">New assignment</h2>
+      <p class="eyebrow">ASSIGNMENT DETAILS</p>
+      <h2 id="formTitle">New assignment</h2>
       <form id="assignmentForm">
         <input type="hidden" id="assignmentId">
         <div class="form-grid">
@@ -63,12 +91,23 @@
           <label>Subject name<input id="subjectName" required></label>
           <label class="wide">Assignment title<input id="assignmentTitle" required></label>
           <label>Due date<input id="dueDate" type="date" required></label>
-          <label>Priority<select id="priority" required><option>High</option><option selected>Medium</option><option>Low</option></select></label>
-          <label>Status<select id="status" required><option>Not Started</option><option>In Progress</option><option>Completed</option></select></label>
+          <label>Priority<select id="priority" required>
+              <option>High</option>
+              <option selected>Medium</option>
+              <option>Low</option>
+            </select></label>
+          <label>Status<select id="status" required>
+              <option>Not Started</option>
+              <option>In Progress</option>
+              <option>Completed</option>
+            </select></label>
           <label>Progress (%)<input id="progress" type="number" min="0" max="100" value="0" required></label>
-          <label class="wide">Description<textarea id="description" rows="4" placeholder="Requirements, milestones, or notes"></textarea></label>
+          <label class="wide">Description<textarea id="description" rows="4"
+              placeholder="Requirements, milestones, or notes"></textarea></label>
         </div>
-        <div class="modal-actions"><button type="button" class="button ghost" data-close="assignmentModal">Cancel</button><button type="submit" class="button primary">Save assignment</button></div>
+        <div class="modal-actions"><button type="button" class="button ghost"
+            data-close="assignmentModal">Cancel</button><button type="submit" class="button primary">Save
+            assignment</button></div>
       </form>
     </section>
   </div>
@@ -76,13 +115,21 @@
   <div class="modal-overlay" id="aiModal" hidden>
     <section class="modal ai-modal" role="dialog" aria-modal="true" aria-labelledby="aiTitle">
       <button class="close-button" data-close="aiModal" aria-label="Close">×</button>
-      <div class="ai-heading"><span class="ai-icon">✦</span><div><p class="eyebrow">LOCAL QWEN / LLAMA</p><h2 id="aiTitle">Assignment AI planner</h2></div></div>
-      <p class="muted">The assistant analyses active deadlines, priority and progress using the Plan → Act → Observe → Adapt loop.</p>
+      <div class="ai-heading"><span class="ai-icon">✦</span>
+        <div>
+          <p class="eyebrow">LOCAL QWEN / LLAMA</p>
+          <h2 id="aiTitle">Assignment AI planner</h2>
+        </div>
+      </div>
+      <p class="muted">The assistant analyses active deadlines, priority and progress using the Plan → Act → Observe →
+        Adapt loop.</p>
       <button class="button primary" id="generateAiButton">Generate my priority plan</button>
-      <div id="aiResult" class="ai-result">Select generate to create a recommendation from your current assignments.</div>
+      <div id="aiResult" class="ai-result">Select generate to create a recommendation from your current assignments.
+      </div>
     </section>
   </div>
 
   <script src="js/app.js"></script>
 </body>
+
 </html>
