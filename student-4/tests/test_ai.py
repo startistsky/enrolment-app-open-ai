@@ -25,7 +25,7 @@ def test_ai_agentic_workflow():
     """
     Test the complete Agentic AI workflow:
 
-    Plan -> Act -> Observe -> Adapt
+    Plan -> Extract Query -> Act -> Observe -> Adapt
     """
 
     fake_events = [
@@ -51,14 +51,26 @@ def test_ai_agentic_workflow():
         "Look for career-related events in the campus event database."
     )
 
-    fake_final_answer = (
-        "Career Fair 2026 is available on 2026-08-25 "
-        "at the Main Hall."
+    fake_query = """
+    {
+        "date": "",
+        "month": "",
+        "category": "Career",
+        "title": "",
+        "location": "",
+        "keywords": []
+    }
+    """
+
+    expected_response = (
+        "I found 1 matching event:\n\n"
+        "Career Fair 2026 — 2026-08-25 at Main Hall. "
+        "Meet employers and explore career opportunities."
     )
 
     # call_llm() is called twice:
     # 1. PLAN
-    # 2. ADAPT
+    # 2. EXTRACT STRUCTURED QUERY
     with patch(
         "ai.get_events",
         return_value=fake_events
@@ -66,7 +78,7 @@ def test_ai_agentic_workflow():
         "ai.call_llm",
         side_effect=[
             fake_plan,
-            fake_final_answer
+            fake_query
         ]
     ):
 
@@ -83,17 +95,21 @@ def test_ai_agentic_workflow():
 
         data = response.get_json()
 
-        # Check final AI response
+        # Check final response
         assert "response" in data
-        assert data["response"] == fake_final_answer
+        assert data["response"] == expected_response
 
         # Check Agentic workflow exists
         assert "agentic_workflow" in data
 
         workflow = data["agentic_workflow"]
 
-        # Check all four stages
+        # Check workflow mode
+        assert workflow["mode"] == "event_database"
+
+        # Check all stages
         assert "plan" in workflow
+        assert "query" in workflow
         assert "act" in workflow
         assert "observe" in workflow
         assert "adapt" in workflow
@@ -101,15 +117,28 @@ def test_ai_agentic_workflow():
         # PLAN
         assert workflow["plan"] == fake_plan
 
+        # QUERY
+        assert workflow["query"]["date"] == ""
+        assert workflow["query"]["month"] == ""
+        assert workflow["query"]["category"] == "Career"
+        assert workflow["query"]["title"] == ""
+        assert workflow["query"]["location"] == ""
+        assert workflow["query"]["keywords"] == []
+
         # ACT
-        assert "Retrieved 2 events" in workflow["act"]
+        assert (
+            workflow["act"]
+            == "Retrieved 2 events and found 1 matches."
+        )
 
         # OBSERVE
-        assert "Career Fair 2026" in workflow["observe"]
-        assert "AI Workshop" in workflow["observe"]
+        assert (
+            workflow["observe"]
+            == "Database search found 1 matching events."
+        )
 
         # ADAPT
-        assert workflow["adapt"] == fake_final_answer
+        assert workflow["adapt"] == expected_response
 
 
 def test_ai_missing_message():
@@ -141,8 +170,19 @@ def test_ai_empty_database():
         "Search the campus event database for matching events."
     )
 
-    fake_final_answer = (
-        "No matching campus events are currently available."
+    fake_query = """
+    {
+        "date": "",
+        "month": "",
+        "category": "",
+        "title": "",
+        "location": "",
+        "keywords": []
+    }
+    """
+
+    expected_response = (
+        "No matching event is currently available."
     )
 
     with patch(
@@ -152,7 +192,7 @@ def test_ai_empty_database():
         "ai.call_llm",
         side_effect=[
             fake_plan,
-            fake_final_answer
+            fake_query
         ]
     ):
 
@@ -169,21 +209,39 @@ def test_ai_empty_database():
 
         data = response.get_json()
 
+        assert data["response"] == expected_response
+
         workflow = data["agentic_workflow"]
 
+        assert workflow["mode"] == "event_database"
+
+        # PLAN
         assert workflow["plan"] == fake_plan
 
+        # QUERY
+        assert workflow["query"] == {
+            "date": "",
+            "month": "",
+            "category": "",
+            "title": "",
+            "location": "",
+            "keywords": []
+        }
+
+        # ACT
         assert (
             workflow["act"]
-            == "Retrieved 0 events from the database service."
+            == "Retrieved 0 events and found 0 matches."
         )
 
+        # OBSERVE
         assert (
             workflow["observe"]
-            == "The database returned no campus events."
+            == "Database search found no matching events."
         )
 
-        assert workflow["adapt"] == fake_final_answer
+        # ADAPT
+        assert workflow["adapt"] == expected_response
 
 
 def test_ai_service_failure():
