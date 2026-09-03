@@ -1,0 +1,98 @@
+name: Student 5 Career and Internship Management CI
+
+on:
+  push:
+    branches:
+      - new-student-5
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  student5-tests:
+    name: Student 5 CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # setup python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # install backend dependecies
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r student-5/backend/requirements.txt
+
+      # check syntax
+      - name: Check Python syntax
+        run: |
+          python -m py_compile student-5/backend/app.py
+          python -m py_compile student-5/backend/agent/agent.py
+          python -m py_compile student-5/backend/agent/agent_tools.py
+          python -m py_compile student-5/backend/agent/ai_routes.py
+          python -m py_compile student-5/backend/agent/ai_service.py
+          python -m py_compile student-5/backend/crud/service.py
+          python -m py_compile student-5/backend/model/database.py
+          python -m py_compile student-5/backend/model/seed.py
+
+      # validation configuration
+      - name: Validate Docker Compose
+        run: |
+          docker compose config
+
+      # build docker service
+      - name: Build Student 5 Docker services
+        run: |
+          docker compose build student5-database student5-backend
+
+      # start
+      - name: Start Student 5 Docker services
+        run: |
+          docker compose up -d student5-database student5-backend
+
+      # wait for service to start
+      - name: Wait for services
+        run: |
+          echo "Waiting for Student 5 services to start..."
+          sleep 15
+
+      # check container
+      - name: Check running containers
+        run: |
+          docker compose ps
+
+      # test health
+      - name: Test backend health
+        run: |
+          curl --fail --retry 5 --retry-delay 5 http://localhost:8005/health
+
+      - name: Test database
+        run: |
+          curl --fail --retry 10 --retry-delay 3 \
+            http://localhost:8005/api/jobs
+
+      # show failure logs
+      - name: Show Docker logs on failure
+        if: failure()
+        run: |
+          echo "Student 5 Database Logs"
+          docker compose logs student5-database || true
+
+          echo "Student 5 Backend Logs
+          docker compose logs student5-backend || true
+
+          echo "Docker Compose Status"
+          docker compose ps
+
+      # stop Docker service
+      - name: Stop Docker services
+        if: always()
+        run: |
+          docker compose down
