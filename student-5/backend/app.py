@@ -1,5 +1,6 @@
 from flask import (
     Flask,
+    jsonify,
     render_template
 )
 
@@ -32,6 +33,13 @@ init_db()
 # seed data 
 seed()
 
+# health check
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({
+    "status": "healthy"
+}), 200
+
 # render frontend 
 @app.route("/")
 def index():
@@ -39,7 +47,6 @@ def index():
     return render_template(
         "index.html"
     )
-
 
 @app.route("/job.html")
 def job_page():

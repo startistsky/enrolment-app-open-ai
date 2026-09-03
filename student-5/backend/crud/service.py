@@ -12,7 +12,6 @@ service = Blueprint(
     __name__
 )
 
-
 # Jobs service 
 @service.route(
     "/jobs",
