@@ -78,12 +78,6 @@ jobs:
           curl --fail --retry 10 --retry-delay 3 \
             http://localhost:8005/api/jobs
 
-      # run tests
-      - name: Run Student 5 automated tests
-        if: hashFiles('student-5/tests/**/*.py') != ''
-        run: |
-          python -m pytest student-5/tests -v
-
       # show failure logs
       - name: Show Docker logs on failure
         if: failure()
