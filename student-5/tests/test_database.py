@@ -1,6 +1,5 @@
 from model.database import get_db, init_db
 
-
 def test_save_job():
 
     # Create database/tables
@@ -33,11 +32,24 @@ def test_save_job():
         SELECT id
         FROM jobs
         WHERE title = ?
+        ORDER BY id DESC
+        LIMIT 1
         """,
         ("Python Developer",)
     ).fetchone()
 
     job_id = job["id"]
+
+    # Remove any existing saved-job record for this job
+    db.execute(
+        """
+        DELETE FROM saved_jobs
+        WHERE job_id = ?
+        """,
+        (job_id,)
+    )
+
+    db.commit()
 
     # Save the job
     db.execute(
@@ -50,17 +62,15 @@ def test_save_job():
 
     db.commit()
 
-    # Check that the job was saved
+    # Verify the job was saved
     saved_job = db.execute(
         """
-        SELECT *
+        SELECT job_id
         FROM saved_jobs
         WHERE job_id = ?
         """,
         (job_id,)
     ).fetchone()
-
-    db.close()
 
     assert saved_job is not None
     assert saved_job["job_id"] == job_id

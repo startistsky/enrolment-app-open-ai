@@ -1,7 +1,7 @@
 from model.database import get_db
 from .ai_service import analyse_job
 
-
+# Tool used by agent to access context - selected a job 
 # AI tool service 
 def get_job_tool(job_id):
     db = get_db()

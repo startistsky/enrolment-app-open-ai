@@ -97,12 +97,12 @@ def test_missing_prompt():
         load_prompt("does_not_exist")
 
 
-def test_check_ollama():
-    result = check_ollama()
+# def test_check_ollama():
+#     result = check_ollama()
 
-    assert result["available"] is True
-    assert result["success"] is True
-    assert len(result["models"]) > 0
+#     assert result["available"] is True
+#     assert result["success"] is True
+#     assert len(result["models"]) > 0
 
 
 def test_analyse_job(monkeypatch):

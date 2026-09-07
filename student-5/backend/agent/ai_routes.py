@@ -11,6 +11,7 @@ from .agent import (
     run_career_agent
 )
 
+# Handle frontend intergration -> expose endpoints 
 # AI service routes
 ai_routes = Blueprint(
     "ai_routes",

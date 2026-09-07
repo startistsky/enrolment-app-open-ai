@@ -30,6 +30,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r student-5/backend/requirements.txt
 
+       # run automated test
+      - name: Run Student 5 tests
+        working-directory: student-5
+        run: |
+          pytest tests/ -v
+
+      # 5. build student 5 image using the shared docker
+      - name: Build Student 5 Docker images
+        run: |
+          docker compose build database backend frontend
+
+      # 6. start student 5 service
+      - name: Start Student 5 services
+        run: |
+          docker compose up -d database ollama backend frontend
+
+      # show container status for CI evidence/debugging
+      - name: Show running containers
+        run: |
+          docker compose ps
+
       # check syntax
       - name: Check Python syntax
         run: |
@@ -95,4 +116,4 @@ jobs:
       - name: Stop Docker services
         if: always()
         run: |
-          docker compose down
+          docker compose down -v

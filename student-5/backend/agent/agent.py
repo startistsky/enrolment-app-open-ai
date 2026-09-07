@@ -5,6 +5,8 @@ from .agent_tools import (
     get_job_requirements_tool
 )
 
+# agentic loop 
+
 # Plan action
 def choose_action(message):
     """
