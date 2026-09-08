@@ -2,7 +2,7 @@ import os
 import json
 import pytest
 
-from agent.career_agent import (
+from agent.agent import (
     choose_action,
     observe_result,
     adapt_action,
