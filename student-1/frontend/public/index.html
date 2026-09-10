@@ -84,6 +84,96 @@
             <div id="agentic-trace" class="agentic-trace" aria-label="Agentic workflow stages"></div>
         </section>
     </div>
+
+    <section class="card mcp-card" aria-labelledby="mcp-heading">
+        <h2 id="mcp-heading">MCP Tools</h2>
+        <p>Use the shared MCP server to retrieve verified project and Course Management information.</p>
+        <div class="mcp-actions">
+            <div class="mcp-action">
+                <h3>Course Count</h3>
+                <button id="mcp-course-count-button" class="button button-primary" type="button">
+                    Get Course Count
+                </button>
+            </div>
+            <div class="mcp-action">
+                <h3>Course by Code</h3>
+                <label for="mcp-course-code">Course code</label>
+                <div class="mcp-input-group">
+                    <input id="mcp-course-code" type="text" placeholder="COMP1001" autocomplete="off">
+                    <button id="mcp-course-code-button" class="button button-primary" type="button">
+                        Find Course
+                    </button>
+                </div>
+            </div>
+            <div class="mcp-action">
+                <h3>Project Files</h3>
+                <button id="mcp-project-files-button" class="button button-primary" type="button">
+                    List Project Files
+                </button>
+            </div>
+        </div>
+        <div id="mcp-result" class="mcp-result" role="status" aria-live="polite">
+            <p class="muted">Choose an MCP tool to view its result.</p>
+        </div>
+    </section>
+
+    <section class="card rag-card" aria-labelledby="rag-heading">
+        <h2 id="rag-heading">RAG Course Assistant</h2>
+        <p>Ask a course-related question. The response is grounded only in retrieved Course Management records.</p>
+        <div class="rag-controls">
+            <label for="rag-query">Course-related question</label>
+            <textarea id="rag-query" rows="3" placeholder="What course covers databases?"></textarea>
+            <button id="rag-answer-button" class="button button-primary" type="button">
+                Ask with RAG
+            </button>
+        </div>
+        <div id="rag-result" class="rag-result" role="status" aria-live="polite">
+            <p class="muted">Ask a question to retrieve a grounded Course Management answer.</p>
+        </div>
+    </section>
+
+    <section class="card release1-paoa-card" aria-labelledby="release1-paoa-heading">
+        <h2 id="release1-paoa-heading">Release 1 Agentic PAOA Trace</h2>
+        <p>Validate MCP and RAG workflows using the Plan → Act → Observe → Adapt agentic execution cycle.</p>
+        <div class="release1-paoa-controls">
+            <div class="form-field">
+                <label for="release1-paoa-mode">Mode</label>
+                <select id="release1-paoa-mode">
+                    <option value="mcp">MCP</option>
+                    <option value="rag">RAG</option>
+                </select>
+            </div>
+
+            <div id="release1-mcp-inputs" class="release1-mode-inputs">
+                <div class="form-field">
+                    <label for="release1-mcp-action">MCP action</label>
+                    <select id="release1-mcp-action">
+                        <option value="course_count">Course Count</option>
+                        <option value="course_by_code">Course by Code</option>
+                        <option value="project_files">Project Files</option>
+                    </select>
+                </div>
+                <div id="release1-course-code-field" class="form-field" hidden>
+                    <label for="release1-course-code">Course code</label>
+                    <input id="release1-course-code" type="text" placeholder="COMP1001" autocomplete="off">
+                </div>
+            </div>
+
+            <div id="release1-rag-inputs" class="release1-mode-inputs" hidden>
+                <div class="form-field">
+                    <label for="release1-rag-query">Course-related question</label>
+                    <textarea id="release1-rag-query" rows="3" placeholder="What course covers databases?"></textarea>
+                </div>
+            </div>
+
+            <button id="release1-paoa-run-button" class="button button-primary" type="button">
+                Run MCP PAOA
+            </button>
+        </div>
+        <div id="release1-paoa-result" class="release1-paoa-result" role="status" aria-live="polite">
+            <p class="muted">Choose a mode and run the Release 1 agentic workflow.</p>
+        </div>
+    </section>
 </main>
 
 <dialog id="course-dialog" aria-labelledby="form-title">

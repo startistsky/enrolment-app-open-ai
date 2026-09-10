@@ -1,9 +1,14 @@
+import asyncio
+import json
 import os
 import re
 
+import httpx2
 import requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from mcp import ClientSession
+from mcp.client.streamable_http import streamable_http_client
 
 
 app = Flask(__name__)
@@ -18,6 +23,14 @@ AI_SERVICE_URL = os.getenv(
 AI_MODEL = "qwen2.5:0.5b"
 REQUEST_TIMEOUT_SECONDS = 5
 AI_REQUEST_TIMEOUT_SECONDS = 60
+MCP_SERVER_URL = os.getenv(
+    "MCP_SERVER_URL", "http://host.docker.internal:9001/mcp"
+).rstrip("/")
+MCP_REQUEST_TIMEOUT_SECONDS = 10
+RAG_SERVER_URL = os.getenv(
+    "RAG_SERVER_URL", "http://host.docker.internal:9101"
+).rstrip("/")
+RAG_REQUEST_TIMEOUT_SECONDS = 10
 
 REQUIRED_COURSE_FIELDS = [
     "course_code",
@@ -34,6 +47,493 @@ TEXT_COURSE_FIELDS = [
     "semester",
     "course_description",
 ]
+
+
+def _normalise_mcp_result(tool_result):
+    """Convert an MCP tool result into a JSON-serialisable value."""
+    structured_content = getattr(tool_result, "structured_content", None)
+    if structured_content is not None:
+        return structured_content
+
+    content = getattr(tool_result, "content", [])
+    if content and all(getattr(item, "type", None) == "text" for item in content):
+        text_values = [item.text for item in content]
+        if len(text_values) == 1:
+            try:
+                return json.loads(text_values[0])
+            except (TypeError, ValueError):
+                return text_values[0]
+
+        return text_values
+
+    return [
+        item.model_dump(by_alias=True, mode="json")
+        if hasattr(item, "model_dump")
+        else str(item)
+        for item in content
+    ]
+
+
+def _exception_contains(exception, exception_types):
+    """Check an exception and any nested exception group for matching types."""
+    if isinstance(exception, exception_types):
+        return True
+
+    nested_exceptions = getattr(exception, "exceptions", ())
+    return any(
+        _exception_contains(nested, exception_types)
+        for nested in nested_exceptions
+    )
+
+
+def call_mcp_tool(tool_name, arguments=None):
+    """Call a tool on the shared MCP server and return a safe result envelope."""
+    async def invoke_tool():
+        async with httpx2.AsyncClient(
+            timeout=MCP_REQUEST_TIMEOUT_SECONDS
+        ) as http_client:
+            async with streamable_http_client(
+                MCP_SERVER_URL,
+                http_client=http_client,
+            ) as streams:
+                async with ClientSession(
+                    streams[0],
+                    streams[1],
+                    read_timeout_seconds=MCP_REQUEST_TIMEOUT_SECONDS,
+                ) as session:
+                    await session.initialize()
+                    return await session.call_tool(tool_name, arguments or {})
+
+    try:
+        tool_result = asyncio.run(invoke_tool())
+    except Exception as exc:
+        if _exception_contains(
+            exc,
+            (httpx2.ConnectError, httpx2.TimeoutException),
+        ):
+            return {
+                "ok": False,
+                "status": 503,
+                "error": "MCP server unavailable",
+                "detail": str(exc),
+            }
+
+        return {
+            "ok": False,
+            "status": 502,
+            "error": "MCP protocol or tool invocation failed",
+            "detail": str(exc),
+        }
+
+    if getattr(tool_result, "is_error", False):
+        return {
+            "ok": False,
+            "status": 502,
+            "error": "MCP tool invocation failed",
+            "detail": _normalise_mcp_result(tool_result),
+        }
+
+    return {
+        "ok": True,
+        "result": _normalise_mcp_result(tool_result),
+    }
+
+
+def mcp_tool_response(tool_name, arguments=None):
+    """Build a Flask response from the shared MCP tool call envelope."""
+    outcome = call_mcp_tool(tool_name, arguments)
+    if not outcome["ok"]:
+        error_body = {
+            key: value
+            for key, value in outcome.items()
+            if key not in {"ok", "status"}
+        }
+        return jsonify(error_body), outcome["status"]
+
+    return jsonify({
+        "tool": tool_name,
+        "result": outcome["result"],
+    })
+
+
+def call_rag_course_retrieval(query, top_k=3):
+    """Retrieve course context from the shared local RAG server."""
+    try:
+        response = requests.post(
+            f"{RAG_SERVER_URL}/retrieve/course",
+            json={
+                "query": query,
+                "top_k": top_k,
+            },
+            timeout=RAG_REQUEST_TIMEOUT_SECONDS,
+        )
+    except (requests.ConnectionError, requests.Timeout) as exc:
+        return {
+            "ok": False,
+            "status": 503,
+            "error": "RAG server unavailable",
+            "detail": str(exc),
+        }
+    except requests.RequestException as exc:
+        return {
+            "ok": False,
+            "status": 502,
+            "error": "RAG retrieval failed",
+            "detail": str(exc),
+        }
+
+    if not response.ok:
+        return {
+            "ok": False,
+            "status": 502,
+            "error": "RAG retrieval failed",
+            "detail": f"RAG server returned HTTP {response.status_code}",
+        }
+
+    try:
+        result = response.json()
+    except ValueError:
+        return {
+            "ok": False,
+            "status": 502,
+            "error": "RAG retrieval failed",
+            "detail": "RAG server returned invalid JSON",
+        }
+
+    if not isinstance(result, dict):
+        return {
+            "ok": False,
+            "status": 502,
+            "error": "RAG retrieval failed",
+            "detail": "RAG server response must be a JSON object",
+        }
+
+    return {
+        "ok": True,
+        "result": result,
+    }
+
+
+def generate_grounded_course_answer(query, retrieval_result):
+    """Generate an answer using only the course records returned by RAG."""
+    matches = retrieval_result.get("matches", [])
+    retrieved_records = [
+        match["context"]
+        for match in matches
+        if isinstance(match, dict) and isinstance(match.get("context"), dict)
+    ]
+
+    prompt = (
+        "Answer the user's question using ONLY the supplied Course Management "
+        "context. Do not use outside knowledge or invent course information. "
+        "If the supplied context is insufficient, say that there is insufficient "
+        "Course Management context. Keep the answer concise. Do not invent "
+        "citations; citations are attached separately by the backend.\n\n"
+        f"User question:\n{query}\n\n"
+        "Retrieved Course Management context:\n"
+        f"{json.dumps(retrieved_records, ensure_ascii=False, indent=2)}\n\n"
+        "Use only the retrieved context."
+    )
+
+    return request_ai_recommendation(prompt)
+
+
+def _error_from_outcome(outcome):
+    """Remove internal control fields from an MCP or RAG error outcome."""
+    return {
+        key: value
+        for key, value in outcome.items()
+        if key not in {"ok", "status"}
+    }
+
+
+def _validate_mcp_result(action, result):
+    """Validate an MCP result deterministically for a supported action."""
+    checks = ["MCP invocation succeeded"]
+
+    if action == "course_count":
+        valid = (
+            isinstance(result, dict)
+            and isinstance(result.get("course_count"), int)
+            and not isinstance(result.get("course_count"), bool)
+            and result["course_count"] >= 0
+        )
+        if valid:
+            checks.append("Course count is a non-negative integer")
+        else:
+            checks.append("Course count result failed structural validation")
+        return valid, checks
+
+    if action == "course_by_code":
+        valid = isinstance(result, dict) and "error" not in result
+        if valid and result.get("course_code"):
+            checks.append("Course record contains course_code")
+        else:
+            valid = False
+            checks.append("Course record is missing course_code")
+        if valid and result.get("course_name"):
+            checks.append("Course record contains course_name")
+        else:
+            valid = False
+            checks.append("Course record is missing course_name")
+        return valid, checks
+
+    valid = isinstance(result, list)
+    checks.append(
+        "Project files result is a list"
+        if valid
+        else "Project files result failed structural validation"
+    )
+    return valid, checks
+
+
+def _validate_rag_result(result):
+    """Validate retrieved RAG evidence without asking an AI model."""
+    if not isinstance(result, dict):
+        return {
+            "valid": False,
+            "grounding_available": False,
+            "reason": "RAG retrieval result must be an object.",
+        }
+
+    matches = result.get("matches")
+    if not isinstance(matches, list):
+        return {
+            "valid": False,
+            "grounding_available": False,
+            "reason": "RAG matches must be a list.",
+        }
+
+    insufficient_context = result.get("insufficient_context")
+    if not isinstance(insufficient_context, bool):
+        return {
+            "valid": False,
+            "grounding_available": False,
+            "reason": "RAG result must explicitly declare insufficient_context.",
+        }
+
+    if insufficient_context:
+        return {
+            "valid": True,
+            "grounding_available": False,
+            "reason": "No relevant Course Management context was retrieved.",
+        }
+
+    if not matches:
+        return {
+            "valid": False,
+            "grounding_available": False,
+            "reason": "A sufficient RAG result must contain at least one match.",
+        }
+
+    allowed_confidence = {"high", "medium", "low"}
+    for match in matches:
+        if not isinstance(match, dict):
+            return {
+                "valid": False,
+                "grounding_available": False,
+                "reason": "Every RAG match must be an object.",
+            }
+        if not isinstance(match.get("context"), dict):
+            return {
+                "valid": False,
+                "grounding_available": False,
+                "reason": "Every RAG match must contain course context.",
+            }
+        if not isinstance(match.get("citation"), str) or not match["citation"].strip():
+            return {
+                "valid": False,
+                "grounding_available": False,
+                "reason": "Every RAG match must contain a citation.",
+            }
+        if match.get("confidence") not in allowed_confidence:
+            return {
+                "valid": False,
+                "grounding_available": False,
+                "reason": "Every RAG match must contain a valid confidence category.",
+            }
+
+    return {
+        "valid": True,
+        "grounding_available": True,
+        "reason": "Retrieved citations, confidence and course context passed validation.",
+    }
+
+
+def _build_rag_final_result(query, retrieval_result, answer=None):
+    """Build deterministic grounded-answer metadata from RAG retrieval data."""
+    matches = retrieval_result.get("matches", [])
+    if retrieval_result.get("insufficient_context") is True or not matches:
+        message = retrieval_result.get("message")
+        if not isinstance(message, str) or not message.strip():
+            message = "Insufficient context: no relevant Course Management information was found."
+        return {
+            "query": retrieval_result.get("query", query),
+            "answer": message,
+            "citations": [],
+            "confidence": "low",
+            "insufficient_context": True,
+            "retrieved_context": [],
+        }
+
+    citations = []
+    for match in matches:
+        citation = match["citation"]
+        if citation not in citations:
+            citations.append(citation)
+
+    return {
+        "query": retrieval_result.get("query", query),
+        "answer": answer,
+        "citations": citations,
+        "confidence": matches[0]["confidence"],
+        "insufficient_context": False,
+        "retrieved_context": matches,
+    }
+
+
+def run_release1_mcp_paoa(action, course_code=None):
+    """Run one evidence-based PAOA cycle using an existing MCP helper."""
+    supported_actions = {"course_count", "course_by_code", "project_files"}
+    if action not in supported_actions:
+        return {"error": "Unsupported MCP action"}, 400
+
+    if action == "course_by_code":
+        if not isinstance(course_code, str) or not course_code.strip():
+            return {"error": "course_code is required"}, 400
+        normalised_code = course_code.strip().upper()
+        arguments = {"course_code": normalised_code}
+    elif action == "project_files":
+        arguments = {"directory_path": ".."}
+    else:
+        arguments = None
+
+    trace = {
+        "mode": "mcp",
+        "plan": {
+            "goal": "Retrieve verified Course Management information through the shared MCP server.",
+            "action": action,
+            "tool": action,
+        },
+        "act": {
+            "tool": action,
+            "arguments": arguments,
+            "invocation_completed": False,
+        },
+    }
+
+    outcome = call_mcp_tool(action, arguments)
+    if not outcome["ok"]:
+        return _error_from_outcome(outcome), outcome["status"]
+
+    trace["act"]["invocation_completed"] = True
+    result = outcome["result"]
+    valid, checks = _validate_mcp_result(action, result)
+    trace["observe"] = {"valid": valid, "checks": checks}
+
+    if valid:
+        trace["adapt"] = {
+            "performed": False,
+            "reason": "The MCP result passed validation; no corrective action was required.",
+        }
+    else:
+        trace["adapt"] = {
+            "performed": True,
+            "reason": "The first MCP result failed validation, so one corrective tool retry was performed.",
+            "retry_count": 1,
+        }
+        retry_outcome = call_mcp_tool(action, arguments)
+        if not retry_outcome["ok"]:
+            return _error_from_outcome(retry_outcome), retry_outcome["status"]
+        result = retry_outcome["result"]
+        valid, checks = _validate_mcp_result(action, result)
+        trace["observe"] = {
+            "valid": valid,
+            "checks": checks,
+            "attempt": "corrective_retry",
+        }
+
+    trace["final_result"] = result
+    return trace, 200 if trace["observe"]["valid"] else 502
+
+
+def run_release1_rag_paoa(query, top_k=3):
+    """Run one evidence-based PAOA cycle using existing RAG and AI helpers."""
+    safe_top_k = (
+        min(top_k, 10)
+        if isinstance(top_k, int) and not isinstance(top_k, bool) and top_k > 0
+        else 3
+    )
+    trace = {
+        "mode": "rag",
+        "plan": {
+            "goal": "Retrieve grounded Course Management context and validate the evidence before producing an AI-supported response.",
+            "strategy": "Retrieve relevant course records from the shared RAG server and validate citations, confidence and context.",
+        },
+        "act": {
+            "operation": "RAG course retrieval",
+            "query": query,
+            "top_k": top_k,
+            "invocation_completed": False,
+        },
+    }
+
+    outcome = call_rag_course_retrieval(query, top_k)
+    if not outcome["ok"]:
+        return _error_from_outcome(outcome), outcome["status"]
+
+    trace["act"]["invocation_completed"] = True
+    retrieval_result = outcome["result"]
+    observation = _validate_rag_result(retrieval_result)
+    trace["observe"] = observation
+
+    if observation["valid"]:
+        trace["adapt"] = {
+            "performed": False,
+            "reason": (
+                "Retrieved RAG evidence passed grounding validation; no retrieval correction was required."
+                if observation["grounding_available"]
+                else "Insufficient context is a valid outcome; no corrective retrieval was required."
+            ),
+        }
+    else:
+        trace["adapt"] = {
+            "performed": True,
+            "reason": "The first RAG retrieval result failed grounding validation, so one corrective retrieval was performed.",
+            "retry_count": 1,
+        }
+        retry_outcome = call_rag_course_retrieval(query, safe_top_k)
+        if not retry_outcome["ok"]:
+            return _error_from_outcome(retry_outcome), retry_outcome["status"]
+        retrieval_result = retry_outcome["result"]
+        observation = _validate_rag_result(retrieval_result)
+        trace["observe"] = {
+            **observation,
+            "attempt": "corrective_retry",
+        }
+
+    if not trace["observe"]["valid"]:
+        trace["final_result"] = {
+            "error": "RAG retrieval failed",
+            "detail": trace["observe"]["reason"],
+        }
+        return trace, 502
+
+    if not trace["observe"]["grounding_available"]:
+        trace["final_result"] = _build_rag_final_result(query, retrieval_result)
+        return trace, 200
+
+    answer, ai_error = generate_grounded_course_answer(query, retrieval_result)
+    if ai_error:
+        ai_response, status = ai_error
+        return ai_response.get_json(), status
+
+    trace["final_result"] = _build_rag_final_result(
+        query,
+        retrieval_result,
+        answer,
+    )
+    return trace, 200
 
 
 def database_request(method, path, **kwargs):
@@ -344,6 +844,179 @@ def generate_course_recommendation(course_id):
         "recommendation": recommendation,
         "agentic_trace": agentic_trace,
     })
+
+
+@app.get("/api/mcp/course-count")
+def mcp_course_count():
+    return mcp_tool_response("course_count")
+
+
+@app.get("/api/mcp/course-by-code/<course_code>")
+def mcp_course_by_code(course_code):
+    return mcp_tool_response(
+        "course_by_code",
+        {"course_code": course_code},
+    )
+
+
+@app.get("/api/mcp/project-files")
+def mcp_project_files():
+    directory_path = request.args.get("directory_path", "..")
+    return mcp_tool_response(
+        "project_files",
+        {"directory_path": directory_path},
+    )
+
+
+@app.get("/api/mcp/ci-report")
+def mcp_ci_report():
+    report_path = request.args.get("report_path", "../reports/report.json")
+    return mcp_tool_response(
+        "ci_report",
+        {"report_path": report_path},
+    )
+
+
+@app.post("/api/rag/course")
+def rag_course_retrieval():
+    if not request.is_json:
+        return jsonify({
+            "error": "Content-Type must be application/json",
+        }), 400
+
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({
+            "error": "Request body must be a JSON object",
+        }), 400
+
+    outcome = call_rag_course_retrieval(
+        body.get("query"),
+        body.get("top_k", 3),
+    )
+    if not outcome["ok"]:
+        error_body = {
+            key: value
+            for key, value in outcome.items()
+            if key not in {"ok", "status"}
+        }
+        return jsonify(error_body), outcome["status"]
+
+    return jsonify({"result": outcome["result"]})
+
+
+@app.post("/api/rag/answer")
+def rag_grounded_answer():
+    if not request.is_json:
+        return jsonify({
+            "error": "Content-Type must be application/json",
+        }), 400
+
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({
+            "error": "Request body must be a JSON object",
+        }), 400
+
+    query = body.get("query")
+    retrieval_outcome = call_rag_course_retrieval(
+        query,
+        body.get("top_k", 3),
+    )
+    if not retrieval_outcome["ok"]:
+        error_body = {
+            key: value
+            for key, value in retrieval_outcome.items()
+            if key not in {"ok", "status"}
+        }
+        return jsonify(error_body), retrieval_outcome["status"]
+
+    retrieval_result = retrieval_outcome["result"]
+    matches = retrieval_result.get("matches", [])
+    if not isinstance(matches, list):
+        return jsonify({
+            "error": "RAG retrieval failed",
+            "detail": "RAG matches must be a list",
+        }), 502
+
+    usable_matches = [
+        match
+        for match in matches
+        if isinstance(match, dict) and isinstance(match.get("context"), dict)
+    ]
+    if retrieval_result.get("insufficient_context") is True or not usable_matches:
+        answer = retrieval_result.get("message")
+        if not isinstance(answer, str) or not answer.strip():
+            answer = "Insufficient context: no relevant Course Management information was found."
+
+        return jsonify({
+            "query": retrieval_result.get("query", query),
+            "answer": answer,
+            "citations": [],
+            "confidence": "low",
+            "insufficient_context": True,
+            "retrieved_context": [],
+        })
+
+    answer, ai_error = generate_grounded_course_answer(
+        query,
+        {**retrieval_result, "matches": usable_matches},
+    )
+    if ai_error:
+        return ai_error
+
+    citations = []
+    for match in usable_matches:
+        citation = match.get("citation")
+        if isinstance(citation, str) and citation not in citations:
+            citations.append(citation)
+
+    confidence = usable_matches[0].get("confidence", "low")
+    if confidence not in {"high", "medium", "low"}:
+        confidence = "low"
+
+    return jsonify({
+        "query": retrieval_result.get("query", query),
+        "answer": answer,
+        "citations": citations,
+        "confidence": confidence,
+        "insufficient_context": False,
+        "retrieved_context": usable_matches,
+    })
+
+
+@app.post("/api/agentic/release1/validate")
+def validate_release1_agentic_workflow():
+    if not request.is_json:
+        return jsonify({
+            "error": "Content-Type must be application/json",
+        }), 400
+
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({
+            "error": "Request body must be a JSON object",
+        }), 400
+
+    mode = body.get("mode")
+    if mode not in {"mcp", "rag"}:
+        return jsonify({"error": "mode must be 'mcp' or 'rag'"}), 400
+
+    if mode == "mcp":
+        result, status = run_release1_mcp_paoa(
+            body.get("action"),
+            body.get("course_code"),
+        )
+    else:
+        query = body.get("query")
+        if not isinstance(query, str) or not query.strip():
+            return jsonify({"error": "A RAG query is required"}), 400
+        result, status = run_release1_rag_paoa(
+            query.strip(),
+            body.get("top_k", 3),
+        )
+
+    return jsonify(result), status
 
 
 if __name__ == "__main__":
