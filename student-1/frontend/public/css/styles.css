@@ -38,12 +38,14 @@ body {
 
 button,
 input,
+select,
 textarea {
     font: inherit;
 }
 
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
 textarea:focus-visible {
     outline: 3px solid rgba(10, 155, 67, 0.2);
     outline-offset: 2px;
@@ -215,6 +217,7 @@ label {
 }
 
 input,
+select,
 textarea {
     width: 100%;
     padding: 11px 13px;
@@ -233,11 +236,13 @@ textarea::placeholder {
 }
 
 input:hover,
+select:hover,
 textarea:hover {
     border-color: #cfd4dc;
 }
 
 input:focus,
+select:focus,
 textarea:focus {
     border-color: var(--green);
     box-shadow: 0 0 0 3px rgba(10, 155, 67, 0.1);
@@ -452,6 +457,278 @@ tbody tr:last-child td {
     font-weight: 600;
 }
 
+.mcp-card {
+    margin-top: 18px;
+}
+
+.mcp-card > p {
+    color: var(--muted);
+}
+
+.mcp-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.mcp-action {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fafcfb;
+}
+
+.mcp-action h3 {
+    margin-bottom: 12px;
+    font-size: 17px;
+}
+
+.mcp-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.mcp-input-group .button {
+    flex: 0 0 auto;
+}
+
+.mcp-result {
+    min-height: 72px;
+    margin-top: 18px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.mcp-result p {
+    margin: 0;
+}
+
+.mcp-success {
+    color: var(--text);
+    font-weight: 700;
+}
+
+.mcp-error {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.mcp-file-list {
+    columns: 3 180px;
+    margin: 0;
+    padding-left: 20px;
+}
+
+.rag-card {
+    margin-top: 18px;
+}
+
+.rag-card > p {
+    color: var(--muted);
+}
+
+.rag-controls {
+    display: grid;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.rag-controls .button {
+    justify-self: start;
+}
+
+.rag-result {
+    min-height: 72px;
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fafcfb;
+}
+
+.rag-result > p,
+.rag-result-section p,
+.rag-source-list {
+    margin: 0;
+}
+
+.rag-result-section + .rag-result-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+.rag-result-section h3 {
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.rag-answer-text {
+    color: var(--text);
+    white-space: pre-wrap;
+}
+
+.rag-warning,
+.rag-error {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.rag-confidence {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.rag-confidence-high {
+    color: var(--green-dark);
+    background: var(--green-soft);
+}
+
+.rag-confidence-medium {
+    color: #854d0e;
+    background: #fef3c7;
+}
+
+.rag-confidence-low {
+    color: #7f1d1d;
+    background: var(--danger-soft);
+}
+
+.rag-source-list {
+    padding-left: 20px;
+}
+
+.rag-context-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.rag-context-card {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.release1-paoa-card {
+    margin-top: 18px;
+}
+
+.release1-paoa-card > p {
+    color: var(--muted);
+}
+
+.release1-paoa-controls {
+    display: grid;
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.release1-mode-inputs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.release1-mode-inputs[hidden] {
+    display: none;
+}
+
+.release1-paoa-controls > .button {
+    justify-self: start;
+}
+
+.release1-paoa-result {
+    min-height: 72px;
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fafcfb;
+}
+
+.release1-paoa-result > p {
+    margin: 0;
+}
+
+.release1-paoa-sequence {
+    display: grid;
+    justify-items: stretch;
+}
+
+.release1-paoa-stage {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--green);
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.release1-paoa-stage h3 {
+    margin-bottom: 12px;
+    font-size: 18px;
+}
+
+.release1-stage-observe {
+    border-left-color: #2563eb;
+}
+
+.release1-stage-adapt {
+    border-left-color: #d97706;
+}
+
+.release1-stage-final {
+    border-left-color: #7c3aed;
+}
+
+.release1-paoa-field {
+    display: grid;
+    grid-template-columns: minmax(130px, 0.3fr) 1fr;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.release1-paoa-field span {
+    overflow-wrap: anywhere;
+}
+
+.release1-paoa-stage > strong {
+    display: block;
+    margin-top: 12px;
+}
+
+.release1-paoa-stage ul {
+    margin: 6px 0 0;
+    padding-left: 20px;
+}
+
+.release1-paoa-arrow {
+    padding: 7px;
+    color: var(--green-dark);
+    font-size: 22px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.release1-context-detail {
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fafcfb;
+}
+
+.release1-paoa-error {
+    color: var(--danger);
+    font-weight: 600;
+}
+
 .agentic-trace {
     display: grid;
     grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
@@ -654,7 +931,23 @@ dialog::backdrop {
         width: 100%;
     }
 
+    .rag-controls .button {
+        width: 100%;
+    }
+
+    .release1-mode-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .release1-paoa-controls > .button {
+        width: 100%;
+    }
+
     .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mcp-actions {
         grid-template-columns: 1fr;
     }
 
@@ -717,6 +1010,16 @@ dialog::backdrop {
     .detail-list {
         grid-template-columns: 1fr;
         gap: 3px;
+    }
+
+    .release1-paoa-field {
+        grid-template-columns: 1fr;
+        gap: 3px;
+    }
+
+    .mcp-input-group {
+        align-items: stretch;
+        flex-direction: column;
     }
 
     .detail-list dd {

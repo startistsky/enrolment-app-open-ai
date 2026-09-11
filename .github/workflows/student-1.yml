@@ -1,0 +1,71 @@
+name: Student 1 Release 1 CI
+
+on:
+  push:
+    paths:
+      - "student-1/**"
+      - "mcp-server/**"
+      - "rag-server/**"
+      - "docker-compose.yml"
+      - ".github/workflows/student-1.yml"
+  pull_request:
+    paths:
+      - "student-1/**"
+      - "mcp-server/**"
+      - "rag-server/**"
+      - "docker-compose.yml"
+      - ".github/workflows/student-1.yml"
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Student 1 and Release 1 dependencies
+        run: |
+          python -m pip install \
+            -r student-1/backend/requirements.txt \
+            -r student-1/database/requirements.txt \
+            -r student-1/tests/requirements.txt \
+            -r mcp-server/requirements.txt \
+            -r rag-server/requirements.txt
+
+      - name: Check Python dependencies
+        run: python -m pip check
+
+      - name: Validate Python syntax
+        run: |
+          python -m compileall -q \
+            student-1/backend \
+            student-1/database \
+            student-1/tests \
+            mcp-server \
+            rag-server
+
+      - name: Validate frontend JavaScript
+        run: node --check student-1/frontend/public/js/courses.js
+
+      - name: Run Student 1 tests
+        run: python -m pytest student-1/tests -q
+
+      - name: Build Student 1 database image
+        run: docker build -t student1-database-ci student-1/database
+
+      - name: Build Student 1 backend image
+        run: docker build -t student1-backend-ci student-1/backend
+
+      - name: Build Student 1 frontend image
+        run: docker build -t student1-frontend-ci student-1/frontend
