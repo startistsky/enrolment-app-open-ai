@@ -11,7 +11,8 @@ from rag_client import retrieve_event_context
 from prompts import (
     build_plan_prompt,
     build_query_prompt,
-    build_chat_prompt
+    build_chat_prompt,
+    build_grounded_event_prompt
 )
 
 
@@ -585,6 +586,62 @@ def build_event_response(
 
 
 # ============================================================
+# GROUNDED RESPONSE VALIDATION
+# ============================================================
+
+def grounded_response_is_valid(answer, retrieved_events):
+    """
+    Check that a generated RAG answer is consistent with
+    the retrieved event context.
+
+    The local 0.5B model can occasionally ignore supplied
+    context. If that happens, the backend falls back to a
+    deterministic answer built directly from the retrieved
+    records instead of returning a contradiction.
+    """
+
+    if not isinstance(answer, str) or not answer.strip():
+        return False
+
+    if not retrieved_events:
+        return True
+
+    normalized_answer = normalize_text(answer)
+
+    contradiction_phrases = [
+        "no matching event",
+        "no matching events",
+        "no event is available",
+        "no events are available",
+        "no cybersecurity events",
+        "there are no",
+        "context is insufficient",
+        "context provided is insufficient",
+    ]
+
+    if any(
+        phrase in normalized_answer
+        for phrase in contradiction_phrases
+    ):
+        return False
+
+    retrieved_titles = [
+        normalize_text(event.get("title"))
+        for event in retrieved_events
+        if isinstance(event, dict)
+        and event.get("title")
+    ]
+
+    if retrieved_titles and not any(
+        title in normalized_answer
+        for title in retrieved_titles
+    ):
+        return False
+
+    return True
+
+
+# ============================================================
 # RELEASE 1 - MCP TEST ENDPOINTS
 # ============================================================
 
@@ -818,6 +875,12 @@ def ai_assistant():
                 "agentic_workflow": {
                     "mode": "mcp",
 
+                    "plan": (
+                        "Use the shared MCP event_count tool "
+                        "to retrieve the verified total number "
+                        "of Campus Event records."
+                    ),
+
                     "tool": (
                         "event_count"
                     ),
@@ -871,17 +934,13 @@ def ai_assistant():
             }), 200
 
         # ====================================================
-        # PLAN
+        # PLAN - RELEASE 1 RAG
         # ====================================================
 
-        plan_prompt = (
-            build_plan_prompt(
-                user_message
-            )
-        )
-
-        plan = call_llm(
-            plan_prompt
+        plan = (
+            "Retrieve relevant Campus Event records "
+            "from the shared RAG Server and answer "
+            "only from the retrieved context."
         )
 
         # ====================================================
@@ -968,12 +1027,33 @@ def ai_assistant():
 
         if rag_matches:
 
-            final_answer = (
-                build_event_response(
+            grounded_prompt = (
+                build_grounded_event_prompt(
                     user_message,
                     rag_matches
                 )
             )
+
+            generated_answer = call_llm(
+                grounded_prompt
+            ).strip()
+
+            if grounded_response_is_valid(
+                generated_answer,
+                rag_matches
+            ):
+                final_answer = generated_answer
+                grounding_method = "grounded_llm"
+            else:
+                final_answer = (
+                    build_event_response(
+                        user_message,
+                        rag_matches
+                    )
+                )
+                grounding_method = (
+                    "retrieved_context_fallback"
+                )
 
             observation = (
                 f"RAG retrieved "
@@ -1005,6 +1085,10 @@ def ai_assistant():
                         rag_citations
                     ),
 
+                    "grounding": (
+                        grounding_method
+                    ),
+
                     "adapt": (
                         final_answer
                     )
@@ -1015,6 +1099,16 @@ def ai_assistant():
         # ====================================================
         # RELEASE 0 FALLBACK DATABASE WORKFLOW
         # ====================================================
+
+        plan_prompt = (
+            build_plan_prompt(
+                user_message
+            )
+        )
+
+        plan = call_llm(
+            plan_prompt
+        )
 
         query_prompt = (
             build_query_prompt(
@@ -1046,18 +1140,14 @@ def ai_assistant():
         if matching_events:
 
             observation = (
-                "RAG returned insufficient "
-                "context. Database fallback "
-                f"found {len(matching_events)} "
-                "matching events."
+                f"Database search found "
+                f"{len(matching_events)} matching events."
             )
 
         else:
 
             observation = (
-                "RAG returned insufficient "
-                "context and database fallback "
-                "found no matching events."
+                "Database search found no matching events."
             )
 
         final_answer = (
@@ -1074,8 +1164,10 @@ def ai_assistant():
 
             "agentic_workflow": {
                 "mode": (
-                    "database_fallback"
+                    "event_database"
                 ),
+
+                "rag_fallback": True,
 
                 "plan": plan,
 
