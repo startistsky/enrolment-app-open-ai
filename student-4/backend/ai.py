@@ -6,6 +6,7 @@ from datetime import datetime
 from config import AI_SERVICE_URL, MODEL_NAME, AI_TIMEOUT
 from database_api import get_events
 from mcp_client import call_mcp_tool
+from rag_client import retrieve_event_context
 
 from prompts import (
     build_plan_prompt,
@@ -59,9 +60,6 @@ def call_llm(prompt):
 # ============================================================
 
 def normalize_text(value):
-    """
-    Normalize text for case-insensitive matching.
-    """
 
     if value is None:
         return ""
@@ -69,14 +67,27 @@ def normalize_text(value):
     return str(value).lower().strip()
 
 
-def needs_event_database(user_message):
-    """
-    Decide whether the message appears to be asking about
-    campus events.
+def is_event_count_question(user_message):
 
-    Normal conversation goes directly to the LLM.
-    Event-related questions use the database workflow.
-    """
+    message = normalize_text(user_message)
+
+    count_phrases = [
+        "how many events",
+        "how many event",
+        "number of events",
+        "number of event",
+        "event count",
+        "total events",
+        "total number of events"
+    ]
+
+    return any(
+        phrase in message
+        for phrase in count_phrases
+    )
+
+
+def needs_event_database(user_message):
 
     message = normalize_text(user_message)
 
@@ -148,6 +159,7 @@ def needs_event_database(user_message):
 # ============================================================
 
 def empty_query():
+
     return {
         "date": "",
         "month": "",
@@ -159,22 +171,14 @@ def empty_query():
 
 
 def parse_query_json(raw_response, user_message):
-    """
-    Parse and clean structured JSON returned by Ollama.
-
-    Small models sometimes add markdown formatting or incorrectly
-    copy the entire user question into the title field.
-    """
 
     text = raw_response.strip()
 
-    # Remove common markdown wrappers.
     if text.startswith("```"):
         text = text.replace("```json", "")
         text = text.replace("```", "")
         text = text.strip()
 
-    # Try to extract the JSON object if extra text appears.
     first_brace = text.find("{")
     last_brace = text.rfind("}")
 
@@ -210,19 +214,22 @@ def parse_query_json(raw_response, user_message):
 
         "keywords": (
             data.get("keywords", [])
-            if isinstance(data.get("keywords", []), list)
+            if isinstance(
+                data.get("keywords", []),
+                list
+            )
             else []
         )
     }
 
-    # --------------------------------------------------------
-    # Clean bad title extraction
-    # --------------------------------------------------------
+    normalized_user = normalize_text(
+        user_message
+    )
 
-    normalized_user = normalize_text(user_message)
-    normalized_title = normalize_text(query["title"])
+    normalized_title = normalize_text(
+        query["title"]
+    )
 
-    # Exact copy of the user's question is not an event title.
     if normalized_title == normalized_user:
         query["title"] = ""
 
@@ -264,21 +271,6 @@ def parse_query_json(raw_response, user_message):
 # ============================================================
 
 def normalize_date(value):
-    """
-    Convert different date formats into MM-DD.
-
-    Examples:
-
-    2026-08-08
-    8 August 2026
-    8 August
-    August 8
-    8 Aug
-
-    all become:
-
-    08-08
-    """
 
     if not value:
         return ""
@@ -305,12 +297,15 @@ def normalize_date(value):
     for date_format in possible_formats:
 
         try:
+
             parsed = datetime.strptime(
                 value,
                 date_format
             )
 
-            return parsed.strftime("%m-%d")
+            return parsed.strftime(
+                "%m-%d"
+            )
 
         except ValueError:
             continue
@@ -319,14 +314,6 @@ def normalize_date(value):
 
 
 def normalize_month(value):
-    """
-    Convert different month formats into a month number.
-
-    Examples:
-
-    August -> 08
-    Aug    -> 08
-    """
 
     if not value:
         return ""
@@ -341,12 +328,15 @@ def normalize_month(value):
     for date_format in possible_formats:
 
         try:
+
             parsed = datetime.strptime(
                 value,
                 date_format
             )
 
-            return parsed.strftime("%m")
+            return parsed.strftime(
+                "%m"
+            )
 
         except ValueError:
             continue
@@ -355,14 +345,13 @@ def normalize_month(value):
 
 
 def get_event_month(event_date):
-    """
-    Extract month from an event date.
-    """
 
     if not event_date:
         return ""
 
-    value = str(event_date).strip()
+    value = str(
+        event_date
+    ).strip()
 
     possible_formats = [
         "%Y-%m-%d",
@@ -377,12 +366,15 @@ def get_event_month(event_date):
     for date_format in possible_formats:
 
         try:
+
             parsed = datetime.strptime(
                 value,
                 date_format
             )
 
-            return parsed.strftime("%m")
+            return parsed.strftime(
+                "%m"
+            )
 
         except ValueError:
             continue
@@ -395,10 +387,6 @@ def get_event_month(event_date):
 # ============================================================
 
 def event_matches(event, query):
-    """
-    Determine whether one database event matches the
-    structured query.
-    """
 
     event_title = normalize_text(
         event.get("title")
@@ -449,36 +437,20 @@ def event_matches(event, query):
         []
     )
 
-    # --------------------------------------------------------
-    # DATE
-    # --------------------------------------------------------
-
     if query_date:
 
         if query_date != event_date:
             return False
-
-    # --------------------------------------------------------
-    # MONTH
-    # --------------------------------------------------------
 
     if query_month:
 
         if query_month != event_month:
             return False
 
-    # --------------------------------------------------------
-    # TITLE
-    # --------------------------------------------------------
-
     if query_title:
 
         if query_title not in event_title:
             return False
-
-    # --------------------------------------------------------
-    # CATEGORY
-    # --------------------------------------------------------
 
     if query_category:
 
@@ -491,18 +463,10 @@ def event_matches(event, query):
         if query_category not in category_search_text:
             return False
 
-    # --------------------------------------------------------
-    # LOCATION
-    # --------------------------------------------------------
-
     if query_location:
 
         if query_location not in event_location:
             return False
-
-    # --------------------------------------------------------
-    # KEYWORDS
-    # --------------------------------------------------------
 
     if query_keywords:
 
@@ -515,7 +479,9 @@ def event_matches(event, query):
 
         for keyword in query_keywords:
 
-            keyword = normalize_text(keyword)
+            keyword = normalize_text(
+                keyword
+            )
 
             if (
                 keyword
@@ -527,57 +493,61 @@ def event_matches(event, query):
 
 
 def filter_events(events, query):
-    """
-    Filter database events using the structured query.
-    """
 
     return [
         event
         for event in events
-        if event_matches(event, query)
+        if event_matches(
+            event,
+            query
+        )
     ]
 
 
 # ============================================================
-# DETERMINISTIC FINAL RESPONSE
+# FINAL EVENT RESPONSE
 # ============================================================
 
-def build_event_response(user_message, matching_events):
-    """
-    Build a reliable answer directly from database results.
-
-    Ollama is NOT allowed to decide whether matching events exist.
-    This prevents hallucinations and incorrect fallback responses.
-    """
+def build_event_response(
+    user_message,
+    matching_events
+):
 
     if not matching_events:
-        return "No matching event is currently available."
 
-    message = normalize_text(user_message)
+        return (
+            "No matching event is "
+            "currently available."
+        )
 
-    # --------------------------------------------------------
+    message = normalize_text(
+        user_message
+    )
+
     # LOCATION QUESTION
-    # --------------------------------------------------------
-
     if (
         "where" in message
         or "location" in message
     ):
 
-        if len(matching_events) == 1:
+        if len(
+            matching_events
+        ) == 1:
 
-            event = matching_events[0]
+            event = (
+                matching_events[0]
+            )
 
             return (
-                f"{event.get('title', 'The event')} is at "
+                f"{event.get('title', 'The event')} "
+                f"is at "
                 f"{event.get('location', 'an unspecified location')}."
             )
 
-    # --------------------------------------------------------
     # SINGLE RESULT
-    # --------------------------------------------------------
-
-    if len(matching_events) == 1:
+    if len(
+        matching_events
+    ) == 1:
 
         event = matching_events[0]
 
@@ -589,12 +559,14 @@ def build_event_response(user_message, matching_events):
             f"{event.get('description', '')}"
         )
 
-    # --------------------------------------------------------
     # MULTIPLE RESULTS
-    # --------------------------------------------------------
 
     lines = [
-        f"I found {len(matching_events)} matching events:"
+        (
+            f"I found "
+            f"{len(matching_events)} "
+            f"matching events:"
+        )
     ]
 
     for event in matching_events:
@@ -607,35 +579,64 @@ def build_event_response(user_message, matching_events):
             )
         )
 
-    return "\n".join(lines)
-
+    return "\n".join(
+        lines
+    )
 
 
 # ============================================================
-# RELEASE 1 - MCP
+# RELEASE 1 - MCP TEST ENDPOINTS
 # ============================================================
 
-@ai_bp.route("/api/mcp/event-count", methods=["GET"])
+@ai_bp.route(
+    "/api/mcp/event-count",
+    methods=["GET"]
+)
 def mcp_event_count():
-    outcome = call_mcp_tool("event_count")
+
+    outcome = call_mcp_tool(
+        "event_count"
+    )
 
     if not outcome["ok"]:
+
         return jsonify({
-            "error": outcome.get("error"),
-            "detail": outcome.get("detail"),
-        }), outcome.get("status", 500)
+            "error": outcome.get(
+                "error"
+            ),
+
+            "detail": outcome.get(
+                "detail"
+            )
+
+        }), outcome.get(
+            "status",
+            500
+        )
 
     return jsonify({
         "tool": "event_count",
-        "result": outcome["result"],
+
+        "result": outcome[
+            "result"
+        ]
+
     }), 200
 
 
-@ai_bp.route("/api/mcp/event-by-title", methods=["GET"])
+@ai_bp.route(
+    "/api/mcp/event-by-title",
+    methods=["GET"]
+)
 def mcp_event_by_title():
-    event_title = request.args.get("title", "").strip()
+
+    event_title = request.args.get(
+        "title",
+        ""
+    ).strip()
 
     if not event_title:
+
         return jsonify({
             "error": "title is required"
         }), 400
@@ -643,54 +644,200 @@ def mcp_event_by_title():
     outcome = call_mcp_tool(
         "event_by_title",
         {
-            "event_title": event_title
+            "event_title": (
+                event_title
+            )
         }
     )
 
     if not outcome["ok"]:
+
         return jsonify({
-            "error": outcome.get("error"),
-            "detail": outcome.get("detail"),
-        }), outcome.get("status", 500)
+            "error": outcome.get(
+                "error"
+            ),
+
+            "detail": outcome.get(
+                "detail"
+            )
+
+        }), outcome.get(
+            "status",
+            500
+        )
 
     return jsonify({
         "tool": "event_by_title",
-        "result": outcome["result"],
+
+        "result": outcome[
+            "result"
+        ]
+
     }), 200
+
+
 # ============================================================
-# API
+# RELEASE 1 - RAG TEST ENDPOINT
 # ============================================================
 
-@ai_bp.route("/api/ai", methods=["POST"])
-def ai_assistant():
-    """
-    Hybrid Agentic AI workflow.
-
-    General conversation:
-        User -> Ollama
-
-    Event query:
-        Plan
-        -> Extract Query
-        -> Act
-        -> Observe
-        -> Deterministic Adapt
-    """
+@ai_bp.route(
+    "/api/rag/event",
+    methods=["POST"]
+)
+def rag_event():
 
     data = request.get_json() or {}
 
-    user_message = data.get(
-        "message",
-        ""
+    query = str(
+        data.get(
+            "query",
+            ""
+        )
+    ).strip()
+
+    if not query:
+
+        return jsonify({
+            "error": "query is required"
+        }), 400
+
+    outcome = retrieve_event_context(
+        query,
+        top_k=3
+    )
+
+    if not outcome["ok"]:
+
+        return jsonify({
+            "error": outcome.get(
+                "error"
+            ),
+
+            "detail": outcome.get(
+                "detail"
+            )
+
+        }), outcome.get(
+            "status",
+            500
+        )
+
+    return jsonify(
+        outcome["result"]
+    ), 200
+
+
+# ============================================================
+# MAIN AI API
+# ============================================================
+
+@ai_bp.route(
+    "/api/ai",
+    methods=["POST"]
+)
+def ai_assistant():
+
+    data = request.get_json() or {}
+
+    user_message = str(
+        data.get(
+            "message",
+            ""
+        )
     ).strip()
 
     if not user_message:
 
         return jsonify({
-            "error": "Message is required."
+            "error": (
+                "Message is required."
+            )
         }), 400
 
     try:
+
+        # ====================================================
+        # RELEASE 1 - MCP EVENT COUNT
+        # ====================================================
+
+        if is_event_count_question(
+            user_message
+        ):
+
+            outcome = call_mcp_tool(
+                "event_count"
+            )
+
+            if not outcome["ok"]:
+
+                raise RuntimeError(
+                    outcome.get(
+                        "error",
+                        "MCP event_count failed"
+                    )
+                )
+
+            result = outcome.get(
+                "result",
+                {}
+            )
+
+            if not isinstance(
+                result,
+                dict
+            ):
+
+                raise RuntimeError(
+                    (
+                        "MCP event_count "
+                        "returned an invalid result"
+                    )
+                )
+
+            event_count = result.get(
+                "event_count"
+            )
+
+            if event_count is None:
+
+                raise RuntimeError(
+                    (
+                        "MCP event_count "
+                        "returned an invalid result"
+                    )
+                )
+
+            final_answer = (
+                f"There are {event_count} "
+                f"campus events currently available."
+            )
+
+            return jsonify({
+                "response": final_answer,
+
+                "agentic_workflow": {
+                    "mode": "mcp",
+
+                    "tool": (
+                        "event_count"
+                    ),
+
+                    "act": (
+                        "Called the shared "
+                        "MCP Server event_count tool."
+                    ),
+
+                    "observe": (
+                        f"MCP returned "
+                        f"{event_count} events."
+                    ),
+
+                    "adapt": (
+                        final_answer
+                    )
+                }
+
+            }), 200
 
         # ====================================================
         # GENERAL CONVERSATION
@@ -700,8 +847,10 @@ def ai_assistant():
             user_message
         ):
 
-            chat_prompt = build_chat_prompt(
-                user_message
+            chat_prompt = (
+                build_chat_prompt(
+                    user_message
+                )
             )
 
             final_answer = call_llm(
@@ -709,19 +858,26 @@ def ai_assistant():
             )
 
             return jsonify({
-                "response": final_answer,
+                "response": (
+                    final_answer
+                ),
 
                 "agentic_workflow": {
-                    "mode": "general_conversation"
+                    "mode": (
+                        "general_conversation"
+                    )
                 }
+
             }), 200
 
         # ====================================================
         # PLAN
         # ====================================================
 
-        plan_prompt = build_plan_prompt(
-            user_message
+        plan_prompt = (
+            build_plan_prompt(
+                user_message
+            )
         )
 
         plan = call_llm(
@@ -729,11 +885,141 @@ def ai_assistant():
         )
 
         # ====================================================
-        # EXTRACT STRUCTURED QUERY
+        # RELEASE 1 - RAG
         # ====================================================
 
-        query_prompt = build_query_prompt(
-            user_message
+        rag_outcome = (
+            retrieve_event_context(
+                user_message,
+                top_k=5
+            )
+        )
+
+        rag_matches = []
+        rag_citations = []
+
+        if rag_outcome.get(
+            "ok"
+        ):
+
+            rag_result = (
+                rag_outcome.get(
+                    "result",
+                    {}
+                )
+            )
+
+            if (
+                isinstance(
+                    rag_result,
+                    dict
+                )
+                and not rag_result.get(
+                    "insufficient_context",
+                    True
+                )
+            ):
+
+                raw_matches = (
+                    rag_result.get(
+                        "matches",
+                        []
+                    )
+                )
+
+                for match in raw_matches:
+
+                    if not isinstance(
+                        match,
+                        dict
+                    ):
+                        continue
+
+                    context = (
+                        match.get(
+                            "context"
+                        )
+                    )
+
+                    if isinstance(
+                        context,
+                        dict
+                    ):
+
+                        rag_matches.append(
+                            context
+                        )
+
+                    citation = (
+                        match.get(
+                            "citation"
+                        )
+                    )
+
+                    if citation:
+
+                        rag_citations.append(
+                            citation
+                        )
+
+        # ====================================================
+        # RAG SUCCESS
+        # ====================================================
+
+        if rag_matches:
+
+            final_answer = (
+                build_event_response(
+                    user_message,
+                    rag_matches
+                )
+            )
+
+            observation = (
+                f"RAG retrieved "
+                f"{len(rag_matches)} relevant "
+                f"Campus Event record(s)."
+            )
+
+            return jsonify({
+                "response": (
+                    final_answer
+                ),
+
+                "agentic_workflow": {
+                    "mode": "rag",
+
+                    "plan": plan,
+
+                    "act": (
+                        "Queried the shared "
+                        "RAG Server for "
+                        "Campus Event context."
+                    ),
+
+                    "observe": (
+                        observation
+                    ),
+
+                    "citations": (
+                        rag_citations
+                    ),
+
+                    "adapt": (
+                        final_answer
+                    )
+                }
+
+            }), 200
+
+        # ====================================================
+        # RELEASE 0 FALLBACK DATABASE WORKFLOW
+        # ====================================================
+
+        query_prompt = (
+            build_query_prompt(
+                user_message
+            )
         )
 
         query_response = call_llm(
@@ -745,73 +1031,73 @@ def ai_assistant():
             user_message
         )
 
-        # ====================================================
-        # ACT
-        # ====================================================
-
         events = get_events()
 
         if events is None:
             events = []
 
-        matching_events = filter_events(
-            events,
-            query
+        matching_events = (
+            filter_events(
+                events,
+                query
+            )
         )
-
-        # ====================================================
-        # OBSERVE
-        # ====================================================
 
         if matching_events:
 
             observation = (
-                f"Database search found "
-                f"{len(matching_events)} matching events."
+                "RAG returned insufficient "
+                "context. Database fallback "
+                f"found {len(matching_events)} "
+                "matching events."
             )
 
         else:
 
             observation = (
-                "Database search found no matching events."
+                "RAG returned insufficient "
+                "context and database fallback "
+                "found no matching events."
             )
 
-        # ====================================================
-        # ADAPT
-        #
-        # Important:
-        # Python creates the final factual response.
-        # Ollama does not decide whether results exist.
-        # ====================================================
-
-        final_answer = build_event_response(
-            user_message,
-            matching_events
+        final_answer = (
+            build_event_response(
+                user_message,
+                matching_events
+            )
         )
 
-        # ====================================================
-        # RESPONSE
-        # ====================================================
-
         return jsonify({
-            "response": final_answer,
+            "response": (
+                final_answer
+            ),
 
             "agentic_workflow": {
-                "mode": "event_database",
+                "mode": (
+                    "database_fallback"
+                ),
 
                 "plan": plan,
 
                 "query": query,
 
                 "act": (
-                    f"Retrieved {len(events)} events and "
-                    f"found {len(matching_events)} matches."
+                    f"Retrieved "
+                    f"{len(events)} events "
+                    f"and found "
+                    f"{len(matching_events)} "
+                    f"matches."
                 ),
 
-                "observe": observation,
+                "observe": (
+                    observation
+                ),
 
-                "adapt": final_answer
+                "adapt": (
+                    final_answer
+                )
             }
+
         }), 200
 
     except RuntimeError as error:
@@ -823,6 +1109,10 @@ def ai_assistant():
     except Exception as error:
 
         return jsonify({
-            "error": "An unexpected error occurred.",
+            "error": (
+                "An unexpected error occurred."
+            ),
+
             "details": str(error)
+
         }), 500
