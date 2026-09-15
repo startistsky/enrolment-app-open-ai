@@ -14,3 +14,17 @@ MODEL_NAME = os.getenv(
 AI_TIMEOUT = int(
     os.getenv("AI_TIMEOUT", "60")
 )
+
+MCP_SERVER_URL = os.getenv(
+    "MCP_SERVER_URL",
+    "http://host.docker.internal:9001/mcp"
+)
+
+RAG_SERVER_URL = os.getenv(
+    "RAG_SERVER_URL",
+    "http://host.docker.internal:9101"
+)
+
+RAG_TIMEOUT = int(
+    os.getenv("RAG_TIMEOUT", "10")
+)

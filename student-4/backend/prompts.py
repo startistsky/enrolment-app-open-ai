@@ -1,3 +1,5 @@
+import json
+
 def build_plan_prompt(user_message):
     return f"""
 You are the planning stage of a campus event assistant.
@@ -155,4 +157,36 @@ You may:
 Keep the answer concise and friendly.
 
 Return only your response.
+"""
+
+
+def build_grounded_event_prompt(user_message, retrieved_events):
+    context_json = json.dumps(
+        retrieved_events,
+        ensure_ascii=False,
+        indent=2
+    )
+
+    return f"""
+You are a campus event assistant producing a grounded RAG answer.
+
+USER QUESTION:
+{user_message}
+
+RETRIEVED CAMPUS EVENT CONTEXT (JSON):
+{context_json}
+
+IMPORTANT:
+The retrieved context above contains the records selected by the RAG system.
+If one or more records are present, do NOT say that no matching event exists.
+
+RULES:
+1. Answer using ONLY the retrieved event context above.
+2. Do not invent event names, dates, locations, categories, or descriptions.
+3. When a retrieved record answers the question, state the event title and the relevant factual details from that record.
+4. Only say the context is insufficient when the retrieved records truly do not contain the information needed to answer the question.
+5. Keep the answer concise and helpful.
+6. Do not invent citations; citations are attached separately by the backend.
+
+Return only the grounded answer.
 """

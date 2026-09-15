@@ -1,9 +1,11 @@
-name: Student 4 Campus Event Management CI
+name: Student 4 Release 1 CI
 
 on:
   push:
     paths:
       - "student-4/**"
+      - "mcp-server/**"
+      - "rag-server/**"
       - "docker-compose.yml"
       - ".github/workflows/student-4.yml"
 
@@ -12,6 +14,8 @@ on:
       - main
     paths:
       - "student-4/**"
+      - "mcp-server/**"
+      - "rag-server/**"
       - "docker-compose.yml"
       - ".github/workflows/student-4.yml"
 
@@ -20,46 +24,72 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout exact repository commit
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Python for pytest
+      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      # 3. Install backend dependencies and pytest
-      - name: Install backend dependencies
+      # 3. Install Student 4 backend dependencies
+      - name: Install Student 4 backend dependencies
         working-directory: student-4
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
           pip install pytest
 
-      # 4. Run Student 4 automated tests
+      # 4. Install shared MCP dependencies
+      - name: Install MCP dependencies
+        run: |
+          pip install -r mcp-server/requirements.txt
+
+      # 5. Install shared RAG dependencies
+      - name: Install RAG dependencies
+        run: |
+          pip install -r rag-server/requirements.txt
+
+      # 6. Run all Student 4 tests
       - name: Run Student 4 tests
         working-directory: student-4
         run: |
           pytest tests/ -v
 
-      # 5. Build Student 4 Docker images using shared Compose configuration
+      # 7. Validate Student 4 MCP Python files
+      - name: Validate Student 4 MCP files
+        run: |
+          python -m py_compile \
+            mcp-server/server.py \
+            mcp-server/tools/student4_event_tools.py \
+            student-4/backend/mcp_client.py
+
+      # 8. Validate Student 4 RAG Python files
+      - name: Validate Student 4 RAG files
+        run: |
+          python -m py_compile \
+            rag-server/server.py \
+            rag-server/retrievers/student4_event_retriever.py \
+            student-4/backend/rag_client.py
+
+      # 9. Build Student 4 Docker images
       - name: Build Student 4 Docker images
         run: |
           docker compose build database backend frontend
 
-      # 6. Start Student 4 services
+      # 10. Start Student 4 services
       - name: Start Student 4 services
         run: |
           docker compose up -d database ollama backend frontend
 
-      # 7. Show container status for CI evidence/debugging
+      # 11. Show container status
       - name: Show running containers
         run: |
           docker compose ps
 
-      # 8. Smoke validation - Frontend
+      # 12. Validate frontend
       - name: Validate Student 4 frontend
         run: |
           for i in {1..8}; do
@@ -78,7 +108,7 @@ jobs:
             sleep 5
           done
 
-      # 9. Smoke validation - Backend
+      # 13. Validate backend
       - name: Validate Student 4 backend
         run: |
           for i in {1..8}; do
@@ -97,7 +127,7 @@ jobs:
             sleep 5
           done
 
-      # 10. Smoke validation - Database service
+      # 14. Validate database service
       - name: Validate Student 4 database service
         run: |
           for i in {1..8}; do
@@ -116,7 +146,7 @@ jobs:
             sleep 5
           done
 
-      # 11. Display useful logs if any previous step fails
+      # 15. Show logs on failure
       - name: Show Docker logs on failure
         if: failure()
         run: |
@@ -132,7 +162,7 @@ jobs:
           echo "===== OLLAMA LOGS ====="
           docker compose logs ollama || true
 
-      # 12. Always clean up containers and volumes
+      # 16. Tear down containers
       - name: Tear down containers
         if: always()
         run: |
