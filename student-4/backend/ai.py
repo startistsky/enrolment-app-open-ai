@@ -5,6 +5,7 @@ from datetime import datetime
 
 from config import AI_SERVICE_URL, MODEL_NAME, AI_TIMEOUT
 from database_api import get_events
+from mcp_client import call_mcp_tool
 
 from prompts import (
     build_plan_prompt,
@@ -609,6 +610,53 @@ def build_event_response(user_message, matching_events):
     return "\n".join(lines)
 
 
+
+# ============================================================
+# RELEASE 1 - MCP
+# ============================================================
+
+@ai_bp.route("/api/mcp/event-count", methods=["GET"])
+def mcp_event_count():
+    outcome = call_mcp_tool("event_count")
+
+    if not outcome["ok"]:
+        return jsonify({
+            "error": outcome.get("error"),
+            "detail": outcome.get("detail"),
+        }), outcome.get("status", 500)
+
+    return jsonify({
+        "tool": "event_count",
+        "result": outcome["result"],
+    }), 200
+
+
+@ai_bp.route("/api/mcp/event-by-title", methods=["GET"])
+def mcp_event_by_title():
+    event_title = request.args.get("title", "").strip()
+
+    if not event_title:
+        return jsonify({
+            "error": "title is required"
+        }), 400
+
+    outcome = call_mcp_tool(
+        "event_by_title",
+        {
+            "event_title": event_title
+        }
+    )
+
+    if not outcome["ok"]:
+        return jsonify({
+            "error": outcome.get("error"),
+            "detail": outcome.get("detail"),
+        }), outcome.get("status", 500)
+
+    return jsonify({
+        "tool": "event_by_title",
+        "result": outcome["result"],
+    }), 200
 # ============================================================
 # API
 # ============================================================
