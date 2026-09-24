@@ -1,222 +1,571 @@
-from .ai_service import ask_smart, evaluate_agent_result, load_prompt
+from .ai_service import (
+    ask_smart,
+    evaluate_agent_result,
+    load_prompt
+)
+
 from .agent_tools import (
     get_job_tool,
     analyse_job_tool,
-    get_job_requirements_tool
+    get_job_requirements_tool,
+    get_career_rag_tool
 )
 
-# agentic loop 
 
-# Plan action
+# Plan 
 def choose_action(message):
     """
-    PLAN 
-    Decide which tool should be used based on the user's question.
+    PLAN
+
+    Decide which tool should be used based on the
+    user's question.
+
+    Available actions:
+
+        job_information
+        requirements
+        analyse_job
+        career_rag
     """
 
     text = message.lower()
 
+    # Job / resume / ATS analysis
     if any(
         word in text
         for word in [
             "ats",
             "keyword",
             "resume",
-            "cv"
+            "cv",
+            "match",
+            "matching"
         ]
     ):
+
         return "analyse_job"
 
+
+    # Job requirements
     if any(
         word in text
         for word in [
             "requirement",
+            "requirements",
             "qualification",
+            "qualifications",
             "skill",
-            "experience"
+            "skills",
+            "experience",
+            "degree"
         ]
     ):
+
         return "requirements"
 
+
+    # Career guidance requiring external
+    # career knowledge
+    if any(
+        word in text
+        for word in [
+            "how should",
+            "how can",
+            "advice",
+            "guidance",
+            "prepare",
+            "preparation",
+            "interview",
+            "interviewing",
+            "apply",
+            "application",
+            "career",
+            "what should i",
+            "tips"
+        ]
+    ):
+
+        return "career_rag"
+
+
+    # Default
     return "job_information"
 
-# Observe 
-def observe_result(action,tool_result,message):
+
+# Observe
+def observe_result(
+    action,
+    tool_result,
+    message
+):
     """
-    OBSERVE:
-    Evaluate whether the tool result is sufficient for answering the user's question.
+    OBSERVE
+
+    Evaluate whether the result returned by the
+    selected tool is sufficient to answer the
+    user's question.
     """
 
     if tool_result is None:
+
         return {
             "success": False,
             "needs_adaptation": True,
             "reason": "Tool returned no result."
         }
 
+
+    # Special handling for RAG
+    if action == "career_rag":
+
+        if not isinstance(
+            tool_result,
+            dict
+        ):
+
+            return {
+                "success": False,
+                "needs_adaptation": True,
+                "reason": "Invalid RAG response."
+            }
+
+
+        results = tool_result.get(
+            "results",
+            []
+        )
+
+
+        if not results:
+
+            return {
+                "success": False,
+                "needs_adaptation": True,
+                "reason": (
+                    "RAG returned no relevant "
+                    "career knowledge."
+                )
+            }
+
+
+        return {
+            "success": True,
+            "needs_adaptation": False,
+            "reason": (
+                "Relevant career knowledge "
+                "was retrieved."
+            ),
+
+            "rag": {
+                "sources": tool_result.get(
+                    "sources",
+                    []
+                ),
+
+                "confidence": tool_result.get(
+                    "confidence",
+                    "low"
+                )
+            }
+        }
+
+
+    # Normal tool evaluation
     evaluation = evaluate_agent_result(
         message,
         tool_result
     )
 
+
     return {
         "success": evaluation["adequate"],
-        "needs_adaptation": not evaluation["adequate"],
+
+        "needs_adaptation": (
+            not evaluation["adequate"]
+        ),
+
         "reason": evaluation["reason"]
     }
 
 
-# Adapt 
-def adapt_action(action, observation, message):
+# Adapt
+def adapt_action(
+    action,
+    observation,
+    message
+):
     """
-    ADAPT:
-    Decide what the agent should do after observing the previous action's result.
+    ADAPT
+
+    Decide what the agent should do after
+    observing the previous tool result.
     """
+
     if not observation["needs_adaptation"]:
+
         return action
 
-    # If job analysis failed, fall back to requirements information.
+
+    # If RAG could not find useful knowledge,
+    # fall back to the actual job information.
+    if action == "career_rag":
+
+        return "job_information"
+
+
+    # If job analysis failed, use requirements.
     if action == "analyse_job":
+
         return "requirements"
 
-    # If requirements were unavailable, fall back to general job information.
+
+    # If requirements were unavailable,
+    # use general job information.
     if action == "requirements":
+
         return "job_information"
+
 
     return "job_information"
 
-# Act
-def execute_action(action,job):
+
+# Act 
+def execute_action(
+    action,
+    job,
+    message
+):
     """
-    ACT:
+    ACT
+
     Execute the tool selected during planning.
     """
+
     if action == "analyse_job":
-        return analyse_job_tool(job)
+
+        return analyse_job_tool(
+            job
+        )
+
 
     elif action == "requirements":
-        return get_job_requirements_tool(job)
+
+        return get_job_requirements_tool(
+            job
+        )
+
+
+    elif action == "career_rag":
+
+        return get_career_rag_tool(
+            message,
+            job
+        )
+
 
     else:
-        return get_job_tool(
-            job["id"])
 
-# Final response 
-def generate_response(message, job, action, tool_result, observation):
+        return get_job_tool(
+            job["id"]
+        )
+
+
+# Response generation
+def generate_response(
+    message,
+    job,
+    action,
+    tool_result,
+    observation
+):
     """
-    Generate the final response using the observed tool information.
+    Generate the final response using:
+
+        selected job
+        user question
+        tool result
+        observation
+        RAG evidence
     """
 
     prompt = load_prompt(
         "generate_response",
+
         message=message,
+
         job=job,
+
         action=action,
+
         tool_result=tool_result,
+
         observation=observation
     )
-    return ask_smart(prompt)
+
+    return ask_smart(
+        prompt
+    )
+
 
 # Human approval 
-def create_pending_approval(response, planned_action, action, observation):
+def create_pending_approval(
+    response,
+    planned_action,
+    action,
+    observation,
+    tool_result
+):
     """
     HUMAN REVIEW
-    The agent has completed its AI reasoning but 
-    must receive human approval before the workflow is considered complete.
+
+    Return the AI response together with
+    evidence about the agentic process.
+
+    RAG source and confidence information
+    are also returned to the frontend.
     """
 
-    return {
+    result = {
+
         "success": True,
 
-        # Frontend uses this to render approval controls.
-        "status": "awaiting_approval",
+        "status":
+            "awaiting_approval",
 
-        # AI response shown to the student.
-        "response": response,
+        "response":
+            response,
 
-        # Evidence of the agentic process.
-        "planned_action": planned_action,
-        "action": action,
-        "observation": observation,
+        "planned_action":
+            planned_action,
 
-        "adapted": (planned_action != action),
+        "action":
+            action,
 
-        # Explicitly identify the next workflow step.
-        "requires_human_approval": True
+        "observation":
+            observation,
+
+        "adapted":
+            (
+                planned_action != action
+            ),
+
+        "requires_human_approval":
+            True
     }
 
-# Orchestration main agent 
-def run_career_agent(job, message):
-    """Agentic AI Workflow
-    PLAN -> ACT -> OBSERVE -> ADAPT (if required)
-    -> ACT (again if required) -> OBSERVE again-> GENERATE RESPONSE -> HUMAN REVIEW
-    The backend does not block while waiting for approval. 
-    It returns an awaiting_approval state to the frontend. 
+
+    # Include RAG evidence when RAG was used.
+    if action == "career_rag":
+
+        result["rag"] = {
+
+            "sources":
+                tool_result.get(
+                    "sources",
+                    []
+                ),
+
+            "confidence":
+                tool_result.get(
+                    "confidence",
+                    "low"
+                ),
+
+            "results":
+                tool_result.get(
+                    "results",
+                    []
+                )
+        }
+
+
+    return result
+
+# Agentic Loop 
+def run_career_agent(
+    job,
+    message
+):
+    """
+    Agentic AI Workflow
+
+        PLAN
+          ↓
+        ACT
+          ↓
+        OBSERVE
+          ↓
+        ADAPT if required
+          ↓
+        ACT again
+          ↓
+        OBSERVE again
+          ↓
+        GENERATE RESPONSE
+          ↓
+        HUMAN REVIEW
+
+    Supported tools:
+
+        job_information
+        requirements
+        analyse_job
+        career_rag
     """
 
-    # validate job
+    # Validate job
     if not job:
+
         return {
             "success": False,
             "error": "Job not found."
         }
 
-    # validate message
+    # Validate message
     if not message or not message.strip():
+
         return {
             "success": False,
             "error": "Message is required."
         }
 
-    try: 
-        # Plan action 
-        planned_action = choose_action(message)
+
+    try:
+
+        # plan 
+        planned_action = choose_action(
+            message
+        )
+
         action = planned_action
 
-        # print for testing
-        print("---PLAN---")
-        print(f"User message: {message}")
-        print(f"Planned action: {planned_action}")
 
-        # Act
-        tool_result = execute_action(action,job)
-        print("---ACT---")
-        print(f"Executing action: {action}")
-        print(f"Tool result received: {tool_result}")
+        print(
+            "---PLAN---"
+        )
 
-        # Observe
-        observation = observe_result(action,tool_result,message)
-        print("---OBSERVE---")
-        print(f"Observation: {observation}")
+        print(
+            f"User message: {message}"
+        )
 
-        # Adapt 
-        adapted_action = adapt_action(action,observation,message)
-        print("---ADAPT---")
-        print(f"Original action: {action}")
-        print(f"Adapted action: {adapted_action}")
+        print(
+            f"Planned action: "
+            f"{planned_action}"
+        )
 
-        # If adaptation selected a different action, execute it.
+
+        # act 
+        tool_result = execute_action(
+            action,
+            job,
+            message
+        )
+
+
+        print(
+            "---ACT---"
+        )
+
+        print(
+            f"Executing action: {action}"
+        )
+
+        print(
+            f"Tool result received: "
+            f"{tool_result}"
+        )
+
+
+        # observe
+        observation = observe_result(
+            action,
+            tool_result,
+            message
+        )
+
+
+        print(
+            "---OBSERVE---"
+        )
+
+        print(
+            f"Observation: "
+            f"{observation}"
+        )
+
+
+        # adapt
+        adapted_action = adapt_action(
+            action,
+            observation,
+            message
+        )
+
+
+        print(
+            "---ADAPT---"
+        )
+
+        print(
+            f"Original action: {action}"
+        )
+
+        print(
+            f"Adapted action: "
+            f"{adapted_action}"
+        )
+
+        # second act/observe
         if adapted_action != action:
-            action = adapted_action
-            print("---ADAPTATION---")
-            print(f"Changing from {action} to {adapted_action}")
 
-            # Act again 
-            tool_result = execute_action(
-                action,
-                job
+            action = adapted_action
+
+
+            print(
+                "---ADAPTATION---"
             )
 
-            # Observe again
+            print(
+                f"Changing action to: "
+                f"{action}"
+            )
+
+
+            tool_result = execute_action(
+                action,
+                job,
+                message
+            )
+
+
+            print(
+                "---SECOND ACT---"
+            )
+
+            print(
+                f"Tool result: "
+                f"{tool_result}"
+            )
+
+
             observation = observe_result(
                 action,
                 tool_result,
                 message
             )
-            print("---SECOND OBSERVE---")
-            print(f"Observation after adaptation: {observation}")
 
-        # Generate response
+
+            print(
+                "---SECOND OBSERVE---"
+            )
+
+            print(
+                f"Observation after adaptation: "
+                f"{observation}"
+            )
+
+
+        # Generate reponse
         response = generate_response(
             message,
             job,
@@ -224,15 +573,34 @@ def run_career_agent(job, message):
             tool_result,
             observation
         )
-        print("---AI RESPONSE---")
-        print(response)
 
-        # Human review 
-        result = create_pending_approval(response,planned_action,action,observation)
-        print("---HUMAN REVIEW REQUIRED")
+
+        print(
+            "---AI RESPONSE---"
+        )
+
+        print(
+            response
+        )
+
+        # Human review
+        result = create_pending_approval(
+            response,
+            planned_action,
+            action,
+            observation,
+            tool_result
+        )
+
+
+        print(
+            "---HUMAN REVIEW REQUIRED---"
+        )
+
 
         return result
-        
+
+
     except Exception as error:
 
         print(
@@ -240,9 +608,8 @@ def run_career_agent(job, message):
             repr(error)
         )
 
+
         return {
             "success": False,
             "error": str(error)
         }
-
-

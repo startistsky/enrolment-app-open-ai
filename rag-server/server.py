@@ -8,13 +8,15 @@ from retrievers.student4_event_retriever import (
     retrieve_event_context,
 )
 
+from retrievers.student5_career_retriever import (
+    retrieve_career_context,
+)
 
 app = Flask(__name__)
 
 
 @app.get("/health")
 def health():
-
     return jsonify({
         "service": "Smart Campus RAG Server",
         "status": "ok",
@@ -112,6 +114,73 @@ def retrieve_event():
         result
     )
 
+# student 5 Career RAG 
+
+@app.post("/retrieve/career")
+def retrieve_career():
+
+    if not request.is_json:
+
+        return jsonify({
+            "error": (
+                "Content-Type must be "
+                "application/json"
+            ),
+        }), 400
+
+    body = request.get_json(
+        silent=True
+    )
+
+    if not isinstance(
+        body,
+        dict
+    ):
+
+        return jsonify({
+            "error": (
+                "Request body must be "
+                "a JSON object"
+            ),
+        }), 400
+
+    query = body.get(
+        "query"
+    )
+
+    if not query:
+
+        return jsonify({
+            "error": "Query is required"
+        }), 400
+
+    try:
+
+        top_k = body.get(
+            "top_k",
+            4
+        )
+
+        result = retrieve_career_context(
+            query,
+            top_k
+        )
+
+    except Exception as error:
+
+        print(
+            "CAREER RAG ERROR:",
+            repr(error),
+            flush=True
+        )
+
+        return jsonify({
+            "error": "RAG server error"
+        }), 500
+
+    return jsonify(
+        result
+    )
 
 if __name__ == "__main__":
 
@@ -134,6 +203,12 @@ if __name__ == "__main__":
     print(
         "Event RAG endpoint: "
         "http://localhost:9101/retrieve/event",
+        flush=True
+    )
+
+    print(
+        "Career RAG endpoint: "
+        "http://localhost:9101/retrieve/career",
         flush=True
     )
 
