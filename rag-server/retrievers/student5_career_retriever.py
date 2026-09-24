@@ -5,34 +5,37 @@ from pathlib import Path
 import chromadb
 from chromadb.utils import embedding_functions
 
-
 # Configuration
 BASE_DIR = Path(__file__).resolve().parents[1]
 
-KNOWLEDGE_DIR = BASE_DIR / "knowledge" / "career-knowledge"
+KNOWLEDGE_DIR = (
+    BASE_DIR
+    / "knowledge"
+    / "career-knowledge"
+)
 
 CHROMA_DIR = BASE_DIR / "chroma"
 
-COLLECTION_NAME = "student5_career_knowledge"
+COLLECTION_NAME = (
+    "student5_career_knowledge"
+)
 
 EMBEDDING_MODEL = os.getenv(
     "RAG_EMBEDDING_MODEL",
     "all-MiniLM-L6-v2"
 )
 
-
-# ChromaDB vector store
+# ChromaDB
 _client = chromadb.PersistentClient(
     path=str(CHROMA_DIR)
 )
 
-
 _embedding_function = (
-    embedding_functions.SentenceTransformerEmbeddingFunction(
+    embedding_functions
+    .SentenceTransformerEmbeddingFunction(
         model_name=EMBEDDING_MODEL
     )
 )
-
 
 _collection = _client.get_or_create_collection(
     name=COLLECTION_NAME,
@@ -40,11 +43,14 @@ _collection = _client.get_or_create_collection(
 )
 
 # Chunking
-def chunk_text(text, chunk_size=800, overlap=100):
-    """
-    Split knowledge text into overlapping chunks.
-    """
-    text = str(text).strip()
+def chunk_text(
+    text,
+    chunk_size=800,
+    overlap=100
+):
+    """Split knowledge text into overlapping word-based chunks."""
+
+    text = str(text or "").strip()
 
     if not text:
         return []
@@ -56,7 +62,6 @@ def chunk_text(text, chunk_size=800, overlap=100):
     start = 0
 
     while start < len(words):
-
         end = min(
             start + chunk_size,
             len(words)
@@ -64,7 +69,7 @@ def chunk_text(text, chunk_size=800, overlap=100):
 
         chunk = " ".join(
             words[start:end]
-        )
+        ).strip()
 
         if chunk:
             chunks.append(chunk)
@@ -79,7 +84,7 @@ def chunk_text(text, chunk_size=800, overlap=100):
 
     return chunks
 
-# Load knowledge files
+# Load knowledge
 def load_knowledge():
 
     documents = []
@@ -92,17 +97,24 @@ def load_knowledge():
     ):
 
         try:
-
             text = file_path.read_text(
                 encoding="utf-8"
             )
 
-        except OSError:
+        except OSError as error:
+
+            print(
+                f"Could not read "
+                f"{file_path}: {error}"
+            )
+
             continue
 
         chunks = chunk_text(text)
 
-        for index, chunk in enumerate(chunks):
+        for index, chunk in enumerate(
+            chunks
+        ):
 
             documents.append({
                 "id": (
@@ -129,7 +141,10 @@ def index_knowledge():
         return {
             "success": False,
             "indexed": 0,
-            "message": "No knowledge files found."
+            "message": (
+                "No career knowledge "
+                "files found."
+            )
         }
 
     ids = [
@@ -150,13 +165,18 @@ def index_knowledge():
         for document in documents
     ]
 
-    # Rebuild the collection so changes to knowledge files are reflected
+    # Rebuild collection so changes to .txt files are reflected.
     existing = _collection.get()
 
-    if existing.get("ids"):
+    existing_ids = existing.get(
+        "ids",
+        []
+    )
+
+    if existing_ids:
 
         _collection.delete(
-            ids=existing["ids"]
+            ids=existing_ids
         )
 
     _collection.add(
@@ -171,37 +191,103 @@ def index_knowledge():
         "collection": COLLECTION_NAME
     }
 
-# Retrieve
-def retrieve(query, top_k=4):
+# Confidence
+def calculate_confidence(results):
+
+    if not results:
+        return "low"
+
+    distances = [
+        result["distance"]
+        for result in results
+        if result.get("distance") is not None
+    ]
+
+    if not distances:
+        return "low"
+
+    best_distance = min(
+        distances
+    )
+
     """
-    Retrieve the most relevant career knowledge.
+    These are project-level heuristics, not universal Chroma thresholds.
+    Lower distance = closer semantic match.
     """
 
-    query = str(query).strip()
+    if best_distance < 0.45:
+        return "high"
+
+    if best_distance < 0.70:
+        return "medium"
+
+    return "low"
+
+# Retrieve
+def retrieve(
+    query,
+    top_k=4
+):
+    """Retrieve relevant career knowledge from ChromaDB."""
+
+    query = str(query or "").strip()
 
     if not query:
         return []
+
+    # Validate top_k
+    try:
+        top_k = int(top_k)
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        top_k = 4
+
+    top_k = max(
+        1,
+        min(top_k, 10)
+    )
+
+    collection_count = (
+        _collection.count()
+    )
+
+    if collection_count == 0:
+        return []
+
+    top_k = min(
+        top_k,
+        collection_count
+    )
 
     result = _collection.query(
         query_texts=[query],
         n_results=top_k
     )
 
-    documents = (
-        result.get("documents", [[]])[0]
-    )
+    documents = result.get(
+        "documents",
+        [[]]
+    )[0]
 
-    metadatas = (
-        result.get("metadatas", [[]])[0]
-    )
+    metadatas = result.get(
+        "metadatas",
+        [[]]
+    )[0]
 
-    distances = (
-        result.get("distances", [[]])[0]
-    )
+    distances = result.get(
+        "distances",
+        [[]]
+    )[0]
 
     retrieved = []
 
-    for index, document in enumerate(documents):
+    for index, document in enumerate(
+        documents
+    ):
 
         metadata = (
             metadatas[index]
@@ -234,16 +320,18 @@ def retrieve(query, top_k=4):
     return retrieved
 
 # RAG context
-def retrieve_context(query, top_k=4):
-    """
-    Return formatted context suitable for Ollama.
-    """
+def retrieve_context(
+    query,
+    top_k=4
+):
+    """Return grounded context with source information and confidence."""
 
     results = retrieve(query, top_k)
 
     if not results:
 
         return {
+            "success": True,
             "context": "",
             "sources": [],
             "confidence": "low",
@@ -254,32 +342,43 @@ def retrieve_context(query, top_k=4):
 
     sources = []
 
-    for index, result in enumerate(results):
+    for index, result in enumerate(
+        results
+    ):
 
-        context_parts.append(
-            f"""
-SOURCE {index + 1}: {result["source"]}
-
-{result["text"]}
-""".strip()
+        source = result.get(
+            "source",
+            "unknown"
         )
 
-        if result["source"] not in sources:
+        text = result.get(
+            "text",
+            ""
+        )
+
+        context_parts.append(
+            (
+                f"SOURCE {index + 1}: "
+                f"{source}\n\n"
+                f"{text}"
+            )
+        )
+
+        if source not in sources:
+
             sources.append(
-                result["source"]
+                source
             )
 
-    # Simple confidence category
-    if len(results) >= 3:
-        confidence = "high"
-
-    elif len(results) >= 1:
-        confidence = "medium"
-
-    else:
-        confidence = "low"
+    confidence = (
+        calculate_confidence(
+            results
+        )
+    )
 
     return {
+        "success": True,
+
         "context": "\n\n".join(
             context_parts
         ),
@@ -291,19 +390,18 @@ SOURCE {index + 1}: {result["source"]}
         "results": results
     }
 
-# retriever carere context
-def retrieve_career_context(query, top_k=4):
-    """
-    Public Student 5 retriever interface.
 
-    This function is called by the shared
-    RAG server:
-        POST /retrieve/career
-    """
+# Student 5 public interface
+def retrieve_career_context(
+    query,
+    top_k=4
+):
+    """Public Student 5 interface used by the shared RAG server. """
 
     return retrieve_context(query, top_k)
 
-# RAG health
+
+# RAG status
 def rag_status():
     try:
         count = _collection.count()
@@ -311,19 +409,24 @@ def rag_status():
         return {
             "success": True,
             "available": True,
-            "collection": COLLECTION_NAME,
+            "collection": (
+                COLLECTION_NAME
+            ),
             "documents": count,
-            "embedding_model": EMBEDDING_MODEL
+            "embedding_model": (
+                EMBEDDING_MODEL
+            )
         }
 
     except Exception as error:
+
         return {
             "success": False,
             "available": False,
             "error": str(error)
         }
 
-
+# Local test
 if __name__ == "__main__":
 
     print(
@@ -342,3 +445,19 @@ if __name__ == "__main__":
     print(
         rag_status()
     )
+
+    if result.get("success"):
+
+        test_result = retrieve_career_context(
+            "How should I prepare "
+            "my resume for a job?",
+            4
+        )
+
+        print(
+            "\nTest retrieval:"
+        )
+
+        print(
+            test_result
+        )

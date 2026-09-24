@@ -10,6 +10,8 @@ from retrievers.student4_event_retriever import (
 
 from retrievers.student5_career_retriever import (
     retrieve_career_context,
+    index_knowledge, 
+    rag_status
 )
 
 app = Flask(__name__)
@@ -115,7 +117,6 @@ def retrieve_event():
     )
 
 # student 5 Career RAG 
-
 @app.post("/retrieve/career")
 def retrieve_career():
 
@@ -182,6 +183,38 @@ def retrieve_career():
         result
     )
 
+# Student 5 check RAG index and status 
+@app.get("/status")
+def status():
+    return jsonify(
+        rag_status()
+    )
+
+@app.post("/index/career")
+def index_career():
+
+    try:
+
+        result = index_knowledge()
+
+        return jsonify(
+            result
+        )
+
+    except Exception as error:
+
+        print(
+            "CAREER RAG INDEX ERROR:",
+            repr(error),
+            flush=True
+        )
+
+        return jsonify({
+            "success": False,
+            "error": "RAG indexing failed"
+        }), 500
+
+# main
 if __name__ == "__main__":
 
     print(

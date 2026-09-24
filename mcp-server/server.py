@@ -1,6 +1,6 @@
 import sys
 
-from mcp.server import MCPServer
+from mcp.server.mcpserver import MCPServer
 
 from tools.student1_course_tools import (
     get_course_by_code,
@@ -12,22 +12,17 @@ from tools.student4_event_tools import (
     get_event_by_title,
 )
 
+from tools.student5_career_tools import (
+    get_selected_job,
+    get_job_requirements,
+    analyse_selected_job,
+    retrieve_career_knowledge,
+)
+
 from tools.shared_tools import (
     list_project_files,
     read_ci_report,
 )
-
-from tools.student5_career_tools import (
-    get_job,
-    get_job_requirements,
-    get_saved_jobs,
-    get_application,
-    get_resume,
-    save_job,
-    create_application,
-    update_application
-)
-
 
 mcp = MCPServer("Smart Campus MCP")
 
@@ -36,10 +31,14 @@ AVAILABLE_TOOLS = [
     "course_by_code",
     "event_count",
     "event_by_title",
+    "career_get_selected_job",
+    "career_get_job_requirements",
+    "career_analyse_selected_job",
+    "career_retrieve_knowledge",
     "project_files",
     "ci_report",
-]
 
+]
 
 @mcp.tool()
 def course_count():
@@ -64,55 +63,32 @@ def event_by_title(event_title: str):
     """Return a Campus Event record matching the supplied title."""
     return get_event_by_title(event_title)
 
-# student 5 tools
+# student 5 - MCP career tools 
 @mcp.tool()
-def career_get_job(job_id: int):
-    """Get complete information about a selected career job."""
-    return get_job(job_id)
+def career_get_selected_job(job_id: int):
+    """Retrieve the selected career job."""
+    return get_selected_job(job_id)
 
 @mcp.tool()
 def career_get_job_requirements(job_id: int):
-    """Get the requirements and description of a selected job."""
+    """
+    Retrieve the requirements and description 
+    for a selected career job.
+    """
     return get_job_requirements(job_id)
 
 @mcp.tool()
-def career_get_saved_jobs():
-    """Get the user's saved jobs."""
-    return get_saved_jobs()
+def career_analyse_selected_job(job_id: int):
+    """Analyse the selected career job."""
+    return analyse_selected_job(job_id)
 
 @mcp.tool()
-def career_get_application(job_id: int):
-    """Get the user's application information for a job."""
-    return get_application(job_id)
-
-@mcp.tool()
-def career_get_resume():
-    """Get the user's current resume."""
-    return get_resume()
-
-@mcp.tool()
-def career_save_job(job_id: int):
-    """Save a selected job."""
-    return save_job(job_id)
-
-@mcp.tool()
-def career_create_application(
-    job_id: int,
-    status: str = "Applied",
-    notes: str = ""
-):
-    """Create an application for a job."""
-    return create_application(job_id, status, notes)
-
-@mcp.tool()
-def career_update_application(
-    application_id: int,
-    status: str = "Interested",
-    notes: str = ""
-):
-    """Update an existing application."""
-
-    return update_application(application_id, status, notes)
+def career_retrieve_knowledge(query: str, top_k: int = 4):
+    """
+    Retrieve grounded career knowledge 
+    from the shared local RAG server.
+    """
+    return retrieve_career_knowledge(query, top_k)
 
 # general tools
 @mcp.tool()

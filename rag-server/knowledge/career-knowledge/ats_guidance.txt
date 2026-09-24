@@ -1,0 +1,23 @@
+ATS GUIDANCE
+
+Applicant Tracking Systems (ATS) are software systems that employers may use to collect, organise, search, and manage job applications.
+
+When preparing application documents for a job, users can improve clarity by using terminology that accurately reflects the job advertisement and their actual experience.
+
+Useful practices include:
+
+- Use clear section headings.
+- Use readable and consistent formatting.
+- Clearly describe relevant skills.
+- Use terminology from the job advertisement when it accurately describes the applicant's experience.
+- Include relevant qualifications and certifications.
+- Describe relevant experience using specific and truthful language.
+- Avoid adding keywords that do not accurately represent the applicant's background.
+
+Keyword matching should not be treated as a guarantee that an application will pass an ATS.
+
+A keyword appearing in a job advertisement does not mean an applicant should claim that skill. The applicant should only include skills and experience they genuinely possess.
+
+When analysing a job advertisement, ATS-related guidance can identify important terms and concepts in the advertisement.
+
+When no resume is available, the assistant can identify important job keywords but cannot determine whether the user's resume contains those keywords.
