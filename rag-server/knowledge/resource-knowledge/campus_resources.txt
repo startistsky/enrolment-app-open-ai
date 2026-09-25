@@ -1,0 +1,91 @@
+UTS Campus Resource Knowledge
+
+Resource: UTS Library
+Type: Library
+Building: UTS Central
+Location: Building 2
+Capacity: 500
+Opening Hours: 8:00 AM - 10:00 PM
+Description: Library with quiet study areas, computers and group study spaces.
+Suitable for: Quiet individual study, reading, computer access, research and group study.
+
+Resource: Building 11 Study Room 1
+Type: Study Room
+Building: Building 11
+Location: Building 11, Level 4
+Capacity: 6
+Opening Hours: 8:00 AM - 9:00 PM
+Description: Small group study room suitable for collaborative work.
+Suitable for: Small group meetings, teamwork, collaborative study and project discussions.
+
+Resource: Building 11 Study Room 2
+Type: Study Room
+Building: Building 11
+Location: Building 11, Level 4
+Capacity: 8
+Opening Hours: 8:00 AM - 9:00 PM
+Description: Group study room with a whiteboard and display screen.
+Suitable for: Group study, presentations, brainstorming and collaborative project work.
+
+Resource: Building 10 Computer Lab
+Type: Computer Lab
+Building: Building 10
+Location: Building 10, Level 3
+Capacity: 30
+Opening Hours: 8:00 AM - 8:00 PM
+Description: Computer laboratory with desktop computers and study workstations.
+Suitable for: Computer access, individual study, software work and assignments requiring a desktop computer.
+
+Resource: UTS Central Computer Lab
+Type: Computer Lab
+Building: UTS Central
+Location: Building 2, Level 5
+Capacity: 40
+Opening Hours: 8:00 AM - 10:00 PM
+Description: Large computer laboratory available for individual study.
+Suitable for: Computer access, individual study and completing digital coursework.
+
+Resource: Building 2 Printer
+Type: Printer
+Building: UTS Central
+Location: Building 2, Level 7
+Capacity: 1
+Opening Hours: 8:00 AM - 10:00 PM
+Description: Colour and black-and-white printing service near the library.
+Suitable for: Printing documents in colour or black and white near the UTS Library.
+
+Resource: Building 11 Printer
+Type: Printer
+Building: Building 11
+Location: Building 11, Level 2
+Capacity: 1
+Opening Hours: 8:00 AM - 9:00 PM
+Description: Student printer supporting colour and black-and-white printing.
+Suitable for: Students who need colour or black-and-white printing in Building 11.
+
+Resource: Building 1 Quiet Study Area
+Type: Study Room
+Building: Building 1
+Location: Building 1, Level 3
+Capacity: 20
+Opening Hours: 8:00 AM - 8:00 PM
+Description: Quiet study area designed for individual study and reading.
+Suitable for: Quiet individual study, reading, concentration and focused coursework.
+
+Resource: Building 6 Study Space
+Type: Study Room
+Building: Building 6
+Location: Building 6, Level 4
+Capacity: 15
+Opening Hours: 9:00 AM - 7:00 PM
+Description: Open study space with tables and power outlets.
+Suitable for: General study, laptop work, charging devices and informal study.
+
+Resource: Thomas Street Parking
+Type: Parking
+Building: Building 10
+Location: Thomas Street
+Capacity: 50
+Opening Hours: 6:00 AM - 11:00 PM
+Description: Parking facility close to the UTS City Campus.
+Suitable for: Students and visitors who need vehicle parking near the UTS City Campus.
