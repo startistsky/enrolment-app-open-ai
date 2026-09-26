@@ -97,3 +97,118 @@ def test_resource_retrieval_requires_query():
 
     assert result["error"] == "query is required"
     assert result["matches"] == []
+    
+# =========================================================
+# BACKEND RAG ENDPOINT TESTS
+# =========================================================
+
+BACKEND_DIR = os.path.join(
+    PROJECT_ROOT,
+    "student-3",
+    "backend",
+)
+
+sys.path.insert(
+    0,
+    BACKEND_DIR,
+)
+
+from app import app
+
+
+def test_backend_rag_recommend_success(monkeypatch):
+    """Test the backend RAG endpoint returns grounded resource matches."""
+
+    def mock_retrieve_resource_context(query, top_k=3):
+        return {
+            "query": query,
+            "top_k": top_k,
+            "matches": [
+                {
+                    "resource_name": "Building 1 Quiet Study Area",
+                    "source": "campus_resources.txt",
+                    "citation": (
+                        "campus_resources.txt#"
+                        "Building-1-Quiet-Study-Area"
+                    ),
+                    "confidence": "high",
+                    "distance": 0.431,
+                    "context": "Quiet study area for individual study.",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.retrieve_resource_context",
+        mock_retrieve_resource_context,
+    )
+
+    client = app.test_client()
+
+    response = client.post(
+        "/rag/recommend",
+        json={
+            "question": "I need somewhere quiet to study."
+        },
+    )
+
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert data["mode"] == "rag"
+    assert data["question"] == "I need somewhere quiet to study."
+    assert len(data["matches"]) == 1
+    assert (
+        data["matches"][0]["resource_name"]
+        == "Building 1 Quiet Study Area"
+    )
+    assert data["matches"][0]["confidence"] == "high"
+    assert "citation" in data["matches"][0]
+
+
+def test_backend_rag_recommend_requires_question():
+    """Test validation when the backend receives an empty RAG question."""
+
+    client = app.test_client()
+
+    response = client.post(
+        "/rag/recommend",
+        json={
+            "question": ""
+        },
+    )
+
+    data = response.get_json()
+
+    assert response.status_code == 400
+    assert data["error"] == "question is required"
+
+
+def test_backend_rag_recommend_handles_rag_failure(monkeypatch):
+    """Test the backend handles an unavailable RAG service."""
+
+    def mock_rag_failure(query, top_k=3):
+        return {
+            "error": "RAG server unavailable",
+            "matches": [],
+        }
+
+    monkeypatch.setattr(
+        "app.retrieve_resource_context",
+        mock_rag_failure,
+    )
+
+    client = app.test_client()
+
+    response = client.post(
+        "/rag/recommend",
+        json={
+            "question": "Where can I study?"
+        },
+    )
+
+    data = response.get_json()
+
+    assert response.status_code == 503
+    assert data["error"] == "RAG server unavailable"
+    assert data["matches"] == []

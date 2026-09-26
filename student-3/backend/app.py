@@ -1,3 +1,4 @@
+from rag_client import retrieve_resource_context
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import os
@@ -533,6 +534,48 @@ Recommendation:
             "error": "AI or database service unavailable",
             "details": str(error)
         }), 503
+
+
+# =========================================================
+# R1 RAG RECOMMENDATION
+# =========================================================
+
+@app.post("/rag/recommend")
+def rag_recommend():
+    """Retrieve grounded campus resource recommendations using RAG."""
+
+    if not request.is_json:
+        return jsonify({
+            "error": "Content-Type must be application/json"
+        }), 400
+
+    body = request.get_json(silent=True)
+
+    if not isinstance(body, dict):
+        return jsonify({
+            "error": "Request body must be a JSON object"
+        }), 400
+
+    question = body.get("question")
+
+    if not isinstance(question, str) or not question.strip():
+        return jsonify({
+            "error": "question is required"
+        }), 400
+
+    result = retrieve_resource_context(
+        question.strip(),
+        top_k=3,
+    )
+
+    if result.get("error"):
+        return jsonify(result), 503
+
+    return jsonify({
+        "question": question.strip(),
+        "mode": "rag",
+        "matches": result.get("matches", []),
+    }), 200
 
 
 # =========================================================

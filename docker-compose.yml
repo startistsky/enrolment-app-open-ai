@@ -21,6 +21,7 @@ services:
     environment:
       AI_SERVICE_URL: http://ollama:11434/api/generate
       DATABASE_API_URL: http://student3-database:5004
+      RAG_SERVER_URL: http://host.docker.internal:9101
 
     depends_on:
       - student3-database
