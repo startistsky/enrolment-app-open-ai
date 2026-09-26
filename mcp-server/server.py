@@ -7,6 +7,11 @@ from tools.student1_course_tools import (
     get_course_count,
 )
 
+from tools.student3_resource_tools import (
+    get_resource_by_type,
+    get_resource_count,
+)
+
 from tools.student4_event_tools import (
     get_event_count,
     get_event_by_title,
@@ -23,6 +28,8 @@ mcp = MCPServer("Smart Campus MCP")
 AVAILABLE_TOOLS = [
     "course_count",
     "course_by_code",
+    "resource_count",
+    "resource_by_type",
     "event_count",
     "event_by_title",
     "project_files",
@@ -40,6 +47,18 @@ def course_count():
 def course_by_code(course_code: str):
     """Return a Course Management record matching the supplied course code."""
     return get_course_by_code(course_code)
+
+
+@mcp.tool()
+def resource_count():
+    """Return the total number of Campus Resource records."""
+    return get_resource_count()
+
+
+@mcp.tool()
+def resource_by_type(resource_type: str):
+    """Return Campus Resource records matching the supplied resource type."""
+    return get_resource_by_type(resource_type)
 
 
 @mcp.tool()

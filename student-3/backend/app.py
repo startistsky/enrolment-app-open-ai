@@ -1,3 +1,5 @@
+from rag_client import retrieve_resource_context
+from mcp_client import call_mcp_tool
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import os
@@ -534,6 +536,224 @@ Recommendation:
             "details": str(error)
         }), 503
 
+
+# =========================================================
+# R1 RAG RECOMMENDATION
+# =========================================================
+
+@app.get("/api/mcp/resource-count")
+def mcp_resource_count():
+    """Return the campus resource count through the shared MCP server."""
+
+    outcome = call_mcp_tool(
+        "resource_count"
+    )
+
+    if not outcome.get("ok"):
+        return jsonify({
+            "error": outcome.get(
+                "error",
+                "MCP request failed"
+            ),
+            "detail": outcome.get("detail"),
+        }), outcome.get("status", 502)
+
+    return jsonify({
+        "mode": "mcp",
+        "tool": "resource_count",
+        "result": outcome.get("result"),
+    }), 200
+
+
+@app.get("/api/mcp/resource-by-type/<resource_type>")
+def mcp_resource_by_type(resource_type):
+    """Return campus resources by type through the shared MCP server."""
+
+    resource_type = resource_type.strip()
+
+    if not resource_type:
+        return jsonify({
+            "error": "resource_type is required"
+        }), 400
+
+    outcome = call_mcp_tool(
+        "resource_by_type",
+        {
+            "resource_type": resource_type
+        }
+    )
+
+    if not outcome.get("ok"):
+        return jsonify({
+            "error": outcome.get(
+                "error",
+                "MCP request failed"
+            ),
+            "detail": outcome.get("detail"),
+        }), outcome.get("status", 502)
+
+    return jsonify({
+        "mode": "mcp",
+        "tool": "resource_by_type",
+        "input": {
+            "resource_type": resource_type
+        },
+        "result": outcome.get("result"),
+    }), 200
+
+@app.post("/rag/recommend")
+def rag_recommend():
+    """Generate a grounded campus resource recommendation using RAG."""
+
+    if not request.is_json:
+        return jsonify({
+            "error": "Content-Type must be application/json"
+        }), 400
+
+    body = request.get_json(silent=True)
+
+    if not isinstance(body, dict):
+        return jsonify({
+            "error": "Request body must be a JSON object"
+        }), 400
+
+    question = body.get("question")
+
+    if not isinstance(question, str) or not question.strip():
+        return jsonify({
+            "error": "question is required"
+        }), 400
+
+    question = question.strip()
+
+    # Step 1: Retrieve relevant context from the shared RAG server.
+    result = retrieve_resource_context(
+        question,
+        top_k=3,
+    )
+
+    if result.get("error"):
+        return jsonify(result), 503
+
+    matches = result.get("matches", [])
+
+    # Step 2: Only use sufficiently relevant retrieved context.
+    grounded_matches = [
+        match
+        for match in matches
+        if match.get("confidence") in {"high", "medium"}
+    ]
+
+    # Step 3: Do not ask the LLM to guess when retrieval is weak.
+    if not grounded_matches:
+        return jsonify({
+            "question": question,
+            "mode": "rag",
+            "answer": (
+                "Insufficient relevant context was found "
+                "to answer this question."
+            ),
+            "model": AI_MODEL,
+            "citations": [],
+            "confidence": "low",
+            "matches": matches,
+        }), 200
+
+    context = "\n\n".join(
+        match.get("context", "")
+        for match in grounded_matches
+    )
+
+    citations = list(dict.fromkeys(
+        match.get("citation")
+        for match in grounded_matches
+        if match.get("citation")
+    ))
+
+    confidence = (
+        "high"
+        if any(
+            match.get("confidence") == "high"
+            for match in grounded_matches
+        )
+        else "medium"
+    )
+
+    prompt = f"""
+You are a campus resource recommendation assistant.
+
+Answer the user's question using ONLY the retrieved
+campus resource context below.
+
+Do not invent resources, facilities, locations,
+opening hours, capacities, or other information.
+
+If the context does not support a claim, do not make it.
+
+Keep the answer short, clear and useful.
+
+Retrieved context:
+
+{context}
+
+User question:
+
+{question}
+
+Grounded answer:
+"""
+
+    try:
+        # Step 4: Generate an answer grounded in retrieved evidence.
+        ai_response = requests.post(
+            AI_SERVICE_URL,
+            json={
+                "model": AI_MODEL,
+                "prompt": prompt,
+                "stream": False,
+            },
+            timeout=60,
+        )
+
+        ai_response.raise_for_status()
+
+        ai_data = ai_response.json()
+
+        answer = str(
+            ai_data.get(
+                "response",
+                ""
+            )
+        ).strip()
+
+        if not answer:
+            answer = (
+                "The retrieved context was relevant, "
+                "but no grounded answer was generated."
+            )
+
+        # Step 5: Return the answer together with evidence metadata.
+        return jsonify({
+            "question": question,
+            "mode": "rag",
+            "answer": answer,
+            "model": AI_MODEL,
+            "citations": citations,
+            "confidence": confidence,
+            "matches": matches,
+        }), 200
+
+    except requests.Timeout as error:
+        return jsonify({
+            "error": "AI request timed out",
+            "details": str(error),
+        }), 504
+
+    except requests.RequestException as error:
+        return jsonify({
+            "error": "AI service unavailable",
+            "details": str(error),
+        }), 503
 
 # =========================================================
 # START

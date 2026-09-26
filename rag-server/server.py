@@ -4,6 +4,10 @@ from retrievers.student1_course_retriever import (
     retrieve_course_context,
 )
 
+from retrievers.student3_resource_retriever import (
+    retrieve_resource_context,
+)
+
 from retrievers.student4_event_retriever import (
     retrieve_event_context,
 )
@@ -52,6 +56,52 @@ def retrieve_course():
     try:
 
         result = retrieve_course_context(
+            body.get("query"),
+            body.get("top_k", 3),
+        )
+
+    except Exception:
+
+        return jsonify({
+            "error": "RAG server error"
+        }), 500
+
+    return jsonify(
+        result
+    )
+
+
+@app.post("/retrieve/resource")
+def retrieve_resource():
+
+    if not request.is_json:
+
+        return jsonify({
+            "error": (
+                "Content-Type must be "
+                "application/json"
+            ),
+        }), 400
+
+    body = request.get_json(
+        silent=True
+    )
+
+    if not isinstance(
+        body,
+        dict
+    ):
+
+        return jsonify({
+            "error": (
+                "Request body must be "
+                "a JSON object"
+            ),
+        }), 400
+
+    try:
+
+        result = retrieve_resource_context(
             body.get("query"),
             body.get("top_k", 3),
         )
@@ -128,6 +178,12 @@ if __name__ == "__main__":
     print(
         "Course RAG endpoint: "
         "http://localhost:9101/retrieve/course",
+        flush=True
+    )
+
+    print(
+        "Resource RAG endpoint: "
+        "http://localhost:9101/retrieve/resource",
         flush=True
     )
 
