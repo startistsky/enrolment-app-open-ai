@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - student_3
-      - feature/student3-r1-resource
+      - "feature/student3-*"
 
   pull_request:
     branches:
@@ -27,7 +27,7 @@ jobs:
       - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest requests flask flask-cors mcp httpx chromadb
+          pip install pytest requests flask flask-cors mcp httpx chromadb sentence-transformers
 
       - name: Check Python syntax
         run: |
@@ -77,6 +77,7 @@ jobs:
           student-3/tests/test_backend.py \
           student-3/tests/test_database.py \
           student-3/tests/test_mcp_integration.py \
+          student-3/tests/test_rag_integration.py \
           -v
 
       - name: Show Docker logs on failure
