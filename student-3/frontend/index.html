@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,8 +12,11 @@
 
 <body>
 
-  <!-- Top Navigation -->
+  <!-- =========================
+       Top Navigation
+  ========================== -->
   <header class="topbar">
+
     <div class="brand">
       <div class="brand-mark"></div>
       CampusLife
@@ -29,16 +35,22 @@
       <button class="icon-btn" aria-label="profile">👤</button>
       <button class="icon-btn" aria-label="search">⌕</button>
     </div>
+
   </header>
+
 
   <main>
 
-    <!-- Hero -->
+    <!-- =========================
+         Hero
+    ========================== -->
     <section class="hero">
+
       <div class="hero-row">
 
         <div>
           <h1>Campus Resources</h1>
+
           <p>
             Find study spaces, libraries, computer labs,
             printers and other campus facilities.
@@ -46,22 +58,37 @@
         </div>
 
         <div class="hero-actions">
-          <button type="button" class="secondary-btn" id="addResourceButton">
+
+          <button
+            type="button"
+            class="secondary-btn"
+            id="addResourceButton">
             + Add Resource
           </button>
 
-          <button type="button" class="ask-ai" id="askAiButton">
+          <button
+            type="button"
+            class="ask-ai"
+            id="askAiButton">
             ✨ Ask Campus AI
           </button>
+
         </div>
 
       </div>
+
     </section>
 
-    <!-- Search and Filters -->
+
+    <!-- =========================
+         Search and Filters
+    ========================== -->
     <section class="controls">
 
-      <input id="search" class="control" placeholder="Search resources..." />
+      <input
+        id="search"
+        class="control"
+        placeholder="Search resources..." />
 
       <select id="typeFilter" class="control">
         <option value="">All types</option>
@@ -81,41 +108,75 @@
 
     </section>
 
-    <!-- Resource List -->
+
+    <!-- =========================
+         Resource List
+    ========================== -->
     <section class="section">
+
       <div class="section-head">
+
         <h2>All Resources</h2>
-        <div class="result-count" id="resultCount"></div>
+
+        <div
+          class="result-count"
+          id="resultCount">
+        </div>
+
       </div>
 
-      <div class="grid" id="resourceGrid"></div>
+      <div
+        class="grid"
+        id="resourceGrid">
+      </div>
+
     </section>
 
   </main>
 
-  <!-- Footer -->
+
+  <!-- =========================
+       Footer
+  ========================== -->
   <footer class="footer">
     CampusLife Resources · ASD 2026 Student Project ·
     Campus Resource Management
   </footer>
 
-  <!-- Floating AI Button -->
-  <button type="button" class="chat-launcher" id="chatLauncher">
+
+  <!-- =========================
+       Floating AI Button
+  ========================== -->
+  <button
+    type="button"
+    class="chat-launcher"
+    id="chatLauncher"
+    aria-label="Open Campus AI">
     💬
   </button>
 
-  <!-- AI Chat -->
-    <!-- Campus AI Chat -->
-  <aside class="chat" id="chat">
 
+  <!-- =========================
+       Campus AI Chat
+  ========================== -->
+  <aside
+    class="chat"
+    id="chat">
+
+    <!-- Header -->
     <div class="chat-head">
+
       <div class="chat-title-row">
-        <div class="chat-ai-icon">✦</div>
+
+        <div class="chat-ai-icon">
+          ✦
+        </div>
 
         <div>
           <strong>Campus AI Assistant</strong>
-          <span>Smart campus resource support</span>
+          <span>Campus resource support</span>
         </div>
+
       </div>
 
       <button
@@ -125,7 +186,9 @@
         aria-label="Close Campus AI">
         ×
       </button>
+
     </div>
+
 
     <!-- AI Mode Selector -->
     <div class="ai-mode-selector">
@@ -135,7 +198,7 @@
         class="ai-mode active"
         data-ai-mode="ai">
         <span>✨</span>
-        AI Assistant
+        AI
       </button>
 
       <button
@@ -143,7 +206,7 @@
         class="ai-mode"
         data-ai-mode="rag">
         <span>◈</span>
-        RAG Grounded
+        RAG
       </button>
 
       <button
@@ -151,37 +214,48 @@
         class="ai-mode"
         data-ai-mode="mcp">
         <span>⚙</span>
-        MCP Tools
+        MCP
       </button>
 
     </div>
 
-    <!-- Current mode information -->
-    <div class="ai-mode-info" id="aiModeInfo">
+
+    <!-- Current Mode -->
+    <div
+      class="ai-mode-info"
+      id="aiModeInfo">
+
       <strong>AI Assistant</strong>
+
       <span>
-        Get recommendations using live campus resource data.
+        Live campus resource help.
       </span>
+
     </div>
 
-    <div class="messages" id="messages">
+
+    <!-- Messages -->
+    <div
+      class="messages"
+      id="messages">
 
       <div class="msg bot">
-        <div class="message-label">Campus AI</div>
+
+        <div class="message-label">
+          Campus AI
+        </div>
 
         <div>
-          Hi! Tell me what kind of campus resource you need
-          and I can help you find a suitable option.
+          Hi! Tell me what campus resource you need.
         </div>
+
       </div>
 
     </div>
 
-    <div class="quick">
 
-      <div class="quick-label">
-        Quick questions
-      </div>
+    <!-- Quick Questions -->
+    <div class="quick">
 
       <div class="quick-grid">
 
@@ -194,7 +268,7 @@
         <button
           type="button"
           data-quick="Where can I print something?">
-          🖨️ Find a printer
+          🖨️ Printer
         </button>
 
         <button
@@ -213,6 +287,8 @@
 
     </div>
 
+
+    <!-- Input -->
     <div class="chat-input">
 
       <input
@@ -230,99 +306,167 @@
     </div>
 
     <div class="chat-footer">
-      CampusLife AI · Responses may use AI-generated content
+      CampusLife AI · AI-generated content
     </div>
 
   </aside>
-  
-  <!-- Resource Detail Modal -->
-  <div class="modal-overlay" id="detailModal">
+
+
+  <!-- =========================
+       Resource Detail Modal
+  ========================== -->
+  <div
+    class="modal-overlay"
+    id="detailModal">
+
     <div class="modal">
-      <button type="button" class="modal-close" id="detailCloseButton">
+
+      <button
+        type="button"
+        class="modal-close"
+        id="detailCloseButton">
         ×
       </button>
 
       <div id="detailContent"></div>
+
     </div>
+
   </div>
 
-  <!-- Add / Edit Resource Modal -->
-  <div class="modal-overlay" id="resourceFormModal">
+
+  <!-- =========================
+       Add / Edit Resource Modal
+  ========================== -->
+  <div
+    class="modal-overlay"
+    id="resourceFormModal">
 
     <div class="modal form-modal">
 
-      <button type="button" class="modal-close" id="resourceFormCloseButton">
+      <button
+        type="button"
+        class="modal-close"
+        id="resourceFormCloseButton">
         ×
       </button>
 
-      <h2 id="resourceFormTitle">Add Campus Resource</h2>
+      <h2 id="resourceFormTitle">
+        Add Campus Resource
+      </h2>
 
       <form id="resourceForm">
 
         <label>
           Resource Name
-          <input id="formName" required />
+          <input
+            id="formName"
+            required />
         </label>
+
 
         <label>
           Resource Type
-          <select id="formType" required>
-            <option value="">Select type</option>
+
+          <select
+            id="formType"
+            required>
+
+            <option value="">
+              Select type
+            </option>
+
             <option>Library</option>
             <option>Study Room</option>
             <option>Computer Lab</option>
             <option>Printer</option>
             <option>Parking</option>
+
           </select>
         </label>
 
+
         <label>
           Building
-          <input id="formBuilding" required />
+
+          <input
+            id="formBuilding"
+            required />
         </label>
+
 
         <label>
           Floor
+
           <input id="formFloor" />
         </label>
 
+
         <label>
           Capacity
-          <input id="formCapacity" type="number" min="0" />
+
+          <input
+            id="formCapacity"
+            type="number"
+            min="0" />
         </label>
+
 
         <label>
           Availability
-          <select id="formAvailability" required>
+
+          <select
+            id="formAvailability"
+            required>
+
             <option>Available</option>
             <option>Busy</option>
             <option>Unavailable</option>
             <option>Closed</option>
+
           </select>
         </label>
 
+
         <label>
           Opening Hours
-          <input id="formHours" placeholder="8:00 AM - 10:00 PM" />
+
+          <input
+            id="formHours"
+            placeholder="8:00 AM - 10:00 PM" />
         </label>
+
 
         <label>
           Location
+
           <input id="formLocation" />
         </label>
 
+
         <label class="full-width">
           Description
-          <textarea id="formDescription" rows="4"></textarea>
+
+          <textarea
+            id="formDescription"
+            rows="4">
+          </textarea>
         </label>
+
 
         <div class="form-actions">
 
-          <button type="button" class="cancel-btn" id="resourceFormCancelButton">
+          <button
+            type="button"
+            class="cancel-btn"
+            id="resourceFormCancelButton">
             Cancel
           </button>
 
-          <button type="submit" class="ask-ai" id="resourceFormSubmitButton">
+          <button
+            type="submit"
+            class="ask-ai"
+            id="resourceFormSubmitButton">
             Add Resource
           </button>
 
@@ -334,1349 +478,9 @@
 
   </div>
 
-  <script>
-    let resources = [];
-    let editingResourceId = null;
-    let aiRequestInProgress = false;
 
-    const API_BASE_URL =
-      `${window.location.protocol}//${window.location.hostname}:8003`;
-
-    const resourceGrid = document.getElementById("resourceGrid");
-    const search = document.getElementById("search");
-    const typeFilter = document.getElementById("typeFilter");
-    const buildingFilter = document.getElementById("buildingFilter");
-    const availabilityFilter = document.getElementById("availabilityFilter");
-    const resultCount = document.getElementById("resultCount");
-    const resourceForm = document.getElementById("resourceForm");
-    const chatInput = document.getElementById("chatInput");
-    const chatSendButton = document.getElementById("chatSendButton");
-
-    async function loadResources() {
-      try {
-        resourceGrid.innerHTML =
-          "<p>Loading campus resources...</p>";
-
-        const response = await fetch(
-          `${API_BASE_URL}/resources`,
-          { cache: "no-store" }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
-        }
-
-        resources = await response.json();
-
-        seedFiltersAgain();
-        renderResources();
-
-      } catch (error) {
-        console.error("Failed to load resources:", error);
-
-        resourceGrid.innerHTML = `
-          <p>
-            Unable to load campus resources.
-            Please check that the backend service is running.
-          </p>
-        `;
-
-        resultCount.textContent = "0 resources";
-      }
-    }
-
-    function resourceIcon(type) {
-      const icons = {
-        "Library": "📚",
-        "Study Room": "🪑",
-        "Computer Lab": "🖥️",
-        "Printer": "🖨️",
-        "Parking": "🚗"
-      };
-
-      return icons[type] || "🏫";
-    }
-
-    function seedFilters() {
-      const types =
-        [...new Set(
-          resources.map(resource => resource.resource_type)
-        )].sort();
-
-      types.forEach(type => {
-        typeFilter.innerHTML +=
-          `<option value="${type}">${type}</option>`;
-      });
-
-      const buildings =
-        [...new Set(
-          resources.map(resource => resource.building)
-        )].sort();
-
-      buildings.forEach(building => {
-        buildingFilter.innerHTML +=
-          `<option value="${building}">${building}</option>`;
-      });
-    }
-
-    function seedFiltersAgain() {
-      const selectedType = typeFilter.value;
-      const selectedBuilding = buildingFilter.value;
-
-      typeFilter.innerHTML =
-        `<option value="">All types</option>`;
-
-      buildingFilter.innerHTML =
-        `<option value="">All buildings</option>`;
-
-      seedFilters();
-
-      typeFilter.value = selectedType;
-      buildingFilter.value = selectedBuilding;
-    }
-
-    // ---------------------------------------------------------
-    // Improved Search Matching
-    // ---------------------------------------------------------
-    function matchesSearch(resource, query) {
-      if (!query) {
-        return true;
-      }
-
-      const searchableText =
-        `${resource.resource_name || ""}
-         ${resource.resource_type || ""}
-         ${resource.building || ""}
-         ${resource.location || ""}
-         ${resource.description || ""}`
-          .toLowerCase();
-
-      const searchableWords =
-        searchableText.match(/[a-z0-9]+/g) || [];
-
-      const queryWords =
-        query
-          .toLowerCase()
-          .match(/[a-z0-9]+/g) || [];
-
-      return queryWords.every(
-        queryWord =>
-          searchableWords.some(
-            word =>
-              word === queryWord ||
-              word.startsWith(queryWord)
-          )
-      );
-    }
-
-    function renderResources() {
-      const query =
-        search.value.trim().toLowerCase();
-
-      const type =
-        typeFilter.value;
-
-      const building =
-        buildingFilter.value;
-
-      const availability =
-        availabilityFilter.value;
-
-      const filtered =
-        resources.filter(resource => {
-          return (
-            matchesSearch(resource, query) &&
-            (!type || resource.resource_type === type) &&
-            (!building || resource.building === building) &&
-            (!availability ||
-              resource.availability_status === availability)
-          );
-        });
-
-      resultCount.textContent =
-        `${filtered.length} resource${filtered.length === 1 ? "" : "s"}`;
-
-      resourceGrid.innerHTML =
-        filtered.map(resource => `
-          <article
-            class="card"
-            data-resource-id="${resource.resource_id}">
-
-            <div class="image">
-
-              <span class="emoji">
-                ${resourceIcon(resource.resource_type)}
-              </span>
-
-              <span class="tag">
-                ${resource.resource_type}
-              </span>
-
-              <span class="
-                availability-pill
-                ${resource.availability_status.toLowerCase()}
-              ">
-                ${resource.availability_status}
-              </span>
-
-            </div>
-
-            <div class="content">
-
-              <h3>
-                ${resource.resource_name}
-              </h3>
-
-              <p>
-                ${resource.description || ""}
-              </p>
-
-              <div class="meta">
-                <span>
-                  📍 ${resource.location || "Location unavailable"}
-                </span>
-
-                <span>
-                  👥 Capacity:
-                  ${resource.capacity ?? "N/A"}
-                </span>
-
-                <span>
-                  🕒 ${resource.opening_hours || "Hours unavailable"}
-                </span>
-              </div>
-
-            </div>
-
-          </article>
-        `).join("");
-    }
-
-    function openDetail(resourceId) {
-      const resource =
-        resources.find(
-          item => item.resource_id === resourceId
-        );
-
-      if (!resource) {
-        return;
-      }
-
-      const content =
-        document.getElementById("detailContent");
-
-      content.innerHTML = `
-        <div class="detail-icon">
-          ${resourceIcon(resource.resource_type)}
-        </div>
-
-        <div class="detail-tags">
-          <span class="tag-static">
-            ${resource.resource_type}
-          </span>
-
-          <span class="
-            availability-static
-            ${resource.availability_status.toLowerCase()}
-          ">
-            ${resource.availability_status}
-          </span>
-        </div>
-
-        <h2>
-          ${resource.resource_name}
-        </h2>
-
-        <p class="detail-description">
-          ${resource.description || ""}
-        </p>
-
-        <div class="detail-grid">
-          <div>
-            <strong>Building</strong>
-            <span>${resource.building}</span>
-          </div>
-
-          <div>
-            <strong>Floor</strong>
-            <span>${resource.floor || "N/A"}</span>
-          </div>
-
-          <div>
-            <strong>Capacity</strong>
-            <span>${resource.capacity ?? "N/A"}</span>
-          </div>
-
-          <div>
-            <strong>Opening Hours</strong>
-            <span>${resource.opening_hours || "N/A"}</span>
-          </div>
-
-          <div>
-            <strong>Location</strong>
-            <span>${resource.location || "N/A"}</span>
-          </div>
-
-          <div>
-            <strong>Status</strong>
-            <span>${resource.availability_status}</span>
-          </div>
-        </div>
-
-        <div class="detail-actions">
-          <button
-            type="button"
-            class="secondary-btn"
-            id="editResourceButton">
-            Edit Resource
-          </button>
-
-          <button
-            type="button"
-            class="delete-btn"
-            id="deleteResourceButton">
-            Delete Resource
-          </button>
-        </div>
-      `;
-
-      document
-        .getElementById("detailModal")
-        .classList.add("open");
-
-      document
-        .getElementById("editResourceButton")
-        .addEventListener("click", () => {
-          openEditResourceForm(resource.resource_id);
-        });
-
-      document
-        .getElementById("deleteResourceButton")
-        .addEventListener("click", () => {
-          deleteResource(resource.resource_id);
-        });
-    }
-
-    function closeDetail() {
-      document
-        .getElementById("detailModal")
-        .classList.remove("open");
-    }
-
-    async function deleteResource(resourceId) {
-      const resource =
-        resources.find(
-          item => item.resource_id === resourceId
-        );
-
-      if (!resource) {
-        alert("Resource not found in the current list.");
-        return;
-      }
-
-      const confirmed =
-        confirm(
-          `Are you sure you want to delete ${resource.resource_name}?`
-        );
-
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/resources/${resourceId}`,
-          {
-            method: "DELETE",
-            cache: "no-store"
-          }
-        );
-
-        if (!response.ok) {
-          const errorText =
-            await response.text();
-
-          throw new Error(
-            `DELETE failed (${response.status}): ${errorText}`
-          );
-        }
-
-        closeDetail();
-        await loadResources();
-
-      } catch (error) {
-        console.error(
-          "Failed to delete resource:",
-          error
-        );
-
-        alert(
-          "Unable to delete resource. Please try again."
-        );
-      }
-    }
-
-    function resetResourceFormState() {
-      editingResourceId = null;
-
-      resourceForm.reset();
-
-      document
-        .getElementById("resourceFormTitle")
-        .textContent =
-        "Add Campus Resource";
-
-      document
-        .getElementById("resourceFormSubmitButton")
-        .textContent =
-        "Add Resource";
-    }
-
-    function openResourceForm() {
-      resetResourceFormState();
-
-      document
-        .getElementById("resourceFormModal")
-        .classList.add("open");
-    }
-
-    function openEditResourceForm(resourceId) {
-      console.log(
-        "Opening edit form for resource:",
-        resourceId
-      );
-
-      const resource =
-        resources.find(
-          item => item.resource_id === resourceId
-        );
-
-      if (!resource) {
-        alert("Resource not found.");
-        return;
-      }
-
-      editingResourceId = resourceId;
-
-      document.getElementById("formName").value =
-        resource.resource_name || "";
-
-      document.getElementById("formType").value =
-        resource.resource_type || "";
-
-      document.getElementById("formBuilding").value =
-        resource.building || "";
-
-      document.getElementById("formFloor").value =
-        resource.floor || "";
-
-      document.getElementById("formCapacity").value =
-        resource.capacity ?? "";
-
-      document.getElementById("formAvailability").value =
-        resource.availability_status || "Available";
-
-      document.getElementById("formHours").value =
-        resource.opening_hours || "";
-
-      document.getElementById("formLocation").value =
-        resource.location || "";
-
-      document.getElementById("formDescription").value =
-        resource.description || "";
-
-      document
-        .getElementById("resourceFormTitle")
-        .textContent =
-        "Edit Campus Resource";
-
-      document
-        .getElementById("resourceFormSubmitButton")
-        .textContent =
-        "Save Changes";
-
-      closeDetail();
-
-      document
-        .getElementById("resourceFormModal")
-        .classList.add("open");
-    }
-
-    function closeResourceForm() {
-      document
-        .getElementById("resourceFormModal")
-        .classList.remove("open");
-
-      resetResourceFormState();
-    }
-
-    async function saveResource(event) {
-      event.preventDefault();
-
-      const resourceData = {
-        resource_name:
-          document.getElementById("formName").value.trim(),
-
-        resource_type:
-          document.getElementById("formType").value,
-
-        building:
-          document.getElementById("formBuilding").value.trim(),
-
-        floor:
-          document.getElementById("formFloor").value.trim(),
-
-        capacity:
-          document.getElementById("formCapacity").value === ""
-            ? null
-            : Number(
-              document.getElementById("formCapacity").value
-            ),
-
-        availability_status:
-          document.getElementById("formAvailability").value,
-
-        opening_hours:
-          document.getElementById("formHours").value.trim(),
-
-        location:
-          document.getElementById("formLocation").value.trim(),
-
-        description:
-          document.getElementById("formDescription").value.trim()
-      };
-
-      const isEditing =
-        editingResourceId !== null;
-
-      const url =
-        isEditing
-          ? `${API_BASE_URL}/resources/${editingResourceId}`
-          : `${API_BASE_URL}/resources`;
-
-      const method =
-        isEditing
-          ? "PUT"
-          : "POST";
-
-      try {
-        console.log(
-          `${method} resource:`,
-          url,
-          resourceData
-        );
-
-        const response = await fetch(
-          url,
-          {
-            method: method,
-
-            headers: {
-              "Content-Type": "application/json"
-            },
-
-            body:
-              JSON.stringify(resourceData),
-
-            cache:
-              "no-store"
-          }
-        );
-
-        if (!response.ok) {
-          const errorText =
-            await response.text();
-
-          throw new Error(
-            `${method} failed (${response.status}): ${errorText}`
-          );
-        }
-
-        const savedResource =
-          await response.json();
-
-        console.log(
-          isEditing
-            ? "Resource updated:"
-            : "Resource created:",
-          savedResource
-        );
-
-        closeResourceForm();
-        await loadResources();
-
-      } catch (error) {
-        console.error(
-          "Failed to save resource:",
-          error
-        );
-
-        alert(
-          `Unable to save resource. ${error.message}`
-        );
-      }
-    }
-
-    // =========================================================
-    // CAMPUS AI CHAT - AI + RAG + MCP MODES
-    // =========================================================
-
-    let activeAiMode = "ai";
-
-    const aiModeInfo =
-      document.getElementById("aiModeInfo");
-
-    const aiModeButtons =
-      document.querySelectorAll("[data-ai-mode]");
-
-    function toggleChat(force) {
-      const chat =
-        document.getElementById("chat");
-
-      const open =
-        typeof force === "boolean"
-          ? force
-          : !chat.classList.contains("open");
-
-      chat.classList.toggle(
-        "open",
-        open
-      );
-
-      if (open) {
-        setTimeout(
-          () => chatInput.focus(),
-          100
-        );
-      }
-    }
-
-    function addMessage(text, type) {
-      const messages =
-        document.getElementById("messages");
-
-      const message =
-        document.createElement("div");
-
-      message.className =
-        `msg ${type}`;
-
-      if (type === "bot") {
-        const label =
-          document.createElement("div");
-
-        label.className =
-          "message-label";
-
-        label.textContent =
-          activeAiMode === "rag"
-            ? "RAG Grounded"
-            : activeAiMode === "mcp"
-              ? "MCP Tool Result"
-              : "Campus AI";
-
-        message.appendChild(label);
-      }
-
-      const content =
-        document.createElement("div");
-
-      content.textContent =
-        text;
-
-      message.appendChild(content);
-
-      messages.appendChild(message);
-
-      messages.scrollTop =
-        messages.scrollHeight;
-
-      return message;
-    }
-
-    function setAiMode(mode) {
-      if (aiRequestInProgress) {
-        return;
-      }
-
-      activeAiMode =
-        ["ai", "rag", "mcp"].includes(mode)
-          ? mode
-          : "ai";
-
-      aiModeButtons.forEach(button => {
-        button.classList.toggle(
-          "active",
-          button.dataset.aiMode === activeAiMode
-        );
-      });
-
-      if (activeAiMode === "rag") {
-        aiModeInfo.innerHTML = `
-          <strong>RAG Grounded</strong>
-          <span>
-            Answers use retrieved campus knowledge
-            with confidence and source citations.
-          </span>
-        `;
-
-        chatInput.placeholder =
-          "Ask a grounded campus resource question...";
-
-      } else if (activeAiMode === "mcp") {
-        aiModeInfo.innerHTML = `
-          <strong>MCP Tools</strong>
-          <span>
-            Query registered resource tools on the shared MCP server.
-          </span>
-        `;
-
-        chatInput.placeholder =
-          "Try: Printer, Study Room, or How many resources?";
-
-      } else {
-        aiModeInfo.innerHTML = `
-          <strong>AI Assistant</strong>
-          <span>
-            Get recommendations using live campus resource data.
-          </span>
-        `;
-
-        chatInput.placeholder =
-          "Ask about campus resources...";
-      }
-
-      chatInput.focus();
-    }
-
-    async function requestAiRecommendation(question) {
-      const response = await fetch(
-        `${API_BASE_URL}/recommend`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            question: question
-          }),
-
-          cache: "no-store"
-        }
-      );
-
-      const data =
-        await response.json()
-          .catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-          `AI request failed (${response.status})`
-        );
-      }
-
-      return data;
-    }
-
-    async function requestRagRecommendation(question) {
-      const response = await fetch(
-        `${API_BASE_URL}/rag/recommend`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            question: question
-          }),
-
-          cache: "no-store"
-        }
-      );
-
-      const data =
-        await response.json()
-          .catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-          `RAG request failed (${response.status})`
-        );
-      }
-
-      return data;
-    }
-
-    function detectMcpRequest(text) {
-      const normalised = text.trim().toLowerCase();
-
-      if (
-        normalised.includes("how many") ||
-        normalised.includes("count") ||
-        normalised.includes("number of resources") ||
-        normalised === "resources"
-      ) {
-        return {
-          tool: "resource_count"
-        };
-      }
-
-      const resourceTypes = [
-        "Study Room",
-        "Computer Lab",
-        "Library",
-        "Printer",
-        "Parking"
-      ];
-
-      const matchedType =
-        resourceTypes.find(type =>
-          normalised.includes(type.toLowerCase())
-        );
-
-      if (matchedType) {
-        return {
-          tool: "resource_by_type",
-          resourceType: matchedType
-        };
-      }
-
-      return {
-        tool: "resource_by_type",
-        resourceType: text.trim()
-      };
-    }
-
-    async function requestMcpResource(question) {
-      const request = detectMcpRequest(question);
-
-      const url =
-        request.tool === "resource_count"
-          ? `${API_BASE_URL}/api/mcp/resource-count`
-          : `${API_BASE_URL}/api/mcp/resource-by-type/${
-              encodeURIComponent(request.resourceType)
-            }`;
-
-      const response = await fetch(
-        url,
-        { cache: "no-store" }
-      );
-
-      const data =
-        await response.json()
-          .catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-          `MCP request failed (${response.status})`
-        );
-      }
-
-      return data;
-    }
-
-    function renderMcpResponse(message, data) {
-      message.innerHTML = "";
-
-      const label =
-        document.createElement("div");
-
-      label.className =
-        "message-label";
-
-      label.textContent =
-        "MCP Tool Result";
-
-      message.appendChild(label);
-
-      const result =
-        data.result || {};
-
-      const summary =
-        document.createElement("div");
-
-      if (data.tool === "resource_count") {
-        summary.textContent =
-          `Campus resources found: ${result.resource_count ?? 0}`;
-      } else {
-        summary.textContent =
-          `${result.resource_type || "Resource"}: ` +
-          `${result.resource_count ?? 0} found`;
-      }
-
-      message.appendChild(summary);
-
-      const evidence =
-        document.createElement("div");
-
-      evidence.className =
-        "rag-evidence";
-
-      const toolBadge =
-        document.createElement("span");
-
-      toolBadge.className =
-        "rag-confidence high";
-
-      toolBadge.textContent =
-        `✓ MCP · ${data.tool || "tool"}`;
-
-      evidence.appendChild(toolBadge);
-
-      const resourceList =
-        Array.isArray(result.resources)
-          ? result.resources
-          : [];
-
-      if (resourceList.length > 0) {
-        const sources =
-          document.createElement("div");
-
-        sources.className =
-          "rag-sources";
-
-        const heading =
-          document.createElement("strong");
-
-        heading.textContent =
-          "Structured result";
-
-        sources.appendChild(heading);
-
-        resourceList.forEach(resource => {
-          const item =
-            document.createElement("span");
-
-          item.className =
-            "rag-source";
-
-          item.textContent =
-            `• ${resource.resource_name}`;
-
-          sources.appendChild(item);
-        });
-
-        evidence.appendChild(sources);
-      }
-
-      message.appendChild(evidence);
-
-      const messages =
-        document.getElementById("messages");
-
-      messages.scrollTop =
-        messages.scrollHeight;
-    }
-
-    function formatCitation(citation) {
-      if (!citation) {
-        return "";
-      }
-
-      const parts =
-        citation.split("#");
-
-      const resourceName =
-        parts.length > 1
-          ? parts[1].replaceAll("-", " ")
-          : citation;
-
-      return resourceName;
-    }
-
-    function renderRagResponse(message, data) {
-      message.innerHTML = "";
-
-      const label =
-        document.createElement("div");
-
-      label.className =
-        "message-label";
-
-      label.textContent =
-        "RAG Grounded";
-
-      message.appendChild(label);
-
-      const answer =
-        document.createElement("div");
-
-      answer.textContent =
-        data.answer ||
-        "No grounded answer was returned.";
-
-      message.appendChild(answer);
-
-      const evidence =
-        document.createElement("div");
-
-      evidence.className =
-        "rag-evidence";
-
-      const confidence =
-        document.createElement("span");
-
-      const confidenceValue =
-        String(
-          data.confidence || "unknown"
-        ).toLowerCase();
-
-      confidence.className =
-        `rag-confidence ${confidenceValue}`;
-
-      confidence.textContent =
-        `✓ ${confidenceValue} confidence`;
-
-      evidence.appendChild(confidence);
-
-      const citations =
-        Array.isArray(data.citations)
-          ? data.citations
-          : [];
-
-      if (citations.length > 0) {
-        const sources =
-          document.createElement("div");
-
-        sources.className =
-          "rag-sources";
-
-        const heading =
-          document.createElement("strong");
-
-        heading.textContent =
-          "Sources";
-
-        sources.appendChild(heading);
-
-        citations.forEach(citation => {
-          const source =
-            document.createElement("span");
-
-          source.className =
-            "rag-source";
-
-          source.textContent =
-            `↗ ${formatCitation(citation)}`;
-
-          sources.appendChild(source);
-        });
-
-        evidence.appendChild(sources);
-      }
-
-      message.appendChild(evidence);
-
-      const messages =
-        document.getElementById("messages");
-
-      messages.scrollTop =
-        messages.scrollHeight;
-    }
-
-    async function sendMessage() {
-      if (aiRequestInProgress) {
-        return;
-      }
-
-      const text =
-        chatInput.value.trim();
-
-      if (!text) {
-        return;
-      }
-
-      addMessage(
-        text,
-        "user"
-      );
-
-      chatInput.value = "";
-
-      aiRequestInProgress = true;
-      chatSendButton.disabled = true;
-
-      const requestMode =
-        activeAiMode;
-
-      const loadingMessage =
-        addMessage(
-          requestMode === "rag"
-            ? "Retrieving grounded campus resource evidence..."
-            : requestMode === "mcp"
-              ? "Calling the shared MCP resource tools..."
-              : "Campus AI is checking the latest campus resources...",
-          "bot"
-        );
-
-      try {
-        if (requestMode === "rag") {
-          console.log(
-            "Sending RAG recommendation request:",
-            text
-          );
-
-          const data =
-            await requestRagRecommendation(
-              text
-            );
-
-          console.log(
-            "RAG recommendation response:",
-            data
-          );
-
-          renderRagResponse(
-            loadingMessage,
-            data
-          );
-
-        } else if (requestMode === "mcp") {
-          console.log(
-            "Sending MCP resource request:",
-            text
-          );
-
-          const data =
-            await requestMcpResource(
-              text
-            );
-
-          console.log(
-            "MCP resource response:",
-            data
-          );
-
-          renderMcpResponse(
-            loadingMessage,
-            data
-          );
-
-        } else {
-          console.log(
-            "Sending AI recommendation request:",
-            text
-          );
-
-          const data =
-            await requestAiRecommendation(
-              text
-            );
-
-          console.log(
-            "AI recommendation response:",
-            data
-          );
-
-          const content =
-            loadingMessage.querySelector(
-              "div:last-child"
-            );
-
-          content.textContent =
-            data.recommendation ||
-            "No recommendation was returned.";
-        }
-
-      } catch (error) {
-        console.error(
-          "Campus AI request failed:",
-          error
-        );
-
-        loadingMessage.innerHTML = "";
-
-        const label =
-          document.createElement("div");
-
-        label.className =
-          "message-label";
-
-        label.textContent =
-          requestMode === "rag"
-            ? "RAG Grounded"
-            : requestMode === "mcp"
-              ? "MCP Tool Result"
-              : "Campus AI";
-
-        const content =
-          document.createElement("div");
-
-        content.textContent =
-          requestMode === "rag"
-            ? "Sorry, I could not retrieve a grounded recommendation right now. Please check that the backend and RAG services are running."
-            : requestMode === "mcp"
-              ? "Sorry, I could not call the shared MCP resource tools right now. Please check that the backend and MCP server are running."
-              : "Sorry, I could not get a recommendation right now. Please check that the backend and Ollama services are running.";
-
-        loadingMessage.appendChild(label);
-        loadingMessage.appendChild(content);
-
-      } finally {
-        aiRequestInProgress = false;
-        chatSendButton.disabled = false;
-        chatInput.focus();
-      }
-    }
-
-    function askQuick(text) {
-      if (aiRequestInProgress) {
-        return;
-      }
-
-      toggleChat(true);
-
-      chatInput.value =
-        text;
-
-      sendMessage();
-    }
-
-    // ---------------------------------------------------------
-    // Event Wiring
-    // ---------------------------------------------------------
-
-    aiModeButtons.forEach(button => {
-      button.addEventListener(
-        "click",
-        () => setAiMode(button.dataset.aiMode)
-      );
-    });
-
-
-    document
-      .getElementById("addResourceButton")
-      .addEventListener(
-        "click",
-        openResourceForm
-      );
-
-    document
-      .getElementById("askAiButton")
-      .addEventListener(
-        "click",
-        () => toggleChat(true)
-      );
-
-    document
-      .getElementById("chatLauncher")
-      .addEventListener(
-        "click",
-        () => toggleChat()
-      );
-
-    document
-      .getElementById("chatCloseButton")
-      .addEventListener(
-        "click",
-        () => toggleChat(false)
-      );
-
-    chatSendButton.addEventListener(
-      "click",
-      sendMessage
-    );
-
-    chatInput.addEventListener(
-      "keydown",
-      event => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          sendMessage();
-        }
-      }
-    );
-
-    document
-      .getElementById("detailCloseButton")
-      .addEventListener(
-        "click",
-        closeDetail
-      );
-
-    document
-      .getElementById("resourceFormCloseButton")
-      .addEventListener(
-        "click",
-        closeResourceForm
-      );
-
-    document
-      .getElementById("resourceFormCancelButton")
-      .addEventListener(
-        "click",
-        closeResourceForm
-      );
-
-    resourceForm.addEventListener(
-      "submit",
-      saveResource
-    );
-
-    document
-      .querySelectorAll("[data-quick]")
-      .forEach(button => {
-        button.addEventListener(
-          "click",
-          () => askQuick(button.dataset.quick)
-        );
-      });
-
-    resourceGrid.addEventListener(
-      "click",
-      event => {
-        const card =
-          event.target.closest(
-            "[data-resource-id]"
-          );
-
-        if (!card) {
-          return;
-        }
-
-        openDetail(
-          Number(card.dataset.resourceId)
-        );
-      }
-    );
-
-    [
-      search,
-      typeFilter,
-      buildingFilter,
-      availabilityFilter
-    ]
-      .forEach(
-        element =>
-          element.addEventListener(
-            "input",
-            renderResources
-          )
-      );
-
-    // Keep useful functions globally available for browser console testing.
-    window.openResourceForm = openResourceForm;
-    window.openEditResourceForm = openEditResourceForm;
-    window.deleteResource = deleteResource;
-    window.saveResource = saveResource;
-    window.loadResources = loadResources;
-    window.matchesSearch = matchesSearch;
-    window.requestAiRecommendation = requestAiRecommendation;
-    window.requestRagRecommendation = requestRagRecommendation;
-    window.requestMcpResource = requestMcpResource;
-    window.setAiMode = setAiMode;
-    window.sendMessage = sendMessage;
-
-    loadResources();
-
-  </script>
+  <!-- Student 3 JavaScript -->
+  <script src="js/app.js"></script>
 
 </body>
 
