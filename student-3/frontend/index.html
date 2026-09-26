@@ -105,53 +105,136 @@
   </button>
 
   <!-- AI Chat -->
+    <!-- Campus AI Chat -->
   <aside class="chat" id="chat">
 
     <div class="chat-head">
-      <div>
-        <strong>Campus AI Assistant</strong><br>
-        <span>AI-powered campus resource recommendations</span>
+      <div class="chat-title-row">
+        <div class="chat-ai-icon">✦</div>
+
+        <div>
+          <strong>Campus AI Assistant</strong>
+          <span>Smart campus resource support</span>
+        </div>
       </div>
 
-      <button type="button" class="chat-close" id="chatCloseButton">
+      <button
+        type="button"
+        class="chat-close"
+        id="chatCloseButton"
+        aria-label="Close Campus AI">
         ×
       </button>
     </div>
 
+    <!-- AI Mode Selector -->
+    <div class="ai-mode-selector">
+
+      <button
+        type="button"
+        class="ai-mode active"
+        data-ai-mode="ai">
+        <span>✨</span>
+        AI Assistant
+      </button>
+
+      <button
+        type="button"
+        class="ai-mode"
+        data-ai-mode="rag">
+        <span>◈</span>
+        RAG Grounded
+      </button>
+
+      <button
+        type="button"
+        class="ai-mode"
+        data-ai-mode="mcp">
+        <span>⚙</span>
+        MCP Tools
+      </button>
+
+    </div>
+
+    <!-- Current mode information -->
+    <div class="ai-mode-info" id="aiModeInfo">
+      <strong>AI Assistant</strong>
+      <span>
+        Get recommendations using live campus resource data.
+      </span>
+    </div>
+
     <div class="messages" id="messages">
+
       <div class="msg bot">
-        Hi! Tell me what kind of campus resource you need
-        and I can recommend a suitable option.
+        <div class="message-label">Campus AI</div>
+
+        <div>
+          Hi! Tell me what kind of campus resource you need
+          and I can help you find a suitable option.
+        </div>
       </div>
+
     </div>
 
     <div class="quick">
-      <button type="button" data-quick="I need a quiet place to study.">
-        Quiet study?
-      </button>
 
-      <button type="button" data-quick="Where can I print something?">
-        Need a printer
-      </button>
+      <div class="quick-label">
+        Quick questions
+      </div>
 
-      <button type="button" data-quick="I need a study room for 6 people.">
-        Room for 6
-      </button>
+      <div class="quick-grid">
 
-      <button type="button" data-quick="I need a computer lab that is currently available.">
-        Available computer lab?
-      </button>
+        <button
+          type="button"
+          data-quick="I need a quiet place to study.">
+          📚 Quiet study
+        </button>
+
+        <button
+          type="button"
+          data-quick="Where can I print something?">
+          🖨️ Find a printer
+        </button>
+
+        <button
+          type="button"
+          data-quick="I need a study room for 6 people.">
+          👥 Room for 6
+        </button>
+
+        <button
+          type="button"
+          data-quick="I need a computer lab that is currently available.">
+          🖥️ Computer lab
+        </button>
+
+      </div>
+
     </div>
 
     <div class="chat-input">
-      <input id="chatInput" placeholder="Ask about campus resources..." />
-      <button type="button" id="chatSendButton">
-        Send
+
+      <input
+        id="chatInput"
+        placeholder="Ask about campus resources..."
+        autocomplete="off" />
+
+      <button
+        type="button"
+        id="chatSendButton"
+        aria-label="Send message">
+        ➜
       </button>
+
+    </div>
+
+    <div class="chat-footer">
+      CampusLife AI · Responses may use AI-generated content
     </div>
 
   </aside>
-
+  
   <!-- Resource Detail Modal -->
   <div class="modal-overlay" id="detailModal">
     <div class="modal">
@@ -835,8 +918,16 @@
     }
 
     // =========================================================
-    // REAL CAMPUS AI CHAT
+    // CAMPUS AI CHAT - AI + RAG + MCP MODES
     // =========================================================
+
+    let activeAiMode = "ai";
+
+    const aiModeInfo =
+      document.getElementById("aiModeInfo");
+
+    const aiModeButtons =
+      document.querySelectorAll("[data-ai-mode]");
 
     function toggleChat(force) {
       const chat =
@@ -870,8 +961,30 @@
       message.className =
         `msg ${type}`;
 
-      message.textContent =
+      if (type === "bot") {
+        const label =
+          document.createElement("div");
+
+        label.className =
+          "message-label";
+
+        label.textContent =
+          activeAiMode === "rag"
+            ? "RAG Grounded"
+            : activeAiMode === "mcp"
+              ? "MCP Tool Result"
+              : "Campus AI";
+
+        message.appendChild(label);
+      }
+
+      const content =
+        document.createElement("div");
+
+      content.textContent =
         text;
+
+      message.appendChild(content);
 
       messages.appendChild(message);
 
@@ -879,6 +992,61 @@
         messages.scrollHeight;
 
       return message;
+    }
+
+    function setAiMode(mode) {
+      if (aiRequestInProgress) {
+        return;
+      }
+
+      activeAiMode =
+        ["ai", "rag", "mcp"].includes(mode)
+          ? mode
+          : "ai";
+
+      aiModeButtons.forEach(button => {
+        button.classList.toggle(
+          "active",
+          button.dataset.aiMode === activeAiMode
+        );
+      });
+
+      if (activeAiMode === "rag") {
+        aiModeInfo.innerHTML = `
+          <strong>RAG Grounded</strong>
+          <span>
+            Answers use retrieved campus knowledge
+            with confidence and source citations.
+          </span>
+        `;
+
+        chatInput.placeholder =
+          "Ask a grounded campus resource question...";
+
+      } else if (activeAiMode === "mcp") {
+        aiModeInfo.innerHTML = `
+          <strong>MCP Tools</strong>
+          <span>
+            Query registered resource tools on the shared MCP server.
+          </span>
+        `;
+
+        chatInput.placeholder =
+          "Try: Printer, Study Room, or How many resources?";
+
+      } else {
+        aiModeInfo.innerHTML = `
+          <strong>AI Assistant</strong>
+          <span>
+            Get recommendations using live campus resource data.
+          </span>
+        `;
+
+        chatInput.placeholder =
+          "Ask about campus resources...";
+      }
+
+      chatInput.focus();
     }
 
     async function requestAiRecommendation(question) {
@@ -913,6 +1081,306 @@
       return data;
     }
 
+    async function requestRagRecommendation(question) {
+      const response = await fetch(
+        `${API_BASE_URL}/rag/recommend`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            question: question
+          }),
+
+          cache: "no-store"
+        }
+      );
+
+      const data =
+        await response.json()
+          .catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+          `RAG request failed (${response.status})`
+        );
+      }
+
+      return data;
+    }
+
+    function detectMcpRequest(text) {
+      const normalised = text.trim().toLowerCase();
+
+      if (
+        normalised.includes("how many") ||
+        normalised.includes("count") ||
+        normalised.includes("number of resources") ||
+        normalised === "resources"
+      ) {
+        return {
+          tool: "resource_count"
+        };
+      }
+
+      const resourceTypes = [
+        "Study Room",
+        "Computer Lab",
+        "Library",
+        "Printer",
+        "Parking"
+      ];
+
+      const matchedType =
+        resourceTypes.find(type =>
+          normalised.includes(type.toLowerCase())
+        );
+
+      if (matchedType) {
+        return {
+          tool: "resource_by_type",
+          resourceType: matchedType
+        };
+      }
+
+      return {
+        tool: "resource_by_type",
+        resourceType: text.trim()
+      };
+    }
+
+    async function requestMcpResource(question) {
+      const request = detectMcpRequest(question);
+
+      const url =
+        request.tool === "resource_count"
+          ? `${API_BASE_URL}/api/mcp/resource-count`
+          : `${API_BASE_URL}/api/mcp/resource-by-type/${
+              encodeURIComponent(request.resourceType)
+            }`;
+
+      const response = await fetch(
+        url,
+        { cache: "no-store" }
+      );
+
+      const data =
+        await response.json()
+          .catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+          `MCP request failed (${response.status})`
+        );
+      }
+
+      return data;
+    }
+
+    function renderMcpResponse(message, data) {
+      message.innerHTML = "";
+
+      const label =
+        document.createElement("div");
+
+      label.className =
+        "message-label";
+
+      label.textContent =
+        "MCP Tool Result";
+
+      message.appendChild(label);
+
+      const result =
+        data.result || {};
+
+      const summary =
+        document.createElement("div");
+
+      if (data.tool === "resource_count") {
+        summary.textContent =
+          `Campus resources found: ${result.resource_count ?? 0}`;
+      } else {
+        summary.textContent =
+          `${result.resource_type || "Resource"}: ` +
+          `${result.resource_count ?? 0} found`;
+      }
+
+      message.appendChild(summary);
+
+      const evidence =
+        document.createElement("div");
+
+      evidence.className =
+        "rag-evidence";
+
+      const toolBadge =
+        document.createElement("span");
+
+      toolBadge.className =
+        "rag-confidence high";
+
+      toolBadge.textContent =
+        `✓ MCP · ${data.tool || "tool"}`;
+
+      evidence.appendChild(toolBadge);
+
+      const resourceList =
+        Array.isArray(result.resources)
+          ? result.resources
+          : [];
+
+      if (resourceList.length > 0) {
+        const sources =
+          document.createElement("div");
+
+        sources.className =
+          "rag-sources";
+
+        const heading =
+          document.createElement("strong");
+
+        heading.textContent =
+          "Structured result";
+
+        sources.appendChild(heading);
+
+        resourceList.forEach(resource => {
+          const item =
+            document.createElement("span");
+
+          item.className =
+            "rag-source";
+
+          item.textContent =
+            `• ${resource.resource_name}`;
+
+          sources.appendChild(item);
+        });
+
+        evidence.appendChild(sources);
+      }
+
+      message.appendChild(evidence);
+
+      const messages =
+        document.getElementById("messages");
+
+      messages.scrollTop =
+        messages.scrollHeight;
+    }
+
+    function formatCitation(citation) {
+      if (!citation) {
+        return "";
+      }
+
+      const parts =
+        citation.split("#");
+
+      const resourceName =
+        parts.length > 1
+          ? parts[1].replaceAll("-", " ")
+          : citation;
+
+      return resourceName;
+    }
+
+    function renderRagResponse(message, data) {
+      message.innerHTML = "";
+
+      const label =
+        document.createElement("div");
+
+      label.className =
+        "message-label";
+
+      label.textContent =
+        "RAG Grounded";
+
+      message.appendChild(label);
+
+      const answer =
+        document.createElement("div");
+
+      answer.textContent =
+        data.answer ||
+        "No grounded answer was returned.";
+
+      message.appendChild(answer);
+
+      const evidence =
+        document.createElement("div");
+
+      evidence.className =
+        "rag-evidence";
+
+      const confidence =
+        document.createElement("span");
+
+      const confidenceValue =
+        String(
+          data.confidence || "unknown"
+        ).toLowerCase();
+
+      confidence.className =
+        `rag-confidence ${confidenceValue}`;
+
+      confidence.textContent =
+        `✓ ${confidenceValue} confidence`;
+
+      evidence.appendChild(confidence);
+
+      const citations =
+        Array.isArray(data.citations)
+          ? data.citations
+          : [];
+
+      if (citations.length > 0) {
+        const sources =
+          document.createElement("div");
+
+        sources.className =
+          "rag-sources";
+
+        const heading =
+          document.createElement("strong");
+
+        heading.textContent =
+          "Sources";
+
+        sources.appendChild(heading);
+
+        citations.forEach(citation => {
+          const source =
+            document.createElement("span");
+
+          source.className =
+            "rag-source";
+
+          source.textContent =
+            `↗ ${formatCitation(citation)}`;
+
+          sources.appendChild(source);
+        });
+
+        evidence.appendChild(sources);
+      }
+
+      message.appendChild(evidence);
+
+      const messages =
+        document.getElementById("messages");
+
+      messages.scrollTop =
+        messages.scrollHeight;
+    }
+
     async function sendMessage() {
       if (aiRequestInProgress) {
         return;
@@ -935,31 +1403,87 @@
       aiRequestInProgress = true;
       chatSendButton.disabled = true;
 
+      const requestMode =
+        activeAiMode;
+
       const loadingMessage =
         addMessage(
-          "Campus AI is checking the latest campus resources...",
+          requestMode === "rag"
+            ? "Retrieving grounded campus resource evidence..."
+            : requestMode === "mcp"
+              ? "Calling the shared MCP resource tools..."
+              : "Campus AI is checking the latest campus resources...",
           "bot"
         );
 
       try {
-        console.log(
-          "Sending AI recommendation request:",
-          text
-        );
-
-        const data =
-          await requestAiRecommendation(
+        if (requestMode === "rag") {
+          console.log(
+            "Sending RAG recommendation request:",
             text
           );
 
-        console.log(
-          "AI recommendation response:",
-          data
-        );
+          const data =
+            await requestRagRecommendation(
+              text
+            );
 
-        loadingMessage.textContent =
-          data.recommendation ||
-          "No recommendation was returned.";
+          console.log(
+            "RAG recommendation response:",
+            data
+          );
+
+          renderRagResponse(
+            loadingMessage,
+            data
+          );
+
+        } else if (requestMode === "mcp") {
+          console.log(
+            "Sending MCP resource request:",
+            text
+          );
+
+          const data =
+            await requestMcpResource(
+              text
+            );
+
+          console.log(
+            "MCP resource response:",
+            data
+          );
+
+          renderMcpResponse(
+            loadingMessage,
+            data
+          );
+
+        } else {
+          console.log(
+            "Sending AI recommendation request:",
+            text
+          );
+
+          const data =
+            await requestAiRecommendation(
+              text
+            );
+
+          console.log(
+            "AI recommendation response:",
+            data
+          );
+
+          const content =
+            loadingMessage.querySelector(
+              "div:last-child"
+            );
+
+          content.textContent =
+            data.recommendation ||
+            "No recommendation was returned.";
+        }
 
       } catch (error) {
         console.error(
@@ -967,9 +1491,33 @@
           error
         );
 
-        loadingMessage.textContent =
-          "Sorry, I could not get a recommendation right now. " +
-          "Please check that the backend and Ollama services are running.";
+        loadingMessage.innerHTML = "";
+
+        const label =
+          document.createElement("div");
+
+        label.className =
+          "message-label";
+
+        label.textContent =
+          requestMode === "rag"
+            ? "RAG Grounded"
+            : requestMode === "mcp"
+              ? "MCP Tool Result"
+              : "Campus AI";
+
+        const content =
+          document.createElement("div");
+
+        content.textContent =
+          requestMode === "rag"
+            ? "Sorry, I could not retrieve a grounded recommendation right now. Please check that the backend and RAG services are running."
+            : requestMode === "mcp"
+              ? "Sorry, I could not call the shared MCP resource tools right now. Please check that the backend and MCP server are running."
+              : "Sorry, I could not get a recommendation right now. Please check that the backend and Ollama services are running.";
+
+        loadingMessage.appendChild(label);
+        loadingMessage.appendChild(content);
 
       } finally {
         aiRequestInProgress = false;
@@ -994,6 +1542,14 @@
     // ---------------------------------------------------------
     // Event Wiring
     // ---------------------------------------------------------
+
+    aiModeButtons.forEach(button => {
+      button.addEventListener(
+        "click",
+        () => setAiMode(button.dataset.aiMode)
+      );
+    });
+
 
     document
       .getElementById("addResourceButton")
@@ -1113,6 +1669,9 @@
     window.loadResources = loadResources;
     window.matchesSearch = matchesSearch;
     window.requestAiRecommendation = requestAiRecommendation;
+    window.requestRagRecommendation = requestRagRecommendation;
+    window.requestMcpResource = requestMcpResource;
+    window.setAiMode = setAiMode;
     window.sendMessage = sendMessage;
 
     loadResources();
