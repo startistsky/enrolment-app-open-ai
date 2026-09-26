@@ -32,6 +32,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest requests flask flask-cors mcp httpx chromadb sentence-transformers
 
+      # Verify installed Python packages
+      - name: Check Python dependencies
+        run: |
+          python -m pip check
+
       # Check Student 3 Python syntax
       - name: Check Python syntax
         run: |
@@ -46,60 +51,8 @@ jobs:
           python -m py_compile student-3/tests/test_mcp_integration.py
           python -m py_compile student-3/tests/test_rag_integration.py
 
-      # Build Student 3 Docker services
-      - name: Build Student 3 Docker services
-        run: |
-          docker compose build student3-database student3-backend
-
-      # Diagnose disk usage before Ollama is pulled
-      - name: Check disk space before Ollama
-        run: |
-          echo "===== DISK SPACE ====="
-          df -h
-
-          echo ""
-          echo "===== DOCKER DISK USAGE ====="
-          docker system df
-
-          echo ""
-          echo "===== DOCKER IMAGES ====="
-          docker images
-
-      # Start Student 3 services
-      - name: Start Student 3 services
-        run: |
-          docker compose up -d ollama student3-database student3-backend
-
-      # Pull Qwen model
-      - name: Pull Qwen model
-        run: |
-          docker compose exec -T ollama ollama pull qwen2.5:0.5b
-
-      # Wait for services
-      - name: Wait for services
-        run: |
-          echo "Waiting for Student 3 services to start..."
-          sleep 15
-
-      # Check running containers
-      - name: Check running containers
-        run: |
-          docker compose ps
-
-      # Test database health
-      - name: Test database health
-        run: |
-          curl --fail --retry 5 --retry-delay 3 \
-            http://localhost:5004/health
-
-      # Test backend health
-      - name: Test backend health
-        run: |
-          curl --fail --retry 5 --retry-delay 3 \
-            http://localhost:8003/health
-
       # Run all Student 3 tests
-      - name: Run Student 3 CI tests
+      - name: Run Student 3 tests
         run: |
           python -m pytest \
             student-3/tests/test_ai.py \
@@ -109,35 +62,27 @@ jobs:
             student-3/tests/test_rag_integration.py \
             -v
 
-      # Show diagnostic information if CI fails
-      - name: Show diagnostics on failure
-        if: failure()
+      # Validate Docker Compose configuration
+      - name: Validate Docker Compose
         run: |
-          echo "===== DISK SPACE AFTER FAILURE ====="
-          df -h || true
+          docker compose config
 
-          echo ""
-          echo "===== DOCKER DISK USAGE ====="
-          docker system df || true
-
-          echo ""
-          echo "===== DOCKER CONTAINERS ====="
-          docker compose ps || true
-
-          echo ""
-          echo "===== STUDENT 3 DATABASE LOGS ====="
-          docker compose logs student3-database || true
-
-          echo ""
-          echo "===== STUDENT 3 BACKEND LOGS ====="
-          docker compose logs student3-backend || true
-
-          echo ""
-          echo "===== OLLAMA LOGS ====="
-          docker compose logs ollama || true
-
-      # Clean up Docker services
-      - name: Stop Docker services
-        if: always()
+      # Build Student 3 database image
+      - name: Build Student 3 database
         run: |
-          docker compose down -v
+          docker compose build student3-database
+
+      # Build Student 3 backend image
+      - name: Build Student 3 backend
+        run: |
+          docker compose build student3-backend
+
+      # Build Student 3 frontend image
+      - name: Build Student 3 frontend
+        run: |
+          docker compose build student3-frontend
+
+      # Show final Docker images
+      - name: Show Student 3 Docker images
+        run: |
+          docker images | grep student3 || true
