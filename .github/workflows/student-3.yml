@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - student_3
+      - feature/student3-r1-resource
 
   pull_request:
     branches:
@@ -26,14 +27,21 @@ jobs:
       - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest requests
+          pip install pytest requests flask flask-cors mcp httpx
+          pip install -r rag-server/requirements.txt
 
       - name: Check Python syntax
         run: |
           python -m py_compile student-3/backend/app.py
+          python -m py_compile student-3/backend/rag_client.py
+          python -m py_compile student-3/backend/mcp_client.py
+          python -m py_compile student-3/backend/agentic_loop.py
           python -m py_compile student-3/database/database_api.py
           python -m py_compile student-3/database/init_db.py
-          python -m py_compile student-3/backend/agentic_loop.py
+          python -m py_compile mcp-server/tools/student3_resource_tools.py
+          python -m py_compile rag-server/retrievers/student3_resource_retriever.py
+          python -m py_compile student-3/tests/test_mcp_integration.py
+          python -m py_compile student-3/tests/test_rag_integration.py
 
       - name: Build Student 3 Docker services
         run: |

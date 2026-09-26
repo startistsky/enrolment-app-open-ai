@@ -79,20 +79,24 @@ def plan():
     )
 
     print(
-        "6. Validate RAG semantic retrieval with citations "
+        "6. Validate MCP resource tools and structured results."
+    )
+
+    print(
+        "7. Validate RAG semantic retrieval with citations "
         "and confidence."
     )
 
     print(
-        "7. Review the recommendation behaviour."
+        "8. Review the MCP and RAG integration behaviour."
     )
 
     print(
-        "8. Request human approval before accepting the result."
+        "9. Request human approval before accepting the result."
     )
 
     print(
-        "9. Retest the implementation using automated tests."
+        "10. Retest the implementation using automated tests."
     )
 
 
@@ -143,6 +147,29 @@ def request_rag_recommendation(question):
             "question": question
         },
         timeout=30
+    )
+
+    response.raise_for_status()
+
+    return response.json()
+
+def request_mcp_resource_count():
+    """Request the resource count through the shared MCP integration."""
+    response = requests.get(
+        f"{BACKEND_URL}/api/mcp/resource-count",
+        timeout=10
+    )
+
+    response.raise_for_status()
+
+    return response.json()
+
+
+def request_mcp_resource_by_type(resource_type):
+    """Request resources by type through the shared MCP integration."""
+    response = requests.get(
+        f"{BACKEND_URL}/api/mcp/resource-by-type/{resource_type}",
+        timeout=10
     )
 
     response.raise_for_status()
@@ -273,7 +300,68 @@ def act():
         "recommendation_results"
     ] = recommendation_results
 
+        # =====================================================
+    # R1 MCP TOOL VALIDATION
+    # =====================================================
 
+    print_subsection(
+        "ACT TEST: R1 MCP Resource Tools"
+    )
+
+    print(
+        "Calling MCP tool: resource_count"
+    )
+
+    mcp_count_data = request_mcp_resource_count()
+
+    mcp_count_result = mcp_count_data.get(
+        "result",
+        {}
+    )
+
+    print(
+        "MCP resource_count result: "
+        f"{mcp_count_result.get('resource_count')}"
+    )
+
+
+    print(
+        "\nCalling MCP tool: "
+        "resource_by_type(resource_type='Printer')"
+    )
+
+    mcp_type_data = request_mcp_resource_by_type(
+        "Printer"
+    )
+
+    mcp_type_result = mcp_type_data.get(
+        "result",
+        {}
+    )
+
+    print(
+        "MCP Printer count: "
+        f"{mcp_type_result.get('resource_count')}"
+    )
+
+    for resource in mcp_type_result.get(
+        "resources",
+        []
+    ):
+        print(
+            "- "
+            f"{resource.get('resource_name')} "
+            f"[{resource.get('resource_type')}]"
+        )
+
+    results["mcp_count_result"] = (
+        mcp_count_data
+    )
+
+    results["mcp_type_result"] = (
+        mcp_type_data
+    )
+    
     print_subsection(
         "ACT TEST: R1 RAG Grounded Recommendation"
     )
@@ -469,6 +557,79 @@ def observe(results):
             )
         })
 
+        # =====================================================
+    # R1 MCP EVIDENCE VALIDATION
+    # =====================================================
+
+    mcp_count_data = results.get(
+        "mcp_count_result",
+        {}
+    )
+
+    mcp_count_result = mcp_count_data.get(
+        "result",
+        {}
+    )
+
+    mcp_resource_count = mcp_count_result.get(
+        "resource_count"
+    )
+
+    mcp_count_ok = (
+        mcp_count_data.get("mode") == "mcp"
+        and mcp_count_data.get("tool") == "resource_count"
+        and mcp_resource_count == resource_count
+    )
+
+    observations.append({
+        "check": "MCP resource_count tool",
+        "passed": mcp_count_ok,
+        "details": (
+            f"MCP returned {mcp_resource_count} resources; "
+            f"database returned {resource_count}."
+        )
+    })
+
+
+    mcp_type_data = results.get(
+        "mcp_type_result",
+        {}
+    )
+
+    mcp_type_result = mcp_type_data.get(
+        "result",
+        {}
+    )
+
+    mcp_printers = mcp_type_result.get(
+        "resources",
+        []
+    )
+
+    mcp_printer_count = mcp_type_result.get(
+        "resource_count"
+    )
+
+    mcp_type_ok = (
+        mcp_type_data.get("mode") == "mcp"
+        and mcp_type_data.get("tool") == "resource_by_type"
+        and mcp_type_result.get("resource_type") == "Printer"
+        and mcp_printer_count == 2
+        and len(mcp_printers) == 2
+        and all(
+            resource.get("resource_type") == "Printer"
+            for resource in mcp_printers
+        )
+    )
+
+    observations.append({
+        "check": "MCP resource_by_type tool",
+        "passed": mcp_type_ok,
+        "details": (
+            f"MCP returned {mcp_printer_count} Printer resources "
+            "with structured resource data."
+        )
+    })
 
     # =====================================================
     # R1 RAG EVIDENCE VALIDATION
@@ -591,11 +752,13 @@ def review(observations):
 
         review_message = (
             "The current implementation demonstrates "
-            "grounded recommendation behaviour. "
-            "Candidate filtering is consistent with the "
-            "current resource data, and RAG retrieval "
-            "returns relevant semantic matches with "
-            "citations and confidence evidence."
+            "integrated MCP and grounded RAG behaviour. "
+            "The shared MCP resource tools return valid "
+            "structured results through the Student 3 backend. "
+            "Candidate filtering remains consistent with the "
+            "current resource data, and RAG retrieval returns "
+            "relevant semantic matches with citations and "
+            "confidence evidence."
         )
 
         recommendation = (
@@ -882,6 +1045,14 @@ def final_result(
 
         print(
             "- OBSERVE completed"
+        )
+
+        print(
+            "- MCP resource_count tool validated"
+        )
+
+        print(
+            "- MCP resource_by_type tool validated"
         )
 
         print(
