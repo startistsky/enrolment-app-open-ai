@@ -79,15 +79,20 @@ def plan():
     )
 
     print(
-        "6. Review the recommendation behaviour."
+        "6. Validate RAG semantic retrieval with citations "
+        "and confidence."
     )
 
     print(
-        "7. Request human approval before accepting the result."
+        "7. Review the recommendation behaviour."
     )
 
     print(
-        "8. Retest the implementation using automated tests."
+        "8. Request human approval before accepting the result."
+    )
+
+    print(
+        "9. Retest the implementation using automated tests."
     )
 
 
@@ -130,6 +135,19 @@ def request_recommendation(question):
 
     return response.json()
 
+def request_rag_recommendation(question):
+    """Request grounded resource context from the R1 RAG endpoint."""
+    response = requests.post(
+        f"{BACKEND_URL}/rag/recommend",
+        json={
+            "question": question
+        },
+        timeout=30
+    )
+
+    response.raise_for_status()
+
+    return response.json()
 
 def act():
     print_section("ACT")
@@ -254,6 +272,42 @@ def act():
     results[
         "recommendation_results"
     ] = recommendation_results
+
+
+    print_subsection(
+        "ACT TEST: R1 RAG Grounded Recommendation"
+    )
+
+    rag_question = (
+        "I need somewhere quiet to study."
+    )
+
+    print(
+        f"Question: {rag_question}"
+    )
+
+    rag_data = request_rag_recommendation(
+        rag_question
+    )
+
+    rag_matches = rag_data.get(
+        "matches",
+        []
+    )
+
+    print(
+        f"RAG match count: {len(rag_matches)}"
+    )
+
+    for match in rag_matches:
+        print(
+            "- "
+            f"{match.get('resource_name')} "
+            f"| confidence={match.get('confidence')} "
+            f"| citation={match.get('citation')}"
+        )
+
+    results["rag_result"] = rag_data
 
 
     return results
@@ -416,6 +470,74 @@ def observe(results):
         })
 
 
+    # =====================================================
+    # R1 RAG EVIDENCE VALIDATION
+    # =====================================================
+
+    rag_result = results.get("rag_result", {})
+    rag_matches = rag_result.get("matches", [])
+
+    has_rag_matches = len(rag_matches) > 0
+
+    observations.append({
+        "check": "RAG semantic retrieval",
+        "passed": has_rag_matches,
+        "details": f"{len(rag_matches)} semantic matches returned."
+    })
+
+    citations_ok = (
+        has_rag_matches
+        and all(
+            bool(str(match.get("citation", "")).strip())
+            for match in rag_matches
+        )
+    )
+
+    observations.append({
+        "check": "RAG citations",
+        "passed": citations_ok,
+        "details": (
+            "All retrieved resources include citations."
+            if citations_ok
+            else "One or more RAG citations are missing."
+        )
+    })
+
+    confidence_ok = (
+        has_rag_matches
+        and all(
+            match.get("confidence") in {"high", "medium", "low"}
+            for match in rag_matches
+        )
+    )
+
+    observations.append({
+        "check": "RAG confidence",
+        "passed": confidence_ok,
+        "details": (
+            "All retrieved resources include a valid confidence level."
+            if confidence_ok
+            else "One or more confidence values are invalid."
+        )
+    })
+
+    top_resource_ok = (
+        has_rag_matches
+        and rag_matches[0].get("resource_name")
+        == "Building 1 Quiet Study Area"
+    )
+
+    observations.append({
+        "check": "RAG relevance",
+        "passed": top_resource_ok,
+        "details": (
+            "Quiet-study query ranked Building 1 Quiet Study Area first."
+            if top_resource_ok
+            else "Expected quiet-study resource was not ranked first."
+        )
+    })
+
+
     for observation in observations:
 
         status = (
@@ -470,10 +592,10 @@ def review(observations):
         review_message = (
             "The current implementation demonstrates "
             "grounded recommendation behaviour. "
-            "Candidate filtering prevents unrelated "
-            "resource types from being sent to the LLM, "
-            "and the tested recommendation responses "
-            "are consistent with the resource data."
+            "Candidate filtering is consistent with the "
+            "current resource data, and RAG retrieval "
+            "returns relevant semantic matches with "
+            "citations and confidence evidence."
         )
 
         recommendation = (
@@ -502,7 +624,8 @@ def review(observations):
         )
 
         recommendation = (
-            "Review candidate filtering and recommendation "
+            "Review candidate filtering, RAG retrieval, "
+            "citations, confidence evidence and recommendation "
             "logic before accepting the implementation."
         )
 
@@ -759,6 +882,14 @@ def final_result(
 
         print(
             "- OBSERVE completed"
+        )
+
+        print(
+            "- RAG semantic retrieval validated"
+        )
+
+        print(
+            "- RAG citations and confidence validated"
         )
 
         print(
