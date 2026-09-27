@@ -16,50 +16,35 @@ from .agent_tools import (
 def choose_action(message):
     """
     PLAN
-    Decide which tool should be used based on the user's question.
+
+    Decide which tool should be used based on the
+    user's question.
+
+    Available actions:
+
+        job_information
+        requirements
+        analyse_job
+        career_rag
     """
 
     text = message.lower()
 
-    # General career guidance -> RAG
-    if any(
-        phrase in text
-        for phrase in [
-            "how should i",
-            "how can i",
-            "advice",
-            "guidance",
-            "prepare",
-            "preparation",
-            "interview",
-            "interviewing",
-            "career",
-            "tips",
-            "next step",
-            "what should i do",
-            "how do i apply",
-            "application process",
-            "resume advice",
-            "cv advice",
-        ]
-    ):
-        return "career_rag"
-
-    # Job-specific ATS / resume analysis
+    # Job / resume / ATS analysis
     if any(
         word in text
         for word in [
             "ats",
-            "ats keywords",
             "keyword",
-            "keywords",
-            "resume match",
-            "cv match",
-            "match my resume",
-            "analyse my resume",
+            "resume",
+            "cv",
+            "match",
+            "matching"
         ]
     ):
+
         return "analyse_job"
+
 
     # Job requirements
     if any(
@@ -72,12 +57,40 @@ def choose_action(message):
             "skill",
             "skills",
             "experience",
-            "degree",
+            "degree"
         ]
     ):
+
         return "requirements"
 
+
+    # Career guidance requiring external
+    # career knowledge
+    if any(
+        word in text
+        for word in [
+            "how should",
+            "how can",
+            "advice",
+            "guidance",
+            "prepare",
+            "preparation",
+            "interview",
+            "interviewing",
+            "apply",
+            "application",
+            "career",
+            "what should i",
+            "tips"
+        ]
+    ):
+
+        return "career_rag"
+
+
+    # Default
     return "job_information"
+
 
 # Observe
 def observe_result(
@@ -87,8 +100,10 @@ def observe_result(
 ):
     """
     OBSERVE
-    Evaluate whether the result returned by the 
-    selected tool is sufficient to answer the user's question.
+
+    Evaluate whether the result returned by the
+    selected tool is sufficient to answer the
+    user's question.
     """
 
     if tool_result is None:
@@ -181,7 +196,9 @@ def adapt_action(
 ):
     """
     ADAPT
-    Decide what the agent should do after observing the previous tool result.
+
+    Decide what the agent should do after
+    observing the previous tool result.
     """
 
     if not observation["needs_adaptation"]:
@@ -220,6 +237,7 @@ def execute_action(
 ):
     """
     ACT
+
     Execute the tool selected during planning.
     """
 
@@ -262,6 +280,7 @@ def generate_response(
 ):
     """
     Generate the final response using:
+
         selected job
         user question
         tool result
@@ -298,8 +317,10 @@ def create_pending_approval(
 ):
     """
     HUMAN REVIEW
+
     Return the AI response together with
     evidence about the agentic process.
+
     RAG source and confidence information
     are also returned to the frontend.
     """

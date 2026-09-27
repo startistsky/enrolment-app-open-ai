@@ -65,9 +65,13 @@ def call_mcp_tool(
 
 
 # RAG tools
-def retrieve_rag_tool(query, top_k=4):
+def retrieve_rag_tool(
+    query,
+    top_k=4
+):
     """
-    Retrieve grounded career knowledge from the shared RAG server.
+    Retrieve grounded career knowledge
+    from the shared RAG server.
     """
 
     response = requests.post(
@@ -82,7 +86,6 @@ def retrieve_rag_tool(query, top_k=4):
     response.raise_for_status()
 
     return response.json()
-
 
 # job analysis 
 def analyse_job_tool(job):
