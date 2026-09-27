@@ -4,10 +4,6 @@ from retrievers.student1_course_retriever import (
     retrieve_course_context,
 )
 
-from retrievers.student3_resource_retriever import (
-    retrieve_resource_context,
-)
-
 from retrievers.student4_event_retriever import (
     retrieve_event_context,
 )
@@ -100,6 +96,9 @@ def retrieve_resource():
         }), 400
 
     try:
+
+        # Student 3's optional embedding stack must not block course retrieval.
+        from retrievers.student3_resource_retriever import retrieve_resource_context
 
         result = retrieve_resource_context(
             body.get("query"),
