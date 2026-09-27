@@ -1,30 +1,23 @@
 import os
 import requests
-from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("Student5 Career Tools")
-
-# Configuration
 BACKEND_URL = os.getenv(
     "CAREER_BACKEND_URL",
     "http://127.0.0.1:8005"
 )
-
 
 RAG_URL = os.getenv(
     "RAG_URL",
     "http://127.0.0.1:9101"
 )
 
-# Backend helper
-def get_backend_job(
-    job_id
-):
+def get_backend_job(job_id: int):
+    """
+    Retrieve a job from the Flask backend.
+    """
 
     response = requests.get(
-
         f"{BACKEND_URL}/api/jobs/{job_id}",
-
         timeout=10
     )
 
@@ -32,21 +25,15 @@ def get_backend_job(
 
     return response.json()
 
-# MCP - Selected Job
-@mcp.tool()
-def get_selected_job(
-    job_id: int
-):
+# MCP: Selected Job
+def get_selected_job(job_id: int):
     """
-    Retrieve the selected job from
-    the career database.
+    Retrieve the selected job from the career backend.
     """
 
     try:
 
-        job = get_backend_job(
-            job_id
-        )
+        job = get_backend_job(job_id)
 
         return {
             "success": True,
@@ -60,11 +47,9 @@ def get_selected_job(
             "error": str(error)
         }
 
-# MCP - Job Requirements
-@mcp.tool()
-def get_job_requirements(
-    job_id: int
-):
+
+# MCP: Job Requirements
+def get_job_requirements(job_id: int):
     """
     Retrieve requirements and description
     for the selected job.
@@ -72,9 +57,7 @@ def get_job_requirements(
 
     try:
 
-        job = get_backend_job(
-            job_id
-        )
+        job = get_backend_job(job_id)
 
         return {
             "success": True,
@@ -111,25 +94,17 @@ def get_job_requirements(
             "error": str(error)
         }
 
-# MCP - Job Analysis
-@mcp.tool()
-def analyse_selected_job(
-    job_id: int
-):
+# MCP: Job Analysis
+def analyse_selected_job(job_id: int):
     """
-    Analyse the selected job using
-    the existing career AI analysis endpoint.
+    Analyse the selected job through
+    the Flask backend AI analysis endpoint.
     """
 
     try:
 
         response = requests.post(
-
-            (
-                f"{BACKEND_URL}/api/jobs/"
-                f"{job_id}/analyse"
-            ),
-
+            f"{BACKEND_URL}/api/jobs/{job_id}/analyse",
             timeout=120
         )
 
@@ -144,15 +119,18 @@ def analyse_selected_job(
             "error": str(error)
         }
 
-# MCP - RAG Knowledge
-@mcp.tool()
+# MCP: RAG Knowledge
 def retrieve_career_knowledge(
     query: str,
     top_k: int = 4
 ):
     """
-    Retrieve grounded career guidance from
-    the shared local RAG server.
+    Retrieve grounded career knowledge
+    from the RAG server.
+
+    MCP exposes this function as a tool.
+    The MCP server calls this function,
+    which then calls the RAG server.
     """
 
     query = str(
@@ -165,6 +143,21 @@ def retrieve_career_knowledge(
             "success": False,
             "error": "Query is required."
         }
+
+    try:
+
+        top_k = int(top_k)
+
+        if top_k < 1:
+            top_k = 1
+
+        if top_k > 10:
+            top_k = 10
+
+    except (TypeError, ValueError):
+
+        top_k = 4
+
 
     try:
 
@@ -186,7 +179,22 @@ def retrieve_career_knowledge(
 
         return {
             "success": True,
-            **result
+            "confidence": result.get(
+                "confidence",
+                "low"
+            ),
+            "context": result.get(
+                "context",
+                ""
+            ),
+            "results": result.get(
+                "results",
+                []
+            ),
+            "sources": result.get(
+                "sources",
+                []
+            )
         }
 
     except requests.RequestException as error:
@@ -195,10 +203,3 @@ def retrieve_career_knowledge(
             "success": False,
             "error": str(error)
         }
-
-# MCP Server
-if __name__ == "__main__":
-
-    mcp.run(
-        transport="stdio"
-    )

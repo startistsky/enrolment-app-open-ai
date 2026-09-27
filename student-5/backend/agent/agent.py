@@ -30,7 +30,7 @@ def choose_action(message):
 
     text = message.lower()
 
-    # Job / resume / ATS analysis
+    # Job / ATS analysis
     if any(
         word in text
         for word in [
@@ -44,7 +44,6 @@ def choose_action(message):
     ):
 
         return "analyse_job"
-
 
     # Job requirements
     if any(

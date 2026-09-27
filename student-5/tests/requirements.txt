@@ -11,6 +11,5 @@ SQLAlchemy>=2.0,<3
 
 chromadb>=0.5,<2
 sentence-transformers>=2.6,<6
-mcp<2
 
 python-dotenv==1.1.1
