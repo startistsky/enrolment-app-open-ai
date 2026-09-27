@@ -43,7 +43,6 @@ ollama-data/
 
 # IDE files
 .idea/
-student-5/backend/database/career.db-shm
-student-5/backend/database/career.db-wal
-student-5/database/career.db-wal
-student-5/database/career.db-shm
+student-5/backend/database/
+rag-server/chroma/
+
