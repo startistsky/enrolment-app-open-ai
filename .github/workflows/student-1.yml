@@ -59,7 +59,7 @@ jobs:
         run: node --check student-1/frontend/public/js/courses.js
 
       - name: Run Student 1 tests
-        run: python -m pytest student-1/tests -q
+        run: python -m pytest student-1/tests rag-server/tests/test_student1_semantic.py -q
 
       - name: Build Student 1 database image
         run: docker build -t student1-database-ci student-1/database
