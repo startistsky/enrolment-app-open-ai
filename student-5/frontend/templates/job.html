@@ -44,15 +44,30 @@
       <!-- Actions -->
 
       <section class="actions">
-        <button type="button" onclick="saveJob()" class="secondary-button">
+        <button
+          type="button"
+          id="save-job-button"
+          onclick="saveJob()"
+          class="secondary-button"
+        >
           Save Job
         </button>
 
-        <button type="button" onclick="applyJob()" class="primary-button">
+        <button
+          type="button"
+          id="apply-job-button"
+          onclick="applyJob()"
+          class="primary-button"
+        >
           Apply
         </button>
 
-        <button type="button" onclick="analyseJob()" class="primary-button">
+        <button
+          type="button"
+          id="analyse-job-button"
+          onclick="analyseJob()"
+          class="primary-button"
+        >
           Analyse with AI
         </button>
       </section>
@@ -71,7 +86,7 @@
         </div>
       </section>
 
-      <!-- AI Chat -->
+      <!-- Career AI Chat -->
 
       <section class="chat">
         <span class="section-label"> CAREER ASSISTANT </span>
@@ -84,11 +99,16 @@
           <input
             type="text"
             id="chat-input"
-            placeholder="Ask about this job..."
+            placeholder="Get guidance for this job..."
             autocomplete="off"
           />
 
-          <button type="button" onclick="sendMessage()" class="primary-button">
+          <button
+            type="button"
+            id="send-chat-button"
+            onclick="sendMessage()"
+            class="primary-button"
+          >
             Send
           </button>
         </div>

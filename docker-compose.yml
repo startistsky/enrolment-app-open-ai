@@ -199,6 +199,8 @@ services:
     environment:
       AI_SERVICE_URL: http://ollama:11434/api/generate
       DATABASE_PATH: /data/career.db
+      MCP_SERVER_URL: http://host.docker.internal:9001/mcp
+      RAG_SERVER_URL: http://host.docker.internal:9101
     volumes:
       - student5-career-data:/data
     depends_on:

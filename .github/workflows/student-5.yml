@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r student-5/backend/requirements.txt
 
-       # run automated test
+        # run automated test
       - name: Run Student 5 tests
         run: |
           cd student-5
@@ -95,10 +95,22 @@ jobs:
         run: |
           curl --fail --retry 5 --retry-delay 5 http://localhost:8005/health
 
-      - name: Test database
+      - name: Test Jobs endpoints
         run: |
           curl --fail --retry 10 --retry-delay 3 \
             http://localhost:8005/api/jobs
+
+      # check MCP
+      - name: Check shared MCP server
+        run: |
+          curl --fail --retry 10 --retry-delay 3 \
+            http://localhost:9001/mcp
+
+      # check RAG
+      - name: Check shared RAG server
+        run: |
+          curl --fail --retry 10 --retry-delay 3 \
+            http://localhost:9101
 
       # show failure logs
       - name: Show Docker logs on failure
