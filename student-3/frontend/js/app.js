@@ -473,6 +473,17 @@ function toggleChat(open) {
     show
   );
 
+  // Hide launcher while chat is open
+  const launcher =
+    $("chatLauncher");
+
+  if (launcher) {
+    launcher.classList.toggle(
+      "hidden",
+      show
+    );
+  }
+
   if (show) {
     setTimeout(
       () => input?.focus(),
@@ -570,6 +581,30 @@ function setMode(mode) {
   }
 }
 
+// Detect questions for other campus modules
+function detectOutOfDomain(text) {
+  const query = text.toLowerCase();
+
+  const eventWords = [
+    "event",
+    "events",
+    "workshop",
+    "workshops",
+    "seminar",
+    "seminars"
+  ];
+
+  if (
+    eventWords.some(
+      word => query.includes(word)
+    )
+  ) {
+    return "events";
+  }
+
+  return null;
+}
+
 // Detect MCP request
 function detectMcp(text) {
   const query =
@@ -589,6 +624,11 @@ function detectMcp(text) {
     "Study Room": [
       "study room",
       "study space",
+      "book a room",
+      "book room",
+      "room booking",
+      "rooms",
+      "room",
       "quiet",
       "study"
     ],
@@ -642,11 +682,16 @@ async function askMcp(question) {
     detectMcp(question);
 
   if (!request) {
-    return (
-      "I can query Study Rooms, " +
-      "Computer Labs, Printers, " +
-      "Libraries and Parking."
-    );
+    return {
+      answer:
+        "I can query Study Rooms, " +
+        "Computer Labs, Printers, " +
+        "Libraries and Parking.",
+      data: {
+        request: null,
+        result: null
+      }
+    };
   }
 
   const url =
@@ -675,21 +720,33 @@ async function askMcp(question) {
     data.result || {};
 
   if (request.tool === "count") {
-    return (
-      `There are ` +
-      `${result.resource_count ?? 0} ` +
-      `campus resources.`
-    );
+    return {
+      answer:
+        `There are ` +
+        `${result.resource_count ?? 0} ` +
+        `campus resources.`,
+      data: {
+        request,
+        response: data,
+        result
+      }
+    };
   }
 
   const found =
     result.resources || [];
 
   if (!found.length) {
-    return (
-      `No ${request.type.toLowerCase()} ` +
-      `resources were found.`
-    );
+    return {
+      answer:
+        `No ${request.type.toLowerCase()} ` +
+        `resources were found.`,
+      data: {
+        request,
+        response: data,
+        result
+      }
+    };
   }
 
   const names =
@@ -700,12 +757,18 @@ async function askMcp(question) {
       )
       .join("\n");
 
-  return (
-    `I found ${found.length} ` +
-    `${request.type.toLowerCase()} ` +
-    `resource${found.length === 1 ? "" : "s"}:\n` +
-    names
-  );
+  return {
+    answer:
+      `I found ${found.length} ` +
+      `${request.type.toLowerCase()} ` +
+      `resource${found.length === 1 ? "" : "s"}:\n` +
+      names,
+    data: {
+      request,
+      response: data,
+      result
+    }
+  };
 }
 
 // Ask normal AI
@@ -740,11 +803,13 @@ async function askAi(question) {
     );
   }
 
-  return (
-    data.recommendation ||
-    data.answer ||
-    "No recommendation was returned."
-  );
+  return {
+    answer:
+      data.recommendation ||
+      data.answer ||
+      "No recommendation was returned.",
+    data
+  };
 }
 
 // Ask RAG
@@ -779,12 +844,507 @@ async function askRag(question) {
     );
   }
 
-  return (
-    data.answer ||
-    data.recommendation ||
-    "No grounded answer was returned."
+  return {
+    answer:
+      data.answer ||
+      data.recommendation ||
+      "No grounded answer was returned.",
+    data
+  };
+}
+
+// Display AI, RAG or MCP response
+function renderModeResponse(messageBody, mode, response) {
+  if (!messageBody) return;
+
+  const data = response.data || {};
+
+  // AI stays conversational and simple
+  if (mode === "ai") {
+    messageBody.textContent =
+      response.answer;
+
+    return;
+  }
+
+  // RAG shows grounded knowledge evidence
+  if (mode === "rag") {
+    messageBody.textContent =
+      response.answer;
+
+    const citations =
+      data.citations || [];
+
+    const matches =
+      data.matches || [];
+
+    const source =
+      citations.length
+        ? citations[0]
+        : "No citation returned";
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "response-meta rag-meta";
+
+    const heading =
+      document.createElement("div");
+
+    heading.className =
+      "response-meta-heading";
+
+    heading.textContent =
+      "◈  GROUNDING EVIDENCE";
+
+    card.appendChild(heading);
+
+    const sourceBlock =
+      document.createElement("div");
+
+    sourceBlock.className =
+      "response-meta-block";
+
+    const sourceLabel =
+      document.createElement("span");
+
+    sourceLabel.className =
+      "response-meta-label";
+
+    sourceLabel.textContent =
+      "SOURCE";
+
+    const sourceValue =
+      document.createElement("span");
+
+    sourceValue.className =
+      "response-meta-value";
+
+    sourceValue.textContent =
+      source;
+
+    sourceBlock.appendChild(sourceLabel);
+    sourceBlock.appendChild(sourceValue);
+    card.appendChild(sourceBlock);
+
+    const stats =
+      document.createElement("div");
+
+    stats.className =
+      "response-meta-grid";
+
+    const confidence =
+      document.createElement("div");
+
+    const confidenceLabel =
+      document.createElement("span");
+
+    confidenceLabel.className =
+      "response-meta-label";
+
+    confidenceLabel.textContent =
+      "CONFIDENCE";
+
+    const confidenceValue =
+      document.createElement("span");
+
+    confidenceValue.className =
+      "response-meta-value";
+
+    confidenceValue.textContent =
+      (data.confidence || "unknown")
+        .toUpperCase();
+
+    confidence.appendChild(
+      confidenceLabel
+    );
+
+    confidence.appendChild(
+      confidenceValue
+    );
+
+    const retrieved =
+      document.createElement("div");
+
+    const retrievedLabel =
+      document.createElement("span");
+
+    retrievedLabel.className =
+      "response-meta-label";
+
+    retrievedLabel.textContent =
+      "RETRIEVED";
+
+    const retrievedValue =
+      document.createElement("span");
+
+    retrievedValue.className =
+      "response-meta-value";
+
+    retrievedValue.textContent =
+      `${matches.length} matches`;
+
+    retrieved.appendChild(
+      retrievedLabel
+    );
+
+    retrieved.appendChild(
+      retrievedValue
+    );
+
+    stats.appendChild(confidence);
+    stats.appendChild(retrieved);
+
+    card.appendChild(stats);
+    messageBody.appendChild(card);
+
+    return;
+  }
+
+  // MCP shows structured tool execution
+  if (mode === "mcp") {
+    messageBody.textContent =
+      response.answer;
+
+    const request =
+      data.request;
+
+    const result =
+      data.result || {};
+
+    let toolName =
+      "No tool matched";
+
+    let input =
+      "N/A";
+
+    let returned =
+      "No structured result";
+
+    if (request?.tool === "count") {
+      toolName =
+        "resource_count";
+
+      input =
+        "All campus resources";
+
+      returned =
+        `${result.resource_count ?? 0} resources`;
+    }
+
+    if (request?.tool === "type") {
+      toolName =
+        "resource_by_type";
+
+      input =
+        request.type || "N/A";
+
+      returned =
+        `${(result.resources || []).length} resources`;
+    }
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "response-meta mcp-meta";
+
+    const heading =
+      document.createElement("div");
+
+    heading.className =
+      "response-meta-heading";
+
+    heading.textContent =
+      "⚙  TOOL EXECUTION";
+
+    card.appendChild(heading);
+
+    const toolBlock =
+      document.createElement("div");
+
+    toolBlock.className =
+      "response-meta-block";
+
+    const toolLabel =
+      document.createElement("span");
+
+    toolLabel.className =
+      "response-meta-label";
+
+    toolLabel.textContent =
+      "TOOL";
+
+    const toolValue =
+      document.createElement("span");
+
+    toolValue.className =
+      "response-meta-value";
+
+    toolValue.textContent =
+      toolName;
+
+    toolBlock.appendChild(toolLabel);
+    toolBlock.appendChild(toolValue);
+    card.appendChild(toolBlock);
+
+    const stats =
+      document.createElement("div");
+
+    stats.className =
+      "response-meta-grid";
+
+    const inputBlock =
+      document.createElement("div");
+
+    const inputLabel =
+      document.createElement("span");
+
+    inputLabel.className =
+      "response-meta-label";
+
+    inputLabel.textContent =
+      "INPUT";
+
+    const inputValue =
+      document.createElement("span");
+
+    inputValue.className =
+      "response-meta-value";
+
+    inputValue.textContent =
+      input;
+
+    inputBlock.appendChild(inputLabel);
+    inputBlock.appendChild(inputValue);
+
+    const returnedBlock =
+      document.createElement("div");
+
+    const returnedLabel =
+      document.createElement("span");
+
+    returnedLabel.className =
+      "response-meta-label";
+
+    returnedLabel.textContent =
+      "RETURNED";
+
+    const returnedValue =
+      document.createElement("span");
+
+    returnedValue.className =
+      "response-meta-value";
+
+    returnedValue.textContent =
+      returned;
+
+    returnedBlock.appendChild(
+      returnedLabel
+    );
+
+    returnedBlock.appendChild(
+      returnedValue
+    );
+
+    stats.appendChild(inputBlock);
+    stats.appendChild(returnedBlock);
+
+    card.appendChild(stats);
+    messageBody.appendChild(card);
+  }
+}
+
+
+// Add Agent Trace link below an AI response
+function addTraceLink(messageBody) {
+  if (!messageBody) return;
+
+  const message =
+    messageBody.closest(".msg");
+
+  if (!message) return;
+
+  const traceLink =
+    document.createElement("a");
+
+  traceLink.className =
+    "agent-trace-link";
+
+  traceLink.href =
+    "agent-trace.html";
+
+  traceLink.target =
+    "_blank";
+
+  traceLink.rel =
+    "noopener";
+
+  traceLink.textContent =
+    "View Agent Trace →";
+
+  message.appendChild(traceLink);
+
+  messages.scrollTop =
+    messages.scrollHeight;
+}
+
+// Save runtime agent trace
+function saveAgentTrace(question, mode, response) {
+  const data = response.data || {};
+
+  const trace = {
+    timestamp: new Date().toISOString(),
+    question,
+    mode,
+    details: [],
+    plan: "",
+    act: "",
+    observe: "",
+    adapt: "",
+    result: response.answer
+  };
+
+  if (mode === "mcp") {
+    const request = data.request;
+    const result = data.result || {};
+    const found = result.resources || [];
+
+    let tool = "No tool matched";
+    let input = "N/A";
+    let returned = "No structured result";
+
+    if (request?.tool === "count") {
+      tool = "resource_count";
+      input = "All campus resources";
+      returned = `${result.resource_count ?? 0} resources`;
+    }
+
+    if (request?.tool === "type") {
+      tool = "resource_by_type";
+      input = request.type || "N/A";
+      returned = `${found.length} resources`;
+    }
+
+    trace.details = [
+      {
+        label: "TOOL",
+        value: tool
+      },
+      {
+        label: "INPUT",
+        value: input
+      },
+      {
+        label: "RETURNED",
+        value: returned
+      }
+    ];
+
+    trace.plan =
+      request
+        ? `Use MCP structured resource tool for ${request.type || "resource count"}.`
+        : "Check whether the question maps to an available MCP resource tool.";
+
+    trace.act =
+      request?.tool === "count"
+        ? "Called MCP tool: resource_count."
+        : request?.type
+        ? `Called MCP tool: resource_by_type with type ${request.type}.`
+        : "No matching MCP tool was called.";
+
+    trace.observe =
+      request?.tool === "count"
+        ? `MCP returned ${result.resource_count ?? 0} campus resources.`
+        : request?.type
+        ? `MCP returned ${found.length} ${request.type} resource result(s).`
+        : "No structured MCP result was available.";
+
+    trace.adapt =
+      "Converted the structured MCP result into a user-readable response.";
+  }
+
+  if (mode === "rag") {
+    const matches = data.matches || [];
+    const citations = data.citations || [];
+
+    trace.details = [
+      {
+        label: "CONFIDENCE",
+        value: (data.confidence || "unknown").toUpperCase()
+      },
+      {
+        label: "RETRIEVED",
+        value: `${matches.length} matches`
+      },
+      {
+        label: "CITATIONS",
+        value: String(citations.length)
+      }
+    ];
+
+    trace.plan =
+      "Retrieve relevant campus resource knowledge before generating the answer.";
+
+    trace.act =
+      `Called the RAG recommendation service and retrieved ${matches.length} match(es).`;
+
+    trace.observe =
+      `Grounding confidence: ${data.confidence || "unknown"}. ` +
+      `Citations returned: ${citations.length}.`;
+
+    trace.adapt =
+      "Generated the final answer using the retrieved grounded context.";
+  }
+
+  if (mode === "ai") {
+    const candidates =
+      data.candidate_resources || [];
+
+    const requested =
+      data.requested_resource_types || [];
+
+    trace.details = [
+      {
+        label: "MODEL",
+        value: data.model || "Configured model"
+      },
+      {
+        label: "CANDIDATES",
+        value: String(
+          data.candidate_count ?? candidates.length
+        )
+      },
+      {
+        label: "RESOURCE TYPE",
+        value: requested.length
+          ? requested.join(", ")
+          : "General"
+      }
+    ];
+
+    trace.plan =
+      requested.length
+        ? `Identify relevant ${requested.join(", ")} campus resources.`
+        : "Identify relevant campus resources for the user's request.";
+
+    trace.act =
+      `Called the AI recommendation service using ${data.model || "the configured model"}.`;
+
+    trace.observe =
+      `${data.candidate_count ?? candidates.length} candidate resource(s) were selected.`;
+
+    trace.adapt =
+      "Generated a concise recommendation from the selected campus resource context.";
+  }
+
+  localStorage.setItem(
+    "student3AgentTrace",
+    JSON.stringify(trace)
   );
 }
+
 
 // Send chat message
 async function sendMessage() {
@@ -800,6 +1360,27 @@ async function sendMessage() {
 
   if (!question) return;
 
+  const outOfDomain =
+    detectOutOfDomain(question);
+
+  if (outOfDomain === "events") {
+    addMessage(
+      question,
+      "user"
+    );
+
+    input.value = "";
+
+    addMessage(
+      "This question belongs to Campus Events. " +
+      "Please use the Events section for event information.",
+      "bot",
+      "Campus AI"
+    );
+
+    return;
+  }
+
   addMessage(
     question,
     "user"
@@ -813,11 +1394,14 @@ async function sendMessage() {
     $("chatSendButton").disabled = true;
   }
 
+  // Keep the selected mode for this request
+  const requestMode = aiMode;
+
   const label =
-    aiMode === "mcp"
+    requestMode === "mcp"
       ? "MCP Tool Result"
-      : aiMode === "rag"
-      ? "RAG Answer"
+      : requestMode === "rag"
+      ? "RAG Grounded Answer"
       : "Campus AI";
 
   const loading =
@@ -828,24 +1412,35 @@ async function sendMessage() {
     );
 
   try {
-    let answer = "";
+    let response;
 
-    if (aiMode === "mcp") {
-      answer =
+    if (requestMode === "mcp") {
+      response =
         await askMcp(question);
 
-    } else if (aiMode === "rag") {
-      answer =
+    } else if (requestMode === "rag") {
+      response =
         await askRag(question);
 
     } else {
-      answer =
+      response =
         await askAi(question);
     }
 
+    saveAgentTrace(
+      question,
+      requestMode,
+      response
+    );
+
     if (loading) {
-      loading.textContent =
-        answer;
+      renderModeResponse(
+        loading,
+        requestMode,
+        response
+      );
+
+      addTraceLink(loading);
     }
 
   } catch (error) {

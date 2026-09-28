@@ -1022,3 +1022,145 @@ h1 {
     font-size: 38px;
   }
 }
+
+/* AI response evidence */
+.response-meta {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.response-meta-heading {
+  margin-bottom: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.response-meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+
+.response-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.response-meta-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.response-meta-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+}
+
+.response-meta-value {
+  font-size: 11px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* RAG evidence */
+.rag-meta {
+  background: linear-gradient(
+    135deg,
+    rgba(96, 92, 190, 0.10),
+    rgba(122, 139, 210, 0.05)
+  );
+  border: 1px solid rgba(96, 92, 190, 0.22);
+  border-left: 4px solid #6661bd;
+}
+
+.rag-meta .response-meta-heading {
+  color: #5652a5;
+}
+
+/* MCP tool result */
+.mcp-meta {
+  background: linear-gradient(
+    135deg,
+    rgba(66, 126, 84, 0.11),
+    rgba(90, 150, 108, 0.05)
+  );
+  border: 1px solid rgba(66, 126, 84, 0.22);
+  border-left: 4px solid #4f8a60;
+}
+
+.mcp-meta .response-meta-heading {
+  color: #416f4e;
+}
+
+/* Agent trace link */
+.agent-trace-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 12px;
+  padding: 7px 11px;
+  border: 1px solid rgba(65, 102, 74, 0.18);
+  border-radius: 8px;
+  background: rgba(65, 102, 74, 0.06);
+  color: #41664a;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.agent-trace-link:hover {
+  background: rgba(65, 102, 74, 0.12);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+/* Chat readability */
+.message-text {
+  line-height: 1.6;
+}
+
+/* Desktop AI chat */
+@media (min-width: 761px) {
+  .chat {
+    top: 100px;
+    right: 24px;
+    bottom: 24px;
+    width: 560px;
+    height: auto;
+    max-height: calc(100vh - 124px);
+  }
+
+  .messages {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .msg {
+    max-width: 88%;
+    font-size: 13px;
+  }
+
+  .msg.bot {
+    max-width: 92%;
+  }
+}
+
+/* Chat launcher */
+.chat-launcher.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(0.85);
+}
