@@ -14,21 +14,31 @@ from .agent_tools import (
 
 # Plan 
 def choose_action(message):
+    
     """
-    PLAN
-
-    Decide which tool should be used based on the
-    user's question.
-
-    Available actions:
-
-        job_information
-        requirements
-        analyse_job
-        career_rag
+    Decide which tools to use
     """
-
     text = message.lower()
+
+    # Career / interview guidance
+    if any(
+        word in text
+        for word in [
+            "how should",
+            "how can",
+            "advice",
+            "guidance",
+            "preparation",
+            "interview",
+            "interviewing",
+            "apply",
+            "application",
+            "career",
+            "what should i",
+            "tips"
+        ]
+    ):
+        return "career_rag"
 
     # Job / ATS analysis
     if any(
@@ -42,7 +52,6 @@ def choose_action(message):
             "matching"
         ]
     ):
-
         return "analyse_job"
 
     # Job requirements
@@ -59,133 +68,72 @@ def choose_action(message):
             "degree"
         ]
     ):
-
         return "requirements"
 
-
-    # Career guidance requiring external
-    # career knowledge
-    if any(
-        word in text
-        for word in [
-            "how should",
-            "how can",
-            "advice",
-            "guidance",
-            "prepare",
-            "preparation",
-            "interview",
-            "interviewing",
-            "apply",
-            "application",
-            "career",
-            "what should i",
-            "tips"
-        ]
-    ):
-
-        return "career_rag"
-
-
-    # Default
     return "job_information"
 
 
 # Observe
-def observe_result(
-    action,
-    tool_result,
-    message
-):
+def observe_result(action, tool_result, message):
     """
-    OBSERVE
-
-    Evaluate whether the result returned by the
-    selected tool is sufficient to answer the
-    user's question.
+    Evaluate the result returned by the selected tool.
     """
 
     if tool_result is None:
-
         return {
             "success": False,
             "needs_adaptation": True,
             "reason": "Tool returned no result."
         }
 
-
-    # Special handling for RAG
     if action == "career_rag":
 
-        if not isinstance(
-            tool_result,
-            dict
-        ):
-
+        if not isinstance(tool_result, dict):
             return {
                 "success": False,
                 "needs_adaptation": True,
                 "reason": "Invalid RAG response."
             }
 
-
-        results = tool_result.get(
-            "results",
-            []
-        )
-
-
-        if not results:
-
+        if tool_result.get("success") is False:
             return {
                 "success": False,
                 "needs_adaptation": True,
-                "reason": (
-                    "RAG returned no relevant "
-                    "career knowledge."
+                "reason": tool_result.get(
+                    "error",
+                    "RAG request failed."
                 )
             }
 
+        results = tool_result.get("results", [])
+
+        if not results:
+            return {
+                "success": False,
+                "needs_adaptation": True,
+                "reason": "RAG returned no relevant career knowledge."
+            }
 
         return {
             "success": True,
             "needs_adaptation": False,
-            "reason": (
-                "Relevant career knowledge "
-                "was retrieved."
-            ),
-
+            "reason": "Relevant career knowledge was retrieved.",
             "rag": {
-                "sources": tool_result.get(
-                    "sources",
-                    []
-                ),
-
-                "confidence": tool_result.get(
-                    "confidence",
-                    "low"
-                )
+                "sources": tool_result.get("sources", []),
+                "confidence": tool_result.get("confidence", "low")
             }
         }
 
-
-    # Normal tool evaluation
     evaluation = evaluate_agent_result(
         message,
         tool_result
     )
 
-
     return {
         "success": evaluation["adequate"],
-
-        "needs_adaptation": (
-            not evaluation["adequate"]
-        ),
-
+        "needs_adaptation": not evaluation["adequate"],
         "reason": evaluation["reason"]
     }
-
 
 # Adapt
 def adapt_action(
@@ -516,19 +464,14 @@ def run_career_agent(
 
         # second act/observe
         if adapted_action != action:
-
             action = adapted_action
 
-
-            print(
-                "---ADAPTATION---"
-            )
+            print("---ADAPTATION---")
 
             print(
                 f"Changing action to: "
                 f"{action}"
             )
-
 
             tool_result = execute_action(
                 action,
@@ -537,9 +480,7 @@ def run_career_agent(
             )
 
 
-            print(
-                "---SECOND ACT---"
-            )
+            print("---SECOND ACT---")
 
             print(
                 f"Tool result: "
@@ -553,10 +494,7 @@ def run_career_agent(
                 message
             )
 
-
-            print(
-                "---SECOND OBSERVE---"
-            )
+            print("---SECOND OBSERVE---")
 
             print(
                 f"Observation after adaptation: "

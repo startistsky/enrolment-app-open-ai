@@ -173,35 +173,81 @@ def index_knowledge():
 
 # Retrieve
 def retrieve(query, top_k=4):
-    """
-    Retrieve the most relevant career knowledge.
-    """
 
-    query = str(query).strip()
+    query = str(
+        query or ""
+    ).strip()
 
     if not query:
         return []
 
+    try:
+
+        top_k = int(top_k)
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        top_k = 4
+
+    top_k = max(
+        1,
+        min(top_k, 10)
+    )
+
+    collection_count = _collection.count()
+
+    if collection_count == 0:
+
+        print(
+            "CAREER RAG: Chroma collection is empty."
+        )
+
+        return []
+
+    top_k = min(
+        top_k,
+        collection_count
+    )
+
     result = _collection.query(
         query_texts=[query],
-        n_results=top_k
+        n_results=top_k,
+        include=[
+            "documents",
+            "metadatas",
+            "distances"
+        ]
     )
 
     documents = (
-        result.get("documents", [[]])[0]
+        result.get(
+            "documents",
+            [[]]
+        )[0]
     )
 
     metadatas = (
-        result.get("metadatas", [[]])[0]
+        result.get(
+            "metadatas",
+            [[]]
+        )[0]
     )
 
     distances = (
-        result.get("distances", [[]])[0]
+        result.get(
+            "distances",
+            [[]]
+        )[0]
     )
 
     retrieved = []
 
-    for index, document in enumerate(documents):
+    for index, document in enumerate(
+        documents
+    ):
 
         metadata = (
             metadatas[index]
@@ -232,6 +278,7 @@ def retrieve(query, top_k=4):
         })
 
     return retrieved
+ 
 
 # RAG context
 def retrieve_context(query, top_k=4):

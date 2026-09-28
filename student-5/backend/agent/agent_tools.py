@@ -209,53 +209,25 @@ def get_job_requirements_tool(job):
         }
 
 # RAG through MCP
-def get_career_rag_tool(
-    message,
-    job
-):
+def get_career_rag_tool(message, job):
     """
-    Retrieve career knowledge through MCP.
-    Backend -> MCP -> career_retrieve_knowledge -> RAG server
+    Retrieve general career guidance through MCP.
+    The selected job is used later by the response generator
+    for job-specific facts.
     """
 
-    job_context = f"""
-Selected job:
+    query = str(message or "").strip()
 
-Title:
-{job.get("title", "")}
-
-Company:
-{job.get("company", "")}
-
-Location:
-{job.get("location", "")}
-
-Industry:
-{job.get("industry", "")}
-
-Job type:
-{job.get("job_type", "")}
-
-Description:
-{job.get("description", "")}
-
-Requirements:
-{job.get("requirements", "")}
-
-User question:
-{message}
-"""
     try:
         return call_mcp_tool(
             "career_retrieve_knowledge",
             {
-                "query": job_context,
+                "query": query,
                 "top_k": 4
             }
         )
 
     except Exception as error:
-
         print(
             "MCP RAG ERROR:",
             repr(error)
