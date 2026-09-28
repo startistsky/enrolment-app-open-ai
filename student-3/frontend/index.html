@@ -12,11 +12,8 @@
 
 <body>
 
-  <!-- =========================
-       Top Navigation
-  ========================== -->
+  <!-- Top Navigation -->
   <header class="topbar">
-
     <div class="brand">
       <div class="brand-mark"></div>
       CampusLife
@@ -35,22 +32,15 @@
       <button class="icon-btn" aria-label="profile">👤</button>
       <button class="icon-btn" aria-label="search">⌕</button>
     </div>
-
   </header>
-
 
   <main>
 
-    <!-- =========================
-         Hero
-    ========================== -->
+    <!-- Hero -->
     <section class="hero">
-
       <div class="hero-row">
-
         <div>
           <h1>Campus Resources</h1>
-
           <p>
             Find study spaces, libraries, computer labs,
             printers and other campus facilities.
@@ -58,7 +48,6 @@
         </div>
 
         <div class="hero-actions">
-
           <button
             type="button"
             class="secondary-btn"
@@ -72,19 +61,12 @@
             id="askAiButton">
             ✨ Ask Campus AI
           </button>
-
         </div>
-
       </div>
-
     </section>
 
-
-    <!-- =========================
-         Search and Filters
-    ========================== -->
+    <!-- Search and Filters -->
     <section class="controls">
-
       <input
         id="search"
         class="control"
@@ -105,48 +87,27 @@
         <option value="Unavailable">Unavailable</option>
         <option value="Closed">Closed</option>
       </select>
-
     </section>
 
-
-    <!-- =========================
-         Resource List
-    ========================== -->
+    <!-- Resource List -->
     <section class="section">
-
       <div class="section-head">
-
         <h2>All Resources</h2>
-
-        <div
-          class="result-count"
-          id="resultCount">
-        </div>
-
+        <div class="result-count" id="resultCount"></div>
       </div>
 
-      <div
-        class="grid"
-        id="resourceGrid">
-      </div>
-
+      <div class="grid" id="resourceGrid"></div>
     </section>
 
   </main>
 
-
-  <!-- =========================
-       Footer
-  ========================== -->
+  <!-- Footer -->
   <footer class="footer">
     CampusLife Resources · ASD 2026 Student Project ·
     Campus Resource Management
   </footer>
 
-
-  <!-- =========================
-       Floating AI Button
-  ========================== -->
+  <!-- Floating AI Button -->
   <button
     type="button"
     class="chat-launcher"
@@ -155,28 +116,21 @@
     💬
   </button>
 
+  <!-- Chat Background -->
+  <div class="chat-backdrop" id="chatBackdrop"></div>
 
-  <!-- =========================
-       Campus AI Chat
-  ========================== -->
-  <aside
-    class="chat"
-    id="chat">
+  <!-- Campus AI Chat -->
+  <aside class="chat" id="chat">
 
-    <!-- Header -->
+    <!-- Chat Header -->
     <div class="chat-head">
-
       <div class="chat-title-row">
-
-        <div class="chat-ai-icon">
-          ✦
-        </div>
+        <div class="chat-ai-icon">✦</div>
 
         <div>
           <strong>Campus AI Assistant</strong>
           <span>Campus resource support</span>
         </div>
-
       </div>
 
       <button
@@ -186,13 +140,10 @@
         aria-label="Close Campus AI">
         ×
       </button>
-
     </div>
-
 
     <!-- AI Mode Selector -->
     <div class="ai-mode-selector">
-
       <button
         type="button"
         class="ai-mode active"
@@ -216,47 +167,24 @@
         <span>⚙</span>
         MCP
       </button>
-
     </div>
 
-
-    <!-- Current Mode -->
-    <div
-      class="ai-mode-info"
-      id="aiModeInfo">
-
+    <!-- Current AI Mode -->
+    <div class="ai-mode-info" id="aiModeInfo">
       <strong>AI Assistant</strong>
-
-      <span>
-        Live campus resource help.
-      </span>
-
+      <span>Live campus resource help.</span>
     </div>
 
-
-    <!-- Messages -->
-    <div
-      class="messages"
-      id="messages">
-
+    <!-- Chat Messages -->
+    <div class="messages" id="messages">
       <div class="msg bot">
-
-        <div class="message-label">
-          Campus AI
-        </div>
-
-        <div>
-          Hi! Tell me what campus resource you need.
-        </div>
-
+        <div class="message-label">Campus AI</div>
+        <div>Hi! What campus resource are you looking for?</div>
       </div>
-
     </div>
-
 
     <!-- Quick Questions -->
     <div class="quick">
-
       <div class="quick-grid">
 
         <button
@@ -284,13 +212,10 @@
         </button>
 
       </div>
-
     </div>
 
-
-    <!-- Input -->
+    <!-- Chat Input -->
     <div class="chat-input">
-
       <input
         id="chatInput"
         placeholder="Ask about campus resources..."
@@ -302,23 +227,16 @@
         aria-label="Send message">
         ➜
       </button>
-
     </div>
 
     <div class="chat-footer">
-      CampusLife AI · AI-generated content
+      CampusLife AI · Check important details before relying on AI answers
     </div>
 
   </aside>
 
-
-  <!-- =========================
-       Resource Detail Modal
-  ========================== -->
-  <div
-    class="modal-overlay"
-    id="detailModal">
-
+  <!-- Resource Detail Modal -->
+  <div class="modal-overlay" id="detailModal">
     <div class="modal">
 
       <button
@@ -329,19 +247,11 @@
       </button>
 
       <div id="detailContent"></div>
-
     </div>
-
   </div>
 
-
-  <!-- =========================
-       Add / Edit Resource Modal
-  ========================== -->
-  <div
-    class="modal-overlay"
-    id="resourceFormModal">
-
+  <!-- Add and Edit Resource Modal -->
+  <div class="modal-overlay" id="resourceFormModal">
     <div class="modal form-modal">
 
       <button
@@ -359,103 +269,71 @@
 
         <label>
           Resource Name
-          <input
-            id="formName"
-            required />
+          <input id="formName" required />
         </label>
-
 
         <label>
           Resource Type
 
-          <select
-            id="formType"
-            required>
-
-            <option value="">
-              Select type
-            </option>
-
+          <select id="formType" required>
+            <option value="">Select type</option>
             <option>Library</option>
             <option>Study Room</option>
             <option>Computer Lab</option>
             <option>Printer</option>
             <option>Parking</option>
-
           </select>
         </label>
 
-
         <label>
           Building
-
-          <input
-            id="formBuilding"
-            required />
+          <input id="formBuilding" required />
         </label>
-
 
         <label>
           Floor
-
           <input id="formFloor" />
         </label>
 
-
         <label>
           Capacity
-
           <input
             id="formCapacity"
             type="number"
             min="0" />
         </label>
 
-
         <label>
           Availability
 
-          <select
-            id="formAvailability"
-            required>
-
+          <select id="formAvailability" required>
             <option>Available</option>
             <option>Busy</option>
             <option>Unavailable</option>
             <option>Closed</option>
-
           </select>
         </label>
 
-
         <label>
           Opening Hours
-
           <input
             id="formHours"
             placeholder="8:00 AM - 10:00 PM" />
         </label>
 
-
         <label>
           Location
-
           <input id="formLocation" />
         </label>
 
-
         <label class="full-width">
           Description
-
           <textarea
             id="formDescription"
-            rows="4">
-          </textarea>
+            rows="4"></textarea>
         </label>
 
-
         <div class="form-actions">
-
           <button
             type="button"
             class="cancel-btn"
@@ -469,19 +347,14 @@
             id="resourceFormSubmitButton">
             Add Resource
           </button>
-
         </div>
 
       </form>
-
     </div>
-
   </div>
-
 
   <!-- Student 3 JavaScript -->
   <script src="js/app.js"></script>
 
 </body>
-
 </html>
