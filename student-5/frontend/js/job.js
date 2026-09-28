@@ -7,191 +7,73 @@
 // - Career Agent chat
 // - MCP/RAG backend responses
 // - Organisation knowledge TXT sources
-// - RAG confidence
+// - RAG source tags
 // - Human approval workflow
 
-// SELECTED JOB
 const params = new URLSearchParams(window.location.search);
 const jobId = params.get("id");
 
 let currentJob = null;
 let analysing = false;
 
-// AI MARKDOWN
+
+// Formatter
 function formatAIResponse(value) {
   if (value === null || value === undefined || value === "") {
     return "<p>No response received.</p>";
   }
 
   const text = String(value).trim();
-  const lines = text.split(/\r?\n/);
 
-  let html = "";
-  let inList = false;
-  let listType = null;
+  // Escape HTML first for safety.
+  let safeText = escapeHtml(text);
 
-  function closeList() {
-    if (!inList) {
-      return;
-    }
+  // Basic markdown formatting.
+  //
+  // Bold:
+  // **text**
+  //
+  safeText = safeText.replace(
+    /\*\*(.*?)\*\*/g,
+    "<strong>$1</strong>"
+  );
 
-    html += listType === "ol" ? "</ol>" : "</ul>";
+  // Inline code:
+  //
+  // `text`
+  //
+  safeText = safeText.replace(
+    /`([^`]+)`/g,
+    "<code>$1</code>"
+  );
 
-    inList = false;
-    listType = null;
-  }
+  // Preserve the AI response's original line breaks.
+  //
+  // Do not create <ol> or <ul> here because the AI may already
+  // have generated its own numbering.
+  safeText = safeText.replace(
+    /\r?\n/g,
+    "<br>"
+  );
 
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-
-    // Empty line
-    if (!line) {
-      closeList();
-      continue;
-    }
-
-    // --------------------------------------------------------
-    // H3 markdown: ### Heading
-    // --------------------------------------------------------
-
-    if (line.startsWith("### ")) {
-      closeList();
-
-      html += `
-        <h4>
-          ${escapeHtml(line.substring(4))}
-        </h4>
-      `;
-
-      continue;
-    }
-
-    // --------------------------------------------------------
-    // H2 markdown: ## Heading
-    // --------------------------------------------------------
-
-    if (line.startsWith("## ")) {
-      closeList();
-
-      html += `
-        <h3>
-          ${escapeHtml(line.substring(3))}
-        </h3>
-      `;
-
-      continue;
-    }
-
-    // --------------------------------------------------------
-    // H1 markdown: # Heading
-    // --------------------------------------------------------
-
-    if (line.startsWith("# ")) {
-      closeList();
-
-      html += `
-        <h2>
-          ${escapeHtml(line.substring(2))}
-        </h2>
-      `;
-
-      continue;
-    }
-
-    // --------------------------------------------------------
-    // Unordered list
-    // - item
-    // * item
-    // --------------------------------------------------------
-
-    if (line.startsWith("- ") || line.startsWith("* ")) {
-      if (!inList || listType !== "ul") {
-        closeList();
-
-        html += "<ul>";
-
-        inList = true;
-        listType = "ul";
-      }
-
-      const item = line.replace(/^[-*]\s+/, "");
-
-      html += `
-        <li>
-          ${formatInlineAIText(item)}
-        </li>
-      `;
-
-      continue;
-    }
-
-    // --------------------------------------------------------
-    // Ordered list
-    // 1. item
-    // 2. item
-    // --------------------------------------------------------
-
-    if (/^\d+\.\s+/.test(line)) {
-      if (!inList || listType !== "ol") {
-        closeList();
-
-        html += "<ol>";
-
-        inList = true;
-        listType = "ol";
-      }
-
-      const item = line.replace(/^\d+\.\s+/, "");
-
-      html += `
-        <li>
-          ${formatInlineAIText(item)}
-        </li>
-      `;
-
-      continue;
-    }
-
-    // --------------------------------------------------------
-    // Normal paragraph
-    // --------------------------------------------------------
-
-    closeList();
-
-    html += `
-      <p>
-        ${formatInlineAIText(line)}
-      </p>
-    `;
-  }
-
-  closeList();
-
-  return html;
+  return `
+    <div class="ai-response-text-content">
+      ${safeText}
+    </div>
+  `;
 }
 
-// ============================================================
-// INLINE AI TEXT
-// ============================================================
-
-function formatInlineAIText(value) {
-  let text = escapeHtml(String(value));
-
-  // Bold: **text**
-  text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-
-  // Inline code: `text`
-  text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
-
-  return text;
-}
 
 // ============================================================
 // ANALYSIS DISPLAY
 // ============================================================
 
 function displayAnalysis(value) {
-  if (value === null || value === undefined || value === "") {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return `
       <p class="analysis-empty">
         No information available.
@@ -199,7 +81,11 @@ function displayAnalysis(value) {
     `;
   }
 
+
+  // ----------------------------------------------------------
   // Array
+  // ----------------------------------------------------------
+
   if (Array.isArray(value)) {
     if (value.length === 0) {
       return `
@@ -218,7 +104,7 @@ function displayAnalysis(value) {
               <li>
                 ${escapeHtml(String(item))}
               </li>
-            `,
+            `
           )
           .join("")}
 
@@ -226,16 +112,24 @@ function displayAnalysis(value) {
     `;
   }
 
+
+  // ----------------------------------------------------------
   // Object
+  // ----------------------------------------------------------
+
   if (typeof value === "object") {
     return `
       <pre class="analysis-object">${escapeHtml(
-        JSON.stringify(value, null, 2),
+        JSON.stringify(value, null, 2)
       )}</pre>
     `;
   }
 
+
+  // ----------------------------------------------------------
   // String / number / boolean
+  // ----------------------------------------------------------
+
   return `
     <p>
       ${escapeHtml(String(value))}
@@ -243,16 +137,24 @@ function displayAnalysis(value) {
   `;
 }
 
+
 // ============================================================
 // RENDER AI JOB ANALYSIS
 // ============================================================
 
 function renderAIAnalysis(result) {
-  const container = document.getElementById("ai-analysis");
+  const container = document.getElementById(
+    "ai-analysis"
+  );
 
   if (!container) {
     return;
   }
+
+
+  // ----------------------------------------------------------
+  // No result
+  // ----------------------------------------------------------
 
   if (!result) {
     container.innerHTML = `
@@ -264,6 +166,8 @@ function renderAIAnalysis(result) {
     return;
   }
 
+
+  // ----------------------------------------------------------
   // Some backends return:
   //
   // {
@@ -275,64 +179,105 @@ function renderAIAnalysis(result) {
   //   summary: "..."
   // }
   //
-  // Others may wrap this under result.analysis.
+  // Other backends may return:
   //
+  // {
+  //   analysis: {
+  //      skills: [...]
+  //   }
+  // }
+  // ----------------------------------------------------------
+
   const analysis =
-    result.analysis && typeof result.analysis === "object"
+    result.analysis &&
+    typeof result.analysis === "object"
       ? result.analysis
       : result;
+
+
+  // ----------------------------------------------------------
+  // Render analysis
+  // ----------------------------------------------------------
 
   container.innerHTML = `
     <div class="analysis-grid">
 
       <div class="analysis-card">
-        <h3>Skills</h3>
+
+        <h3>
+          Skills
+        </h3>
 
         ${displayAnalysis(analysis.skills)}
+
       </div>
 
 
       <div class="analysis-card">
-        <h3>Qualifications</h3>
+
+        <h3>
+          Qualifications
+        </h3>
 
         ${displayAnalysis(analysis.qualifications)}
+
       </div>
 
 
       <div class="analysis-card">
-        <h3>Experience</h3>
+
+        <h3>
+          Experience
+        </h3>
 
         ${displayAnalysis(analysis.experience)}
+
       </div>
 
 
       <div class="analysis-card">
-        <h3>ATS Keywords</h3>
+
+        <h3>
+          ATS Keywords
+        </h3>
 
         ${displayAnalysis(analysis.ats_keywords)}
+
       </div>
 
 
       <div class="analysis-card analysis-summary">
-        <h3>Summary</h3>
+
+        <h3>
+          Summary
+        </h3>
 
         ${displayAnalysis(analysis.summary)}
+
       </div>
 
     </div>
   `;
 }
 
+
 // ============================================================
 // LOAD JOB
 // ============================================================
 
 async function loadJob() {
-  const container = document.getElementById("job-details");
+  const container = document.getElementById(
+    "job-details"
+  );
 
   if (!container) {
     return;
   }
+
+
+  // ----------------------------------------------------------
+  // Check job ID
+  // ----------------------------------------------------------
 
   if (!jobId) {
     container.innerHTML = `
@@ -344,52 +289,84 @@ async function loadJob() {
     return;
   }
 
+
+  // ----------------------------------------------------------
+  // Load job
+  // ----------------------------------------------------------
+
   try {
     currentJob = await getJob(jobId);
+
 
     if (!currentJob) {
       throw new Error("Job not found.");
     }
 
+
+    // --------------------------------------------------------
+    // Render job
+    // --------------------------------------------------------
+
     container.innerHTML = `
       <article class="job-detail-card">
 
         <span class="tag">
-          ${escapeHtml(currentJob.job_type || "Opportunity")}
+          ${escapeHtml(
+            currentJob.job_type ||
+              "Opportunity"
+          )}
         </span>
 
 
         <h1>
-          ${escapeHtml(currentJob.title || "Untitled Job")}
+          ${escapeHtml(
+            currentJob.title ||
+              "Untitled Job"
+          )}
         </h1>
 
 
         <h2>
-          ${escapeHtml(currentJob.company || "Company not specified")}
+          ${escapeHtml(
+            currentJob.company ||
+              "Company not specified"
+          )}
         </h2>
 
 
         <p>
           <strong>Location:</strong>
-          ${escapeHtml(currentJob.location || "Location not specified")}
+          ${escapeHtml(
+            currentJob.location ||
+              "Location not specified"
+          )}
         </p>
 
 
         <p>
           <strong>Industry:</strong>
-          ${escapeHtml(currentJob.industry || "Not specified")}
+          ${escapeHtml(
+            currentJob.industry ||
+              "Not specified"
+          )}
         </p>
 
 
         <p>
           <strong>Job Type:</strong>
-          ${escapeHtml(currentJob.job_type || "Not specified")}
+          ${escapeHtml(
+            currentJob.job_type ||
+              "Not specified"
+          )}
         </p>
 
 
         <p>
           <strong>Salary:</strong>
-          ${escapeHtml(currentJob.salary || "Not specified")}
+          ${escapeHtml(
+            currentJob.salary ||
+              "Not specified"
+          )}
         </p>
 
 
@@ -403,7 +380,8 @@ async function loadJob() {
 
         <p class="long-text">
           ${escapeHtml(
-            currentJob.description || "No job description available.",
+            currentJob.description ||
+              "No job description available."
           )}
         </p>
 
@@ -414,7 +392,10 @@ async function loadJob() {
 
 
         <p class="long-text">
-          ${escapeHtml(currentJob.requirements || "No requirements provided.")}
+          ${escapeHtml(
+            currentJob.requirements ||
+              "No requirements provided."
+          )}
         </p>
 
 
@@ -424,7 +405,9 @@ async function loadJob() {
               <div class="job-external-link">
 
                 <a
-                  href="${escapeHtml(currentJob.application_url)}"
+                  href="${escapeHtml(
+                    currentJob.application_url
+                  )}"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="primary-button"
@@ -440,100 +423,148 @@ async function loadJob() {
       </article>
     `;
   } catch (error) {
-    console.error("Could not load job:", error);
+    console.error(
+      "Could not load job:",
+      error
+    );
+
 
     container.innerHTML = `
       <p class="status-message error">
 
         Could not load job:
 
-        ${escapeHtml(error.message || "Unknown error")}
+        ${escapeHtml(
+          error.message ||
+            "Unknown error"
+        )}
 
       </p>
     `;
   }
 }
 
+
 // ============================================================
 // SAVE JOB
 // ============================================================
 
 async function saveJob() {
-  const message = document.getElementById("job-action-message");
+  const message = document.getElementById(
+    "job-action-message"
+  );
 
   if (!jobId || !message) {
     return;
   }
 
-  try {
-    message.className = "status-message info";
 
-    message.textContent = "Saving job...";
+  try {
+    message.className =
+      "status-message info";
+
+    message.textContent =
+      "Saving job...";
+
 
     await saveJobAPI(jobId);
 
-    message.className = "status-message success";
 
-    message.textContent = "Job saved successfully.";
+    message.className =
+      "status-message success";
+
+    message.textContent =
+      "Job saved successfully.";
   } catch (error) {
-    console.error("Save job error:", error);
+    console.error(
+      "Save job error:",
+      error
+    );
 
-    message.className = "status-message error";
 
-    message.textContent = `Could not save job: ${
-      error.message || "Unknown error"
-    }`;
+    message.className =
+      "status-message error";
+
+    message.textContent =
+      `Could not save job: ${
+        error.message ||
+        "Unknown error"
+      }`;
   }
 }
+
 
 // ============================================================
 // APPLY TO JOB
 // ============================================================
 
 async function applyJob() {
-  const message = document.getElementById("job-action-message");
+  const message = document.getElementById(
+    "job-action-message"
+  );
 
   if (!jobId || !message) {
     return;
   }
 
-  try {
-    message.className = "status-message info";
 
-    message.textContent = "Adding application...";
+  try {
+    message.className =
+      "status-message info";
+
+    message.textContent =
+      "Adding application...";
+
 
     await createApplication(jobId);
 
-    message.className = "status-message success";
 
-    message.textContent = "Application added successfully.";
+    message.className =
+      "status-message success";
+
+    message.textContent =
+      "Application added successfully.";
   } catch (error) {
-    console.error("Application error:", error);
+    console.error(
+      "Application error:",
+      error
+    );
 
-    message.className = "status-message error";
 
-    message.textContent = `Could not create application: ${
-      error.message || "Unknown error"
-    }`;
+    message.className =
+      "status-message error";
+
+    message.textContent =
+      `Could not create application: ${
+        error.message ||
+        "Unknown error"
+      }`;
   }
 }
+
 
 // ============================================================
 // AI JOB ANALYSIS
 // ============================================================
 
 async function analyseJob() {
-  const container = document.getElementById("ai-analysis");
+  const container = document.getElementById(
+    "ai-analysis"
+  );
 
   if (!container || !jobId) {
     return;
   }
 
+
+  // Prevent duplicate requests.
   if (analysing) {
     return;
   }
 
+
   analysing = true;
+
 
   container.innerHTML = `
     <p class="status-message info">
@@ -541,23 +572,40 @@ async function analyseJob() {
     </p>
   `;
 
-  try {
-    const result = await analyseJobAPI(jobId);
 
-    if (result && result.success === false) {
-      throw new Error(result.error || "Analysis failed.");
+  try {
+    const result =
+      await analyseJobAPI(jobId);
+
+
+    if (
+      result &&
+      result.success === false
+    ) {
+      throw new Error(
+        result.error ||
+          "Analysis failed."
+      );
     }
+
 
     renderAIAnalysis(result);
   } catch (error) {
-    console.error("AI analysis error:", error);
+    console.error(
+      "AI analysis error:",
+      error
+    );
+
 
     container.innerHTML = `
       <p class="status-message error">
 
         AI analysis failed:
 
-        ${escapeHtml(error.message || "Unknown error")}
+        ${escapeHtml(
+          error.message ||
+            "Unknown error"
+        )}
 
       </p>
     `;
@@ -566,63 +614,115 @@ async function analyseJob() {
   }
 }
 
-// Career agent reponse
+
+// Career agent response
 function renderCareerAgentResponse(result) {
   if (!result) {
     return `
       <div class="ai-response-content">
+
         <div class="ai-response-text">
-          <p>No response received.</p>
+          <p>
+            No response received.
+          </p>
         </div>
+
       </div>
     `;
   }
 
+  // Get AI response
   const response =
     result.response ||
     result.message ||
     result.answer ||
     "No response received.";
 
-  /*
-   * Sources can potentially be returned in different places
-   * depending on which backend endpoint generated the response.
-   *
-   * Normal /api/ai/chat response:
-   *
-   * result.sources
-   *
-   * Possible nested response:
-   *
-   * result.result.sources
-   * result.data.sources
-   * result.analysis.sources
-   *
-   * We check these without treating TXT files as URLs.
-   */
 
+  // Get RAG sources if any
   let sources = [];
 
   if (Array.isArray(result.sources)) {
     sources = result.sources;
-  } else if (result.result && Array.isArray(result.result.sources)) {
+  } else if (
+    result.rag &&
+    Array.isArray(result.rag.sources)
+  ) {
+    sources = result.rag.sources;
+  } else if (
+    result.result &&
+    Array.isArray(result.result.sources)
+  ) {
     sources = result.result.sources;
-  } else if (result.data && Array.isArray(result.data.sources)) {
+  } else if (
+    result.data &&
+    Array.isArray(result.data.sources)
+  ) {
     sources = result.data.sources;
-  } else if (result.analysis && Array.isArray(result.analysis.sources)) {
-    sources = result.analysis.sources;
   }
 
-  /*
-   * Confidence can also potentially be nested.
-   */
 
-  const confidence =
-    result.confidence ||
-    result.result?.confidence ||
-    result.data?.confidence ||
-    result.analysis?.confidence ||
-    null;
+  // ----------------------------------------------------------
+  // Clean sources
+  // ----------------------------------------------------------
+
+  sources = [
+    ...new Set(
+      sources
+        .filter(
+          (source) =>
+            source !== null &&
+            source !== undefined
+        )
+        .map(
+          (source) =>
+            String(source).trim()
+        )
+        .filter(Boolean)
+    ),
+  ];
+
+
+  // ----------------------------------------------------------
+  // RAG source tags
+  // ----------------------------------------------------------
+
+  const sourcesHTML =
+    sources.length > 0
+      ? `
+        <div class="rag-sources">
+
+          <div class="rag-sources-header">
+            <span>
+              RAG Sources
+            </span>
+          </div>
+
+
+          <div class="rag-source-tags">
+
+            ${sources
+              .map(
+                (source) => `
+                  <span
+                    class="rag-source-tag"
+                  >
+                    ${escapeHtml(source)}
+                  </span>
+                `
+              )
+              .join("")}
+
+          </div>
+
+        </div>
+      `
+      : "";
+
+
+  // ----------------------------------------------------------
+  // Final response
+  // ----------------------------------------------------------
 
   return `
     <div class="ai-response-content">
@@ -631,57 +731,73 @@ function renderCareerAgentResponse(result) {
         ${formatAIResponse(response)}
       </div>
 
-      ${
-        confidence
-          ? `
-            <div class="rag-confidence">
 
-              <span>
-                RAG confidence:
-              </span>
+      ${sourcesHTML}
 
-              <strong>
-                ${escapeHtml(String(confidence))}
-              </strong>
-
-            </div>
-          `
-          : ""
-      }
     </div>
   `;
 }
 
-// Human AI approval
-function renderAIApproval(chat, result) {
+
+// ============================================================
+// HUMAN AI APPROVAL
+// ============================================================
+
+function renderAIApproval(
+  chat,
+  result
+) {
   if (!chat || !result) {
     return;
   }
 
-  const approvalId = result.approval_id;
 
-  // Backend does not require approval
+  const approvalId =
+    result.approval_id;
+
+
+  // ----------------------------------------------------------
+  // Backend does not require approval.
+  // ----------------------------------------------------------
+
   if (!approvalId) {
     chat.innerHTML += `
       <div class="ai-message">
 
         <div class="ai-message-header">
+
           <strong>
             Career Agent
           </strong>
+
         </div>
 
-        ${renderCareerAgentResponse(result)}
+
+        ${renderCareerAgentResponse(
+          result
+        )}
 
       </div>
     `;
 
-    chat.scrollTop = chat.scrollHeight;
+
+    chat.scrollTop =
+      chat.scrollHeight;
+
 
     return;
   }
 
-  const safeApprovalId = escapeHtml(String(approvalId));
+
+  // ----------------------------------------------------------
+  // Approval required
+  // ----------------------------------------------------------
+
+  const safeApprovalId =
+    escapeHtml(
+      String(approvalId)
+    );
+
 
   chat.innerHTML += `
     <div
@@ -689,16 +805,20 @@ function renderAIApproval(chat, result) {
       data-approval-id="${safeApprovalId}"
     >
 
-
       <div class="ai-approval-response">
 
         <div class="ai-message-header">
+
           <strong>
             Career Agent
           </strong>
+
         </div>
 
-        ${renderCareerAgentResponse(result)}
+
+        ${renderCareerAgentResponse(
+          result
+        )}
 
       </div>
 
@@ -774,38 +894,72 @@ function renderAIApproval(chat, result) {
     </div>
   `;
 
-  chat.scrollTop = chat.scrollHeight;
+
+  chat.scrollTop =
+    chat.scrollHeight;
 }
+
 
 // ============================================================
 // APPROVE AI RESPONSE
 // ============================================================
 
-async function approveAIResponse(approvalId) {
-  const status = document.getElementById("chat-message");
+async function approveAIResponse(
+  approvalId
+) {
+  const status =
+    document.getElementById(
+      "chat-message"
+    );
 
-  const approval = document.querySelector(
-    `[data-approval-id="${CSS.escape(String(approvalId))}"]`,
-  );
+
+  const approval =
+    document.querySelector(
+      `[data-approval-id="${CSS.escape(
+        String(approvalId)
+      )}"]`
+    );
+
 
   if (status) {
-    status.className = "status-message info";
+    status.className =
+      "status-message info";
 
-    status.textContent = "Submitting approval...";
+    status.textContent =
+      "Submitting approval...";
   }
 
-  try {
-    const result = await submitAIApproval(approvalId, true);
 
-    if (!result || result.success === false) {
-      throw new Error(result?.error || "Approval failed.");
+  try {
+    const result =
+      await submitAIApproval(
+        approvalId,
+        true
+      );
+
+
+    if (
+      !result ||
+      result.success === false
+    ) {
+      throw new Error(
+        result?.error ||
+          "Approval failed."
+      );
     }
 
-    // Keep the AI response.
-    // Only replace the review controls.
+
+    // --------------------------------------------------------
+    // Keep AI response.
+    // Replace only the review controls.
+    // --------------------------------------------------------
 
     if (approval) {
-      const review = approval.querySelector(".ai-approval-review");
+      const review =
+        approval.querySelector(
+          ".ai-approval-review"
+        );
+
 
       if (review) {
         review.innerHTML = `
@@ -822,104 +976,189 @@ async function approveAIResponse(approvalId) {
       }
     }
 
-    if (status) {
-      status.className = "status-message success";
 
-      status.textContent = "AI response approved.";
+    if (status) {
+      status.className =
+        "status-message success";
+
+      status.textContent =
+        "AI response approved.";
     }
   } catch (error) {
-    console.error("AI approval error:", error);
+    console.error(
+      "AI approval error:",
+      error
+    );
+
 
     if (status) {
-      status.className = "status-message error";
+      status.className =
+        "status-message error";
 
-      status.textContent = `Could not approve AI response: ${
-        error.message || "Unknown error"
-      }`;
+      status.textContent =
+        `Could not approve AI response: ${
+          error.message ||
+          "Unknown error"
+        }`;
     }
   }
 }
+
 
 // ============================================================
 // SHOW REJECTION FORM
 // ============================================================
 
-function showAIRejection(approvalId) {
-  const form = document.getElementById(`ai-rejection-${approvalId}`);
+function showAIRejection(
+  approvalId
+) {
+  const form =
+    document.getElementById(
+      `ai-rejection-${approvalId}`
+    );
+
 
   if (!form) {
     return;
   }
 
-  form.style.display = "block";
 
-  const feedback = document.getElementById(`ai-feedback-${approvalId}`);
+  form.style.display =
+    "block";
+
+
+  const feedback =
+    document.getElementById(
+      `ai-feedback-${approvalId}`
+    );
+
 
   if (feedback) {
     feedback.focus();
   }
 }
 
+
 // ============================================================
 // REJECT AI RESPONSE
 // ============================================================
 
-async function rejectAIResponse(approvalId) {
-  const feedbackElement = document.getElementById(`ai-feedback-${approvalId}`);
+async function rejectAIResponse(
+  approvalId
+) {
+  const feedbackElement =
+    document.getElementById(
+      `ai-feedback-${approvalId}`
+    );
 
-  const status = document.getElementById("chat-message");
 
-  const approval = document.querySelector(
-    `[data-approval-id="${CSS.escape(String(approvalId))}"]`,
-  );
+  const status =
+    document.getElementById(
+      "chat-message"
+    );
+
+
+  const approval =
+    document.querySelector(
+      `[data-approval-id="${CSS.escape(
+        String(approvalId)
+      )}"]`
+    );
+
 
   if (!feedbackElement) {
     return;
   }
 
-  const feedback = feedbackElement.value.trim();
+
+  const feedback =
+    feedbackElement.value.trim();
+
+
+  // ----------------------------------------------------------
+  // Require feedback
+  // ----------------------------------------------------------
 
   if (!feedback) {
     feedbackElement.focus();
 
+
     if (status) {
-      status.className = "status-message error";
+      status.className =
+        "status-message error";
 
       status.textContent =
         "Please provide feedback before rejecting the response.";
     }
 
+
     return;
   }
 
-  if (status) {
-    status.className = "status-message info";
 
-    status.textContent = "Sending feedback to Career Agent...";
+  // ----------------------------------------------------------
+  // Status
+  // ----------------------------------------------------------
+
+  if (status) {
+    status.className =
+      "status-message info";
+
+    status.textContent =
+      "Sending feedback to Career Agent...";
   }
 
-  // Disable buttons while processing.
+
+  // ----------------------------------------------------------
+  // Disable buttons
+  // ----------------------------------------------------------
 
   if (approval) {
-    const buttons = approval.querySelectorAll("button");
+    const buttons =
+      approval.querySelectorAll(
+        "button"
+      );
 
-    buttons.forEach((button) => {
-      button.disabled = true;
-    });
+
+    buttons.forEach(
+      (button) => {
+        button.disabled = true;
+      }
+    );
   }
 
-  try {
-    const result = await submitAIApproval(approvalId, false, feedback);
 
-    if (!result || result.success === false) {
-      throw new Error(result?.error || "Could not submit feedback.");
+  try {
+    const result =
+      await submitAIApproval(
+        approvalId,
+        false,
+        feedback
+      );
+
+
+    if (
+      !result ||
+      result.success === false
+    ) {
+      throw new Error(
+        result?.error ||
+          "Could not submit feedback."
+      );
     }
 
+
+    // --------------------------------------------------------
     // Mark original response as rejected.
-    // Keep the original response visible.
+    // Keep original response visible.
+    // --------------------------------------------------------
 
     if (approval) {
-      const review = approval.querySelector(".ai-approval-review");
+      const review =
+        approval.querySelector(
+          ".ai-approval-review"
+        );
+
 
       if (review) {
         review.innerHTML = `
@@ -940,7 +1179,9 @@ async function rejectAIResponse(approvalId) {
 
 
             <p>
-              ${escapeHtml(feedback)}
+              ${escapeHtml(
+                feedback
+              )}
             </p>
 
           </div>
@@ -948,67 +1189,118 @@ async function rejectAIResponse(approvalId) {
       }
     }
 
+
     // --------------------------------------------------------
-    // Backend may return a new response requiring approval.
+    // Backend may return a new response
+    // requiring approval.
     // --------------------------------------------------------
 
-    if (result.status === "awaiting_approval") {
-      const chat = document.getElementById("chat-messages");
+    if (
+      result.status ===
+      "awaiting_approval"
+    ) {
+      const chat =
+        document.getElementById(
+          "chat-messages"
+        );
+
 
       if (chat) {
-        renderAIApproval(chat, result);
+        renderAIApproval(
+          chat,
+          result
+        );
       }
     }
 
+
     if (status) {
-      status.className = "status-message info";
+      status.className =
+        "status-message info";
 
       status.textContent =
         "New AI response generated. Please review the new response.";
     }
   } catch (error) {
-    console.error("AI rejection error:", error);
+    console.error(
+      "AI rejection error:",
+      error
+    );
 
-    // Re-enable buttons if request failed.
+
+    // --------------------------------------------------------
+    // Re-enable buttons
+    // --------------------------------------------------------
 
     if (approval) {
-      const buttons = approval.querySelectorAll("button");
+      const buttons =
+        approval.querySelectorAll(
+          "button"
+        );
 
-      buttons.forEach((button) => {
-        button.disabled = false;
-      });
+
+      buttons.forEach(
+        (button) => {
+          button.disabled = false;
+        }
+      );
     }
 
-    if (status) {
-      status.className = "status-message error";
 
-      status.textContent = `Could not submit feedback: ${
-        error.message || "Unknown error"
-      }`;
+    if (status) {
+      status.className =
+        "status-message error";
+
+      status.textContent =
+        `Could not submit feedback: ${
+          error.message ||
+          "Unknown error"
+        }`;
     }
   }
 }
+
 
 // ============================================================
 // CAREER AGENT CHAT
 // ============================================================
 
 async function sendMessage() {
-  const input = document.getElementById("chat-input");
+  const input =
+    document.getElementById(
+      "chat-input"
+    );
 
-  const chat = document.getElementById("chat-messages");
 
-  const status = document.getElementById("chat-message");
+  const chat =
+    document.getElementById(
+      "chat-messages"
+    );
 
-  if (!input || !chat || !status) {
+
+  const status =
+    document.getElementById(
+      "chat-message"
+    );
+
+
+  if (
+    !input ||
+    !chat ||
+    !status
+  ) {
     return;
   }
 
-  const message = input.value.trim();
+
+  const message =
+    input.value.trim();
+
 
   if (!message) {
     return;
   }
+
 
   // ----------------------------------------------------------
   // Display user message
@@ -1016,128 +1308,194 @@ async function sendMessage() {
 
   chat.innerHTML += `
     <div class="user-message">
-
       ${escapeHtml(message)}
-
     </div>
   `;
 
+
   input.value = "";
 
-  status.className = "status-message info";
 
-  status.textContent = "Career Agent is thinking...";
+  status.className =
+    "status-message info";
 
-  // Disable input while waiting.
+
+  status.textContent =
+    "Career Agent is thinking...";
+
+
+  // ----------------------------------------------------------
+  // Disable input
+  // ----------------------------------------------------------
 
   input.disabled = true;
 
-  const sendButton = document.querySelector(".chat-input button");
+
+  const sendButton =
+    document.querySelector(
+      ".chat-input button"
+    );
+
 
   if (sendButton) {
-    sendButton.disabled = true;
+    sendButton.disabled =
+      true;
   }
+
 
   try {
     // --------------------------------------------------------
     // Send selected job ID to backend.
     //
-    // Backend then:
+    // Backend:
     // 1. Loads selected job
     // 2. Executes MCP/RAG
     // 3. Retrieves organisation TXT files
-    // 4. Sends context to AI
+    // 4. Sends relevant context to AI
     // 5. Returns response + sources
     // --------------------------------------------------------
 
-    const result = await sendChatMessage(message, jobId);
+    const result =
+      await sendChatMessage(
+        message,
+        jobId
+      );
 
-    if (!result || result.success === false) {
-      throw new Error(result?.error || "AI request failed.");
+
+    if (
+      !result ||
+      result.success === false
+    ) {
+      throw new Error(
+        result?.error ||
+          "AI request failed."
+      );
     }
+
 
     // --------------------------------------------------------
     // Human approval workflow
     // --------------------------------------------------------
 
-    if (result.status === "awaiting_approval") {
-      renderAIApproval(chat, result);
+    if (
+      result.status ===
+      "awaiting_approval"
+    ) {
+      renderAIApproval(
+        chat,
+        result
+      );
     } else {
-      // ------------------------------------------------------
-      // Normal AI response
-      //
-      // IMPORTANT:
-      //
-      // Do NOT use escapeHtml(result.response) here.
-      //
-      // That would hide:
-      // - formatted AI markdown
-      // - RAG confidence
-      // - TXT source list
-      //
-      // renderCareerAgentResponse() handles all of it.
-      // ------------------------------------------------------
-
       chat.innerHTML += `
         <div class="ai-message">
 
           <div class="ai-message-header">
+
             <strong>
               Career Agent
             </strong>
+
           </div>
 
-          ${renderCareerAgentResponse(result)}
+
+          ${renderCareerAgentResponse(
+            result
+          )}
 
         </div>
       `;
     }
 
-    status.className = "status-message";
+
+    // --------------------------------------------------------
+    // Clear status
+    // --------------------------------------------------------
+
+    status.className =
+      "status-message";
 
     status.textContent = "";
 
-    chat.scrollTop = chat.scrollHeight;
+
+    chat.scrollTop =
+      chat.scrollHeight;
   } catch (error) {
-    console.error("Career Agent error:", error);
+    console.error(
+      "Career Agent error:",
+      error
+    );
 
-    status.className = "status-message error";
 
-    status.textContent = `Career Agent could not complete the request: ${
-      error.message || "Unknown error"
-    }`;
+    status.className =
+      "status-message error";
+
+
+    status.textContent =
+      `Career Agent could not complete the request: ${
+        error.message ||
+        "Unknown error"
+      }`;
   } finally {
+    // --------------------------------------------------------
+    // Re-enable input
+    // --------------------------------------------------------
+
     input.disabled = false;
 
+
     if (sendButton) {
-      sendButton.disabled = false;
+      sendButton.disabled =
+        false;
     }
+
 
     input.focus();
   }
 }
 
+
 // ============================================================
 // ENTER TO SEND
 // ============================================================
 
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("chat-input");
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    const input =
+      document.getElementById(
+        "chat-input"
+      );
 
-  if (!input) {
-    return;
-  }
 
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-
-      sendMessage();
+    if (!input) {
+      return;
     }
-  });
-});
 
-// Page start
-document.addEventListener("DOMContentLoaded", () => {
-  loadJob();
-});
+
+    input.addEventListener(
+      "keydown",
+      (event) => {
+        if (
+          event.key === "Enter" &&
+          !event.shiftKey
+        ) {
+          event.preventDefault();
+
+          sendMessage();
+        }
+      }
+    );
+  }
+);
+
+
+// ============================================================
+// PAGE START
+// ============================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    loadJob();
+  }
+);
