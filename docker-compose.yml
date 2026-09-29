@@ -138,13 +138,7 @@ services:
       - "5005:5002"
 
     healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:5002/health')",
-        ]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health')" ]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -158,6 +152,7 @@ services:
       DATABASE_SERVICE_URL: http://student2-database:5002
       OLLAMA_URL: http://ollama:11434/api/generate
       OLLAMA_MODEL: qwen2.5:0.5b
+      RAG_SERVER_URL: http://host.docker.internal:9101
 
     ports:
       - "8002:8002"
