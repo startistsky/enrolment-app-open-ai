@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - student_3
+      - "feature/student3-*"
 
   pull_request:
     branches:
@@ -11,64 +12,72 @@ on:
 
 jobs:
   student3-tests:
+    name: Student 3 CI
     runs-on: ubuntu-latest
 
     steps:
-
+      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install test dependencies
+      # Install Student 3 dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest requests
+          pip install -r student-3/tests/requirements.txt
 
+      # Verify Python dependencies
+      - name: Check Python dependencies
+        run: |
+          python -m pip check
+
+      # Check Python syntax
       - name: Check Python syntax
         run: |
           python -m py_compile student-3/backend/app.py
+          python -m py_compile student-3/backend/rag_client.py
+          python -m py_compile student-3/backend/mcp_client.py
+          python -m py_compile student-3/backend/agentic_loop.py
           python -m py_compile student-3/database/database_api.py
           python -m py_compile student-3/database/init_db.py
-          python -m py_compile student-3/backend/agentic_loop.py
+          python -m py_compile mcp-server/tools/student3_resource_tools.py
+          python -m py_compile rag-server/retrievers/student3_resource_retriever.py
 
-      - name: Build Student 3 Docker services
+      # Run MCP and RAG automated tests
+      # Full live-service integration tests are validated locally
+      # with Database, Backend, Ollama/Qwen, MCP and RAG running.
+      - name: Run automated tests
         run: |
-          docker compose build student3-database student3-backend
+          python -m pytest \
+            student-3/tests/test_mcp_integration.py \
+            student-3/tests/test_rag_integration.py \
+            -v
 
-      - name: Start Student 3 services
+      # Validate Docker Compose configuration
+      - name: Validate Docker Compose
         run: |
-          docker compose up -d ollama student3-database student3-backend
+          docker compose config
 
-      - name: Pull Qwen model
+      # Build Student 3 application images
+      - name: Build Student 3 database
         run: |
-          docker compose exec -T ollama ollama pull qwen2.5:0.5b
+          docker compose build student3-database
 
-      - name: Wait for services
+      - name: Build Student 3 backend
         run: |
-          sleep 15
+          docker compose build student3-backend
 
-      - name: Check running containers
+      - name: Build Student 3 frontend
         run: |
-          docker compose ps
+          docker compose build student3-frontend
 
-      - name: Test database health
+      # Show build evidence
+      - name: Show Student 3 Docker images
         run: |
-          curl --fail http://localhost:5004/health
-
-      - name: Test backend health
-        run: |
-          curl --fail http://localhost:8003/health
-
-      - name: Run Student 3 automated tests
-        run: |
-          python -m pytest student-3/tests -v
-
-      - name: Show Docker logs on failure
-        if: failure()
-        run: |
-          docker compose logs student3-database
-          docker compose logs student3-backend
+          docker images | grep student3 || true

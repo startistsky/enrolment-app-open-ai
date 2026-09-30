@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+  <title>Agent Trace | SmartCampus AI</title>
+
+  <link
+    rel="stylesheet"
+    href="css/style.css"
+  >
+  <link
+    rel="stylesheet"
+    href="css/agent-trace.css"
+  >
+</head>
+
+<body class="trace-page">
+
+  <header class="trace-header">
+    <button
+      class="trace-back"
+      type="button"
+      onclick="window.close()"
+    >
+      ← Close Agent Trace
+    </button>
+
+    <div class="trace-brand">
+      <div class="brand-mark"></div>
+      SmartCampus AI
+    </div>
+  </header>
+
+  <main class="trace-container">
+
+    <section class="trace-intro">
+      <div class="trace-intro-top">
+        <span class="trace-badge">
+          Runtime Agent Trace
+        </span>
+
+        <span class="trace-status">
+          <span class="trace-status-dot"></span>
+          COMPLETED
+        </span>
+      </div>
+
+      <h1>Agent Execution Trace</h1>
+
+      <p>
+        Inspect how the latest campus resource request
+        was processed by SmartCampus AI.
+      </p>
+    </section>
+
+    <section
+      id="traceEmpty"
+      class="trace-empty"
+      hidden
+    >
+      <h2>No trace available</h2>
+
+      <p>
+        Ask SmartCampus AI a campus resource
+        question first, then open the trace again.
+      </p>
+
+      <a
+        class="trace-button"
+        href="index.html"
+      >
+        Ask Campus AI
+      </a>
+    </section>
+
+    <section
+      id="traceContent"
+      class="trace-content"
+      hidden
+    >
+
+      <div class="trace-summary">
+        <div class="trace-request">
+          <span class="trace-label">
+            REQUEST
+          </span>
+
+          <h2 id="traceQuestion"></h2>
+        </div>
+
+        <div class="trace-meta">
+          <span
+            id="traceMode"
+            class="trace-mode"
+          ></span>
+
+          <span id="traceTime"></span>
+        </div>
+      </div>
+
+      <div
+        id="traceDetails"
+        class="trace-details"
+      ></div>
+
+      <div class="trace-flow">
+
+        <article class="trace-step">
+          <div class="trace-marker">
+            <span class="trace-number">01</span>
+          </div>
+
+          <div class="trace-step-content">
+            <span class="trace-step-type">
+              Agent Step
+            </span>
+
+            <h3>PLAN</h3>
+
+            <p id="tracePlan"></p>
+          </div>
+        </article>
+
+        <article class="trace-step">
+          <div class="trace-marker">
+            <span class="trace-number">02</span>
+          </div>
+
+          <div class="trace-step-content">
+            <span class="trace-step-type">
+              Execution
+            </span>
+
+            <h3>ACT</h3>
+
+            <p id="traceAct"></p>
+          </div>
+        </article>
+
+        <article class="trace-step">
+          <div class="trace-marker">
+            <span class="trace-number">03</span>
+          </div>
+
+          <div class="trace-step-content">
+            <span class="trace-step-type">
+              Evidence
+            </span>
+
+            <h3>OBSERVE</h3>
+
+            <p id="traceObserve"></p>
+          </div>
+        </article>
+
+        <article class="trace-step">
+          <div class="trace-marker">
+            <span class="trace-number">04</span>
+          </div>
+
+          <div class="trace-step-content">
+            <span class="trace-step-type">
+              Response
+            </span>
+
+            <h3>ADAPT</h3>
+
+            <p id="traceAdapt"></p>
+          </div>
+        </article>
+
+      </div>
+
+      <section class="trace-result">
+        <div class="trace-result-heading">
+          <span class="trace-result-check">
+            ✓
+          </span>
+
+          <span class="trace-label">
+            FINAL RESULT
+          </span>
+        </div>
+
+        <p id="traceResult"></p>
+      </section>
+
+    </section>
+
+  </main>
+
+  <script src="js/agent-trace.js"></script>
+</body>
+</html>
