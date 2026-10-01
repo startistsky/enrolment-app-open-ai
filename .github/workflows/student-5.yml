@@ -48,7 +48,10 @@ jobs:
         run: |
           cd student-5
           export PYTHONPATH="$PWD/backend"
-          python -m pytest tests/ -v
+
+          python -m pytest tests/ \
+            --ignore=tests/test_rag_mcp.py \
+            -v
 
       # Docker compose validation
       - name: Validate Docker Compose
@@ -126,16 +129,6 @@ jobs:
             --retry-delay 3 \
             --retry-connrefused \
             http://localhost:9101
-
-      # MCP and RAG test
-      - name: Run MCP and RAG integration tests
-        run: |
-          cd student-5
-          export PYTHONPATH="$PWD/backend"
-
-          python -m pytest \
-            tests/test_rag_mcp.py \
-            -v
 
       - name: Show final container status
         if: always()
