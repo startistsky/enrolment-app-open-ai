@@ -108,28 +108,6 @@ jobs:
             --retry-connrefused \
             http://localhost:8005/api/jobs
 
-      # Run MCP server
-      - name: Check shared MCP server
-        run: |
-          echo "Checking MCP server..."
-
-          curl --fail \
-            --retry 10 \
-            --retry-delay 3 \
-            --retry-connrefused \
-            http://localhost:9001/mcp
-
-      # RUn RAG server
-      - name: Check shared RAG server
-        run: |
-          echo "Checking RAG server..."
-
-          curl --fail \
-            --retry 10 \
-            --retry-delay 3 \
-            --retry-connrefused \
-            http://localhost:9101
-
       - name: Show final container status
         if: always()
         run: |
