@@ -24,7 +24,6 @@ from agent.agent import (
     choose_action,
     observe_result,
     adapt_action,
-    create_pending_approval,
     run_career_agent,
 )
 
@@ -101,58 +100,6 @@ def test_no_adaptation():
         "What skills are required?"
     ) == "requirements"
 
-
-def test_create_pending_approval():
-    observation = {
-        "success": True,
-        "needs_adaptation": False,
-        "reason": "Enough information"
-    }
-
-    tool_result = {
-        "success": True
-    }
-
-    result = create_pending_approval(
-        "Python is required.",
-        "requirements",
-        "requirements",
-        observation,
-        tool_result
-    )
-
-    assert result["success"] is True
-    assert result["status"] == "awaiting_approval"
-    assert result["response"] == "Python is required."
-    assert result["planned_action"] == "requirements"
-    assert result["action"] == "requirements"
-    assert result["adapted"] is False
-    assert result["requires_human_approval"] is True
-
-
-def test_create_pending_approval_after_adaptation():
-    observation = {
-        "success": True,
-        "needs_adaptation": False,
-        "reason": "Enough information"
-    }
-
-    tool_result = {
-        "success": True
-    }
-
-    result = create_pending_approval(
-        "The job requires Python.",
-        "analyse_job",
-        "requirements",
-        observation,
-        tool_result
-    )
-
-    assert result["success"] is True
-    assert result["adapted"] is True
-    assert result["planned_action"] == "analyse_job"
-    assert result["action"] == "requirements"
 
 
 def test_run_career_agent_missing_job():

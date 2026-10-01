@@ -87,33 +87,65 @@
       </section>
 
       <!-- Career AI Chat -->
-
-      <section class="chat">
+      <section class="chat" aria-labelledby="career-agent-heading">
         <span class="section-label"> CAREER ASSISTANT </span>
 
-        <h2>Ask the Career Agent</h2>
+        <h2 id="career-agent-heading">Ask the Career Agent</h2>
 
-        <div id="chat-messages" class="chat-messages"></div>
+        <p class="chat-description">
+          Ask questions about this job, its requirements, application
+          preparation, interviews, skills, qualifications or career guidance.
+        </p>
 
-        <div class="chat-input">
+        <div
+          id="chat-messages"
+          class="chat-messages"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+        >
+          <div class="ai-message">
+            <div class="ai-message-header">
+              <strong> Career Agent </strong>
+            </div>
+
+            <div class="ai-response-content">
+              <div class="ai-response-text">
+                <p>Ask me anything about this job.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat input -->
+        <form
+          id="career-chat-form"
+          class="chat-input"
+          onsubmit="
+            event.preventDefault();
+            sendMessage();
+          "
+        >
+          <label for="chat-input" class="sr-only">
+            Message the Career Agent
+          </label>
+
           <input
             type="text"
             id="chat-input"
+            name="message"
             placeholder="Get guidance for this job..."
             autocomplete="off"
+            maxlength="2000"
           />
 
-          <button
-            type="button"
-            id="send-chat-button"
-            onclick="sendMessage()"
-            class="primary-button"
-          >
+          <button type="submit" id="send-chat-button" class="primary-button">
             Send
           </button>
-        </div>
+        </form>
 
-        <p id="chat-message" class="status-message"></p>
+        <!-- Chat status -->
+        <p id="chat-message" class="status-message" aria-live="polite"></p>
       </section>
     </main>
 

@@ -6,45 +6,72 @@ import chromadb
 from chromadb.utils import embedding_functions
 
 
-# Configuration
-BASE_DIR = Path(__file__).resolve().parents[1]
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-KNOWLEDGE_DIR = BASE_DIR / "knowledge" / "career-knowledge"
+KNOWLEDGE_DIR = (
+BASE_DIR
+/ "knowledge"
+/ "career-knowledge"
+)
 
 CHROMA_DIR = BASE_DIR / "chroma"
 
 COLLECTION_NAME = "student5_career_knowledge"
 
 EMBEDDING_MODEL = os.getenv(
-    "RAG_EMBEDDING_MODEL",
-    "all-MiniLM-L6-v2"
+"RAG_EMBEDDING_MODEL",
+"all-MiniLM-L6-v2",
 )
 
+# configuration
+print("========================================")
+print("CAREER RAG CONFIGURATION")
+print("========================================")
+print(f"BASE_DIR: {BASE_DIR}")
+print(f"KNOWLEDGE_DIR: {KNOWLEDGE_DIR}")
+print(f"KNOWLEDGE_EXISTS: {KNOWLEDGE_DIR.exists()}")
 
-# ChromaDB vector store
+knowledge_files = sorted(
+KNOWLEDGE_DIR.glob("*.txt")
+) if KNOWLEDGE_DIR.exists() else []
+
+print(
+"KNOWLEDGE_FILES:",
+[file.name for file in knowledge_files],
+)
+
+print(f"CHROMA_DIR: {CHROMA_DIR}")
+print(f"COLLECTION: {COLLECTION_NAME}")
+print(f"EMBEDDING_MODEL: {EMBEDDING_MODEL}")
+print("========================================")
+
+# Chromadb
 _client = chromadb.PersistentClient(
-    path=str(CHROMA_DIR)
+path=str(CHROMA_DIR)
 )
-
 
 _embedding_function = (
-    embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name=EMBEDDING_MODEL
-    )
+embedding_functions.SentenceTransformerEmbeddingFunction(
+model_name=EMBEDDING_MODEL,
 )
-
+)
 
 _collection = _client.get_or_create_collection(
-    name=COLLECTION_NAME,
-    embedding_function=_embedding_function
+name=COLLECTION_NAME,
+embedding_function=_embedding_function,
 )
 
-# Chunking
-def chunk_text(text, chunk_size=800, overlap=100):
+# chunking
+def chunk_text(
+text,
+chunk_size=800,
+overlap=100,
+):
     """
-    Split knowledge text into overlapping chunks.
+    Split knowledge text into overlapping word chunks.
     """
-    text = str(text).strip()
+
+    text = str(text or "").strip()
 
     if not text:
         return []
@@ -59,12 +86,12 @@ def chunk_text(text, chunk_size=800, overlap=100):
 
         end = min(
             start + chunk_size,
-            len(words)
+            len(words),
         )
 
         chunk = " ".join(
             words[start:end]
-        )
+        ).strip()
 
         if chunk:
             chunks.append(chunk)
@@ -74,22 +101,55 @@ def chunk_text(text, chunk_size=800, overlap=100):
 
         start = max(
             end - overlap,
-            start + 1
+            start + 1,
         )
 
     return chunks
 
-# Load knowledge files
+# load knwoledge
 def load_knowledge():
+    """
+    Load all career knowledge .txt files.
+    """
 
     documents = []
 
     if not KNOWLEDGE_DIR.exists():
+
+        print(
+            "CAREER RAG ERROR: "
+            "Knowledge directory does not exist:"
+        )
+
+        print(
+            KNOWLEDGE_DIR
+        )
+
         return documents
 
-    for file_path in sorted(
+    files = sorted(
         KNOWLEDGE_DIR.glob("*.txt")
-    ):
+    )
+
+    if not files:
+
+        print(
+            "CAREER RAG ERROR: "
+            "No .txt knowledge files found:"
+        )
+
+        print(
+            KNOWLEDGE_DIR
+        )
+
+        return documents
+
+    print(
+        f"CAREER RAG: Found "
+        f"{len(files)} knowledge files."
+    )
+
+    for file_path in files:
 
         try:
 
@@ -97,39 +157,74 @@ def load_knowledge():
                 encoding="utf-8"
             )
 
-        except OSError:
+        except OSError as error:
+
+            print(
+                f"CAREER RAG: Could not read "
+                f"{file_path.name}: {error}"
+            )
+
+            continue
+
+        if not text.strip():
+
+            print(
+                f"CAREER RAG: "
+                f"{file_path.name} is empty."
+            )
+
             continue
 
         chunks = chunk_text(text)
 
+        print(
+            f"CAREER RAG: "
+            f"{file_path.name} -> "
+            f"{len(chunks)} chunks"
+        )
+
         for index, chunk in enumerate(chunks):
 
-            documents.append({
-                "id": (
-                    f"{file_path.stem}-"
-                    f"{index}-"
-                    f"{uuid.uuid4().hex[:8]}"
-                ),
+            documents.append(
+                {
+                    "id": (
+                        f"{file_path.stem}-"
+                        f"{index}-"
+                        f"{uuid.uuid4().hex[:8]}"
+                    ),
 
-                "text": chunk,
+                    "text": chunk,
 
-                "source": file_path.name,
+                    "source": file_path.name,
 
-                "chunk": index
-            })
+                    "chunk": index,
+                }
+            )
 
     return documents
 
-# Index knowledge
+# index knowledge
 def index_knowledge():
+    """
+    Rebuild the Chroma career collection from the
+    current knowledge files.
+    """
+
+    print(
+        "CAREER RAG: Starting knowledge indexing..."
+    )
 
     documents = load_knowledge()
 
     if not documents:
+
         return {
             "success": False,
             "indexed": 0,
-            "message": "No knowledge files found."
+            "collection": COLLECTION_NAME,
+            "message": (
+                "No career knowledge documents were found."
+            ),
         }
 
     ids = [
@@ -145,34 +240,141 @@ def index_knowledge():
     metadatas = [
         {
             "source": document["source"],
-            "chunk": document["chunk"]
+            "chunk": document["chunk"],
         }
         for document in documents
     ]
 
-    # Rebuild the collection so changes to knowledge files are reflected
-    existing = _collection.get()
+    try:
 
-    if existing.get("ids"):
-
-        _collection.delete(
-            ids=existing["ids"]
+        # Remove existing documents.
+        existing = _collection.get(
+            include=[]
         )
 
-    _collection.add(
-        ids=ids,
-        documents=texts,
-        metadatas=metadatas
+        existing_ids = existing.get(
+            "ids",
+            [],
+        )
+
+        if existing_ids:
+
+            print(
+                f"CAREER RAG: "
+                f"Deleting {len(existing_ids)} "
+                f"old chunks..."
+            )
+
+            _collection.delete(
+                ids=existing_ids
+            )
+
+        print(
+            f"CAREER RAG: Adding "
+            f"{len(documents)} chunks..."
+        )
+
+        _collection.add(
+            ids=ids,
+            documents=texts,
+            metadatas=metadatas,
+        )
+
+    except Exception as error:
+
+        print(
+            "CAREER RAG ERROR: "
+            "Indexing failed:"
+        )
+
+        print(
+            repr(error)
+        )
+
+        return {
+            "success": False,
+            "indexed": 0,
+            "collection": COLLECTION_NAME,
+            "error": str(error),
+        }
+
+    count = _collection.count()
+
+    print(
+        f"CAREER RAG: Successfully indexed "
+        f"{count} chunks."
     )
 
     return {
         "success": True,
-        "indexed": len(documents),
-        "collection": COLLECTION_NAME
+        "indexed": count,
+        "collection": COLLECTION_NAME,
+        "message": "Career knowledge indexed successfully.",
     }
 
-# Retrieve
-def retrieve(query, top_k=4):
+
+def ensure_knowledge_indexed():
+    """
+    Ensure the career knowledge exists in Chroma.
+
+    If Chroma is empty, automatically index the knowledge files.
+    """
+
+    try:
+
+        count = _collection.count()
+
+    except Exception as error:
+
+        print(
+            "CAREER RAG ERROR: "
+            "Could not inspect Chroma collection:"
+        )
+
+        print(
+            repr(error)
+        )
+
+        return {
+            "success": False,
+            "error": str(error),
+        }
+
+    if count > 0:
+
+        print(
+            f"CAREER RAG: Collection contains "
+            f"{count} chunks."
+        )
+
+        return {
+            "success": True,
+            "indexed": count,
+            "already_indexed": True,
+        }
+
+    print(
+        "CAREER RAG: Chroma collection is empty."
+    )
+
+    print(
+        "CAREER RAG: Automatically indexing knowledge..."
+    )
+
+    result = index_knowledge()
+
+    result["already_indexed"] = False
+
+    return result
+
+# retrieve
+def retrieve(
+query,
+top_k=4,
+):
+    """
+    Retrieve relevant career knowledge chunks.
+    """
 
     query = str(
         query or ""
@@ -187,60 +389,95 @@ def retrieve(query, top_k=4):
 
     except (
         TypeError,
-        ValueError
+        ValueError,
     ):
 
         top_k = 4
 
     top_k = max(
         1,
-        min(top_k, 10)
+        min(top_k, 10),
     )
+
+    # IMPORTANT:
+    #
+    # Make sure knowledge has actually been indexed
+    # before querying Chroma.
+    #
+    ensure_result = ensure_knowledge_indexed()
+
+    if not ensure_result.get("success"):
+
+        print(
+            "CAREER RAG ERROR: "
+            "Knowledge could not be indexed."
+        )
+
+        return []
 
     collection_count = _collection.count()
 
     if collection_count == 0:
 
         print(
-            "CAREER RAG: Chroma collection is empty."
+            "CAREER RAG ERROR: "
+            "Collection is still empty after indexing."
         )
 
         return []
 
     top_k = min(
         top_k,
-        collection_count
+        collection_count,
     )
 
-    result = _collection.query(
-        query_texts=[query],
-        n_results=top_k,
-        include=[
-            "documents",
-            "metadatas",
-            "distances"
-        ]
-    )
+    try:
+
+        result = _collection.query(
+            query_texts=[query],
+            n_results=top_k,
+            include=[
+                "documents",
+                "metadatas",
+                "distances",
+            ],
+        )
+
+    except Exception as error:
+
+        print(
+            "CAREER RAG ERROR: "
+            "Retrieval failed:"
+        )
+
+        print(
+            repr(error)
+        )
+
+        return []
 
     documents = (
         result.get(
             "documents",
-            [[]]
+            [[]],
         )[0]
+        or []
     )
 
     metadatas = (
         result.get(
             "metadatas",
-            [[]]
+            [[]],
         )[0]
+        or []
     )
 
     distances = (
         result.get(
             "distances",
-            [[]]
+            [[]],
         )[0]
+        or []
     )
 
     retrieved = []
@@ -261,72 +498,87 @@ def retrieve(query, top_k=4):
             else None
         )
 
-        retrieved.append({
-            "text": document,
+        retrieved.append(
+            {
+                "text": document,
 
-            "source": metadata.get(
-                "source",
-                "unknown"
-            ),
+                "source": metadata.get(
+                    "source",
+                    "unknown",
+                ),
 
-            "chunk": metadata.get(
-                "chunk",
-                0
-            ),
+                "chunk": metadata.get(
+                    "chunk",
+                    0,
+                ),
 
-            "distance": distance
-        })
+                "distance": distance,
+            }
+        )
 
     return retrieved
- 
 
 # RAG context
-def retrieve_context(query, top_k=4):
+def retrieve_context(
+query,
+top_k=4,
+):
     """
-    Return formatted context suitable for Ollama.
+    Return formatted RAG context.
     """
 
-    results = retrieve(query, top_k)
+    results = retrieve(
+        query,
+        top_k,
+    )
 
     if not results:
 
         return {
+            "success": True,
             "context": "",
             "sources": [],
             "confidence": "low",
-            "results": []
+            "results": [],
         }
 
     context_parts = []
 
     sources = []
 
-    for index, result in enumerate(results):
+    for index, result in enumerate(
+        results
+    ):
 
         context_parts.append(
-            f"""
-SOURCE {index + 1}: {result["source"]}
-
-{result["text"]}
-""".strip()
+            (
+                f"SOURCE {index + 1}: "
+                f"{result['source']}\n\n"
+                f"{result['text']}"
+            )
         )
 
-        if result["source"] not in sources:
+        source = result["source"]
+
+        if source not in sources:
+
             sources.append(
-                result["source"]
+                source
             )
 
-    # Simple confidence category
+    # Keep the existing simple confidence
+    # calculation for compatibility.
     if len(results) >= 3:
+
         confidence = "high"
 
-    elif len(results) >= 1:
+    else:
+
         confidence = "medium"
 
-    else:
-        confidence = "low"
-
     return {
+        "success": True,
+
         "context": "\n\n".join(
             context_parts
         ),
@@ -335,57 +587,97 @@ SOURCE {index + 1}: {result["source"]}
 
         "confidence": confidence,
 
-        "results": results
+        "results": results,
     }
 
-# retriever carere context
-def retrieve_career_context(query, top_k=4):
+
+def retrieve_career_context(
+query,
+top_k=4,
+):
     """
     Public Student 5 retriever interface.
 
-    This function is called by the shared
-    RAG server:
+    Called by:
+
         POST /retrieve/career
     """
 
-    return retrieve_context(query, top_k)
+    return retrieve_context(
+        query,
+        top_k,
+    )
 
-# RAG health
+# RAG status
 def rag_status():
+
     try:
         count = _collection.count()
+
+        files = []
+
+        if KNOWLEDGE_DIR.exists():
+
+            files = [
+                path.name
+                for path in sorted(
+                    KNOWLEDGE_DIR.glob("*.txt")
+                )
+            ]
 
         return {
             "success": True,
             "available": True,
             "collection": COLLECTION_NAME,
             "documents": count,
-            "embedding_model": EMBEDDING_MODEL
+            "knowledge_directory": str(
+                KNOWLEDGE_DIR
+            ),
+            "knowledge_files": files,
+            "embedding_model": EMBEDDING_MODEL,
         }
 
     except Exception as error:
+
         return {
             "success": False,
             "available": False,
-            "error": str(error)
+            "error": str(error),
         }
 
-
-if __name__ == "__main__":
-
-    print(
-        "Indexing Student 5 "
-        "career knowledge..."
-    )
-
-    result = index_knowledge()
-
-    print(result)
+# init rag
+def initialise_rag():
 
     print(
-        "RAG status:"
+        "\n========================================"
     )
 
     print(
-        rag_status()
+        "INITIALISING CAREER RAG"
     )
+
+    print(
+        "========================================"
+    )
+
+    result = ensure_knowledge_indexed()
+
+    print(
+        "RAG INITIALISATION RESULT:",
+        result,
+    )
+
+    print(
+        "RAG STATUS:",
+        rag_status(),
+    )
+
+    print(
+        "========================================\n"
+    )
+
+    return result
+
+
+if __name__ == "main":
+    initialise_rag()

@@ -61,36 +61,24 @@ textarea {
 /* =========================================
    HEADER
 ========================================= */
-
+/* Top navigation */
 .topbar {
-  min-height: 86px;
-
+  height: 86px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-
   padding: 0 5vw;
-
   border-bottom: 1px solid var(--line);
-
+  background: rgba(255, 255, 255, 0.96);
   position: sticky;
   top: 0;
-
   z-index: 20;
-
-  background: rgba(255, 255, 255, 0.96);
-
-  backdrop-filter: blur(10px);
 }
 
 .brand {
   display: flex;
   align-items: center;
-
   gap: 12px;
-
   color: var(--green);
-
   font-size: 24px;
   font-weight: 800;
 }
@@ -98,31 +86,29 @@ textarea {
 .brand-mark {
   width: 42px;
   height: 42px;
-
   border: 4px solid var(--green);
   border-radius: 50%;
-
   position: relative;
 }
 
 .brand-mark::after {
   content: "";
-
   position: absolute;
-
   left: 12px;
   top: 8px;
-
   border-left: 13px solid var(--green);
   border-top: 9px solid transparent;
   border-bottom: 9px solid transparent;
 }
 
 .nav {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+
   display: flex;
   align-items: center;
-
-  gap: 28px;
+  gap: 26px;
 
   font-size: 15px;
   font-weight: 600;
@@ -1104,71 +1090,6 @@ button:disabled {
 }
 
 /* =========================================
-   AI APPROVAL
-========================================= */
-
-.ai-approval {
-  margin: 12px 0;
-
-  padding: 16px;
-
-  background: var(--green-soft);
-
-  border-left: 3px solid var(--green);
-
-  border-radius: 10px;
-}
-
-.ai-approval-response {
-  line-height: 1.6;
-}
-
-.ai-approval-review {
-  margin-top: 18px;
-
-  padding-top: 16px;
-
-  border-top: 1px solid rgba(10, 155, 67, 0.18);
-}
-
-.ai-approval-review p {
-  margin: 6px 0;
-}
-
-.ai-approval-buttons {
-  display: flex;
-
-  gap: 10px;
-
-  margin-top: 12px;
-}
-
-.ai-rejection-form {
-  margin-top: 15px;
-
-  padding: 15px;
-
-  background: #ffffff;
-
-  border: 1px solid var(--line);
-
-  border-radius: 10px;
-}
-
-.ai-rejection-form label {
-  display: block;
-
-  margin-bottom: 7px;
-
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.ai-rejection-form textarea {
-  margin-bottom: 10px;
-}
-
-/* =========================================
    APPLICATIONS
 ========================================= */
 
@@ -1399,13 +1320,5 @@ button:disabled {
 
   .user-message {
     max-width: 95%;
-  }
-
-  .ai-approval-buttons {
-    flex-direction: column;
-  }
-
-  .ai-approval-buttons button {
-    width: 100%;
   }
 }

@@ -1,56 +1,49 @@
-// Supports:
-// - Selected job context
-// - Job details
-// - Save job
-// - Apply to job
-// - AI job analysis
-// - Career Agent chat
-// - MCP/RAG backend responses
-// - Organisation knowledge TXT sources
-// - RAG source tags
-// - Human approval workflow
+const params = new URLSearchParams(
+  window.location.search
+);
 
-const params = new URLSearchParams(window.location.search);
 const jobId = params.get("id");
 
 let currentJob = null;
 let analysing = false;
 
-
-// Formatter
+// AI RESPONSE FORMATTER
 function formatAIResponse(value) {
-  if (value === null || value === undefined || value === "") {
-    return "<p>No response received.</p>";
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return `
+      <p>
+        No response received.
+      </p>
+    `;
   }
 
-  const text = String(value).trim();
 
-  // Escape HTML first for safety.
-  let safeText = escapeHtml(text);
+  const text = String(
+    value
+  ).trim();
 
-  // Basic markdown formatting.
-  //
-  // Bold:
-  // **text**
-  //
+  // Escape HTML first.
+  let safeText = escapeHtml(
+    text
+  );
+
+  // Bold
   safeText = safeText.replace(
     /\*\*(.*?)\*\*/g,
     "<strong>$1</strong>"
   );
 
-  // Inline code:
-  //
-  // `text`
-  //
+  // Inline code
   safeText = safeText.replace(
     /`([^`]+)`/g,
     "<code>$1</code>"
   );
 
-  // Preserve the AI response's original line breaks.
-  //
-  // Do not create <ol> or <ul> here because the AI may already
-  // have generated its own numbering.
+  // Preserve line breaks
   safeText = safeText.replace(
     /\r?\n/g,
     "<br>"
@@ -63,12 +56,9 @@ function formatAIResponse(value) {
   `;
 }
 
-
-// ============================================================
 // ANALYSIS DISPLAY
-// ============================================================
-
 function displayAnalysis(value) {
+
   if (
     value === null ||
     value === undefined ||
@@ -81,12 +71,9 @@ function displayAnalysis(value) {
     `;
   }
 
-
-  // ----------------------------------------------------------
-  // Array
-  // ----------------------------------------------------------
-
+  // Array 
   if (Array.isArray(value)) {
+
     if (value.length === 0) {
       return `
         <p class="analysis-empty">
@@ -102,7 +89,9 @@ function displayAnalysis(value) {
           .map(
             (item) => `
               <li>
-                ${escapeHtml(String(item))}
+                ${escapeHtml(
+                  String(item)
+                )}
               </li>
             `
           )
@@ -112,51 +101,52 @@ function displayAnalysis(value) {
     `;
   }
 
+  // Object 
+  if (
+    typeof value === "object"
+  ) {
 
-  // ----------------------------------------------------------
-  // Object
-  // ----------------------------------------------------------
-
-  if (typeof value === "object") {
     return `
       <pre class="analysis-object">${escapeHtml(
-        JSON.stringify(value, null, 2)
+        JSON.stringify(
+          value,
+          null,
+          2
+        )
       )}</pre>
     `;
   }
 
-
-  // ----------------------------------------------------------
-  // String / number / boolean
-  // ----------------------------------------------------------
-
+  // Primitive
   return `
     <p>
-      ${escapeHtml(String(value))}
+      ${escapeHtml(
+        String(value)
+      )}
     </p>
   `;
 }
 
 
-// ============================================================
+
 // RENDER AI JOB ANALYSIS
-// ============================================================
+
 
 function renderAIAnalysis(result) {
-  const container = document.getElementById(
-    "ai-analysis"
-  );
+
+  const container =
+    document.getElementById(
+      "ai-analysis"
+    );
+
 
   if (!container) {
     return;
   }
 
 
-  // ----------------------------------------------------------
-  // No result
-  // ----------------------------------------------------------
-
   if (!result) {
+
     container.innerHTML = `
       <p class="status-message error">
         No analysis received.
@@ -166,38 +156,12 @@ function renderAIAnalysis(result) {
     return;
   }
 
-
-  // ----------------------------------------------------------
-  // Some backends return:
-  //
-  // {
-  //   success: true,
-  //   skills: [...],
-  //   qualifications: [...],
-  //   experience: [...],
-  //   ats_keywords: [...],
-  //   summary: "..."
-  // }
-  //
-  // Other backends may return:
-  //
-  // {
-  //   analysis: {
-  //      skills: [...]
-  //   }
-  // }
-  // ----------------------------------------------------------
-
   const analysis =
     result.analysis &&
     typeof result.analysis === "object"
       ? result.analysis
       : result;
 
-
-  // ----------------------------------------------------------
-  // Render analysis
-  // ----------------------------------------------------------
 
   container.innerHTML = `
     <div class="analysis-grid">
@@ -208,7 +172,9 @@ function renderAIAnalysis(result) {
           Skills
         </h3>
 
-        ${displayAnalysis(analysis.skills)}
+        ${displayAnalysis(
+          analysis.skills
+        )}
 
       </div>
 
@@ -219,7 +185,9 @@ function renderAIAnalysis(result) {
           Qualifications
         </h3>
 
-        ${displayAnalysis(analysis.qualifications)}
+        ${displayAnalysis(
+          analysis.qualifications
+        )}
 
       </div>
 
@@ -230,7 +198,9 @@ function renderAIAnalysis(result) {
           Experience
         </h3>
 
-        ${displayAnalysis(analysis.experience)}
+        ${displayAnalysis(
+          analysis.experience
+        )}
 
       </div>
 
@@ -241,7 +211,9 @@ function renderAIAnalysis(result) {
           ATS Keywords
         </h3>
 
-        ${displayAnalysis(analysis.ats_keywords)}
+        ${displayAnalysis(
+          analysis.ats_keywords
+        )}
 
       </div>
 
@@ -252,7 +224,9 @@ function renderAIAnalysis(result) {
           Summary
         </h3>
 
-        ${displayAnalysis(analysis.summary)}
+        ${displayAnalysis(
+          analysis.summary
+        )}
 
       </div>
 
@@ -260,26 +234,22 @@ function renderAIAnalysis(result) {
   `;
 }
 
-
-// ============================================================
 // LOAD JOB
-// ============================================================
-
 async function loadJob() {
-  const container = document.getElementById(
-    "job-details"
-  );
+
+  const container =
+    document.getElementById(
+      "job-details"
+    );
+
 
   if (!container) {
     return;
   }
 
-
-  // ----------------------------------------------------------
-  // Check job ID
-  // ----------------------------------------------------------
-
+  // validate id
   if (!jobId) {
+
     container.innerHTML = `
       <p class="status-message error">
         No job selected.
@@ -289,31 +259,28 @@ async function loadJob() {
     return;
   }
 
-
-  // ----------------------------------------------------------
-  // Load job
-  // ----------------------------------------------------------
-
+  // fetch job
   try {
-    currentJob = await getJob(jobId);
+
+    currentJob = await getJob(
+      jobId
+    );
 
 
     if (!currentJob) {
-      throw new Error("Job not found.");
+      throw new Error(
+        "Job not found."
+      );
     }
 
-
-    // --------------------------------------------------------
-    // Render job
-    // --------------------------------------------------------
-
+    // render job
     container.innerHTML = `
       <article class="job-detail-card">
 
         <span class="tag">
           ${escapeHtml(
             currentJob.job_type ||
-              "Opportunity"
+            "Opportunity"
           )}
         </span>
 
@@ -321,7 +288,7 @@ async function loadJob() {
         <h1>
           ${escapeHtml(
             currentJob.title ||
-              "Untitled Job"
+            "Untitled Job"
           )}
         </h1>
 
@@ -329,7 +296,7 @@ async function loadJob() {
         <h2>
           ${escapeHtml(
             currentJob.company ||
-              "Company not specified"
+            "Company not specified"
           )}
         </h2>
 
@@ -338,7 +305,7 @@ async function loadJob() {
           <strong>Location:</strong>
           ${escapeHtml(
             currentJob.location ||
-              "Location not specified"
+            "Location not specified"
           )}
         </p>
 
@@ -347,7 +314,7 @@ async function loadJob() {
           <strong>Industry:</strong>
           ${escapeHtml(
             currentJob.industry ||
-              "Not specified"
+            "Not specified"
           )}
         </p>
 
@@ -356,7 +323,7 @@ async function loadJob() {
           <strong>Job Type:</strong>
           ${escapeHtml(
             currentJob.job_type ||
-              "Not specified"
+            "Not specified"
           )}
         </p>
 
@@ -365,7 +332,7 @@ async function loadJob() {
           <strong>Salary:</strong>
           ${escapeHtml(
             currentJob.salary ||
-              "Not specified"
+            "Not specified"
           )}
         </p>
 
@@ -381,7 +348,7 @@ async function loadJob() {
         <p class="long-text">
           ${escapeHtml(
             currentJob.description ||
-              "No job description available."
+            "No job description available."
           )}
         </p>
 
@@ -394,7 +361,7 @@ async function loadJob() {
         <p class="long-text">
           ${escapeHtml(
             currentJob.requirements ||
-              "No requirements provided."
+            "No requirements provided."
           )}
         </p>
 
@@ -422,7 +389,9 @@ async function loadJob() {
 
       </article>
     `;
+
   } catch (error) {
+
     console.error(
       "Could not load job:",
       error
@@ -436,7 +405,7 @@ async function loadJob() {
 
         ${escapeHtml(
           error.message ||
-            "Unknown error"
+          "Unknown error"
         )}
 
       </p>
@@ -444,22 +413,25 @@ async function loadJob() {
   }
 }
 
-
-// ============================================================
 // SAVE JOB
-// ============================================================
-
 async function saveJob() {
-  const message = document.getElementById(
-    "job-action-message"
-  );
 
-  if (!jobId || !message) {
+  const message =
+    document.getElementById(
+      "job-action-message"
+    );
+
+
+  if (
+    !jobId ||
+    !message
+  ) {
     return;
   }
 
 
   try {
+
     message.className =
       "status-message info";
 
@@ -467,7 +439,9 @@ async function saveJob() {
       "Saving job...";
 
 
-    await saveJobAPI(jobId);
+    await saveJobAPI(
+      jobId
+    );
 
 
     message.className =
@@ -475,7 +449,9 @@ async function saveJob() {
 
     message.textContent =
       "Job saved successfully.";
+
   } catch (error) {
+
     console.error(
       "Save job error:",
       error
@@ -493,22 +469,25 @@ async function saveJob() {
   }
 }
 
-
-// ============================================================
 // APPLY TO JOB
-// ============================================================
-
 async function applyJob() {
-  const message = document.getElementById(
-    "job-action-message"
-  );
 
-  if (!jobId || !message) {
+  const message =
+    document.getElementById(
+      "job-action-message"
+    );
+
+
+  if (
+    !jobId ||
+    !message
+  ) {
     return;
   }
 
 
   try {
+
     message.className =
       "status-message info";
 
@@ -516,7 +495,9 @@ async function applyJob() {
       "Adding application...";
 
 
-    await createApplication(jobId);
+    await createApplication(
+      jobId
+    );
 
 
     message.className =
@@ -524,7 +505,9 @@ async function applyJob() {
 
     message.textContent =
       "Application added successfully.";
+
   } catch (error) {
+
     console.error(
       "Application error:",
       error
@@ -542,22 +525,23 @@ async function applyJob() {
   }
 }
 
-
-// ============================================================
 // AI JOB ANALYSIS
-// ============================================================
-
 async function analyseJob() {
-  const container = document.getElementById(
-    "ai-analysis"
-  );
 
-  if (!container || !jobId) {
+  const container =
+    document.getElementById(
+      "ai-analysis"
+    );
+
+
+  if (
+    !container ||
+    !jobId
+  ) {
     return;
   }
 
 
-  // Prevent duplicate requests.
   if (analysing) {
     return;
   }
@@ -574,23 +558,31 @@ async function analyseJob() {
 
 
   try {
+
     const result =
-      await analyseJobAPI(jobId);
+      await analyseJobAPI(
+        jobId
+      );
 
 
     if (
       result &&
       result.success === false
     ) {
+
       throw new Error(
         result.error ||
-          "Analysis failed."
+        "Analysis failed."
       );
     }
 
 
-    renderAIAnalysis(result);
+    renderAIAnalysis(
+      result
+    );
+
   } catch (error) {
+
     console.error(
       "AI analysis error:",
       error
@@ -604,68 +596,91 @@ async function analyseJob() {
 
         ${escapeHtml(
           error.message ||
-            "Unknown error"
+          "Unknown error"
         )}
 
       </p>
     `;
+
   } finally {
+
     analysing = false;
   }
 }
 
+// CAREER AGENT RESPONSE
+function renderCareerAgentResponse(
+  result
+) {
 
-// Career agent response
-function renderCareerAgentResponse(result) {
   if (!result) {
+
     return `
       <div class="ai-response-content">
 
         <div class="ai-response-text">
+
           <p>
             No response received.
           </p>
+
         </div>
 
       </div>
     `;
   }
 
-  // Get AI response
+  // AI response
   const response =
     result.response ||
     result.message ||
     result.answer ||
     "No response received.";
 
-
-  // Get RAG sources if any
+  // sources
   let sources = [];
 
-  if (Array.isArray(result.sources)) {
-    sources = result.sources;
-  } else if (
+  if (
     result.rag &&
-    Array.isArray(result.rag.sources)
+    Array.isArray(
+      result.rag.sources
+    )
   ) {
-    sources = result.rag.sources;
+
+    sources =
+      result.rag.sources;
+
+  } else if (
+    Array.isArray(
+      result.sources
+    )
+  ) {
+
+    sources =
+      result.sources;
+
   } else if (
     result.result &&
-    Array.isArray(result.result.sources)
+    Array.isArray(
+      result.result.sources
+    )
   ) {
-    sources = result.result.sources;
+
+    sources =
+      result.result.sources;
+
   } else if (
     result.data &&
-    Array.isArray(result.data.sources)
+    Array.isArray(
+      result.data.sources
+    )
   ) {
-    sources = result.data.sources;
+
+    sources =
+      result.data.sources;
   }
 
-
-  // ----------------------------------------------------------
-  // Clean sources
-  // ----------------------------------------------------------
-
+  // Clean source list
   sources = [
     ...new Set(
       sources
@@ -676,26 +691,46 @@ function renderCareerAgentResponse(result) {
         )
         .map(
           (source) =>
-            String(source).trim()
+            String(
+              source
+            ).trim()
         )
         .filter(Boolean)
-    ),
+    )
   ];
 
+  // Confidence
+  const confidence =
+    result.rag &&
+    result.rag.confidence
+      ? result.rag.confidence
+      : null;
 
-  // ----------------------------------------------------------
-  // RAG source tags
-  // ----------------------------------------------------------
-
+  // RAG source UI
   const sourcesHTML =
     sources.length > 0
       ? `
         <div class="rag-sources">
 
           <div class="rag-sources-header">
+
             <span>
-              RAG Sources
+              Career Knowledge Sources
             </span>
+
+            ${
+              confidence
+                ? `
+                  <span class="rag-confidence">
+                    Confidence:
+                    ${escapeHtml(
+                      confidence
+                    )}
+                  </span>
+                `
+                : ""
+            }
+
           </div>
 
 
@@ -707,7 +742,9 @@ function renderCareerAgentResponse(result) {
                   <span
                     class="rag-source-tag"
                   >
-                    ${escapeHtml(source)}
+                    ${escapeHtml(
+                      source
+                    )}
                   </span>
                 `
               )
@@ -720,15 +757,17 @@ function renderCareerAgentResponse(result) {
       : "";
 
 
-  // ----------------------------------------------------------
-  // Final response
-  // ----------------------------------------------------------
 
+  // Final response
   return `
     <div class="ai-response-content">
 
       <div class="ai-response-text">
-        ${formatAIResponse(response)}
+
+        ${formatAIResponse(
+          response
+        )}
+
       </div>
 
 
@@ -738,29 +777,23 @@ function renderCareerAgentResponse(result) {
   `;
 }
 
-
-// ============================================================
-// HUMAN AI APPROVAL
-// ============================================================
-
+// HUMAN APPROVAL
 function renderAIApproval(
   chat,
   result
 ) {
-  if (!chat || !result) {
+
+  if (
+    !chat ||
+    !result
+  ) {
     return;
   }
 
-
-  const approvalId =
-    result.approval_id;
-
-
-  // ----------------------------------------------------------
-  // Backend does not require approval.
-  // ----------------------------------------------------------
+  const approvalId = result.approval_id;
 
   if (!approvalId) {
+
     chat.innerHTML += `
       <div class="ai-message">
 
@@ -780,22 +813,16 @@ function renderAIApproval(
       </div>
     `;
 
-
-    chat.scrollTop =
-      chat.scrollHeight;
-
+    chat.scrollTop = chat.scrollHeight;
 
     return;
   }
 
-
-  // ----------------------------------------------------------
-  // Approval required
-  // ----------------------------------------------------------
-
   const safeApprovalId =
     escapeHtml(
-      String(approvalId)
+      String(
+        approvalId
+      )
     );
 
 
@@ -899,14 +926,11 @@ function renderAIApproval(
     chat.scrollHeight;
 }
 
-
-// ============================================================
 // APPROVE AI RESPONSE
-// ============================================================
-
 async function approveAIResponse(
   approvalId
 ) {
+
   const status =
     document.getElementById(
       "chat-message"
@@ -916,12 +940,15 @@ async function approveAIResponse(
   const approval =
     document.querySelector(
       `[data-approval-id="${CSS.escape(
-        String(approvalId)
+        String(
+          approvalId
+        )
       )}"]`
     );
 
 
   if (status) {
+
     status.className =
       "status-message info";
 
@@ -931,6 +958,7 @@ async function approveAIResponse(
 
 
   try {
+
     const result =
       await submitAIApproval(
         approvalId,
@@ -942,19 +970,16 @@ async function approveAIResponse(
       !result ||
       result.success === false
     ) {
+
       throw new Error(
         result?.error ||
-          "Approval failed."
+        "Approval failed."
       );
     }
 
 
-    // --------------------------------------------------------
-    // Keep AI response.
-    // Replace only the review controls.
-    // --------------------------------------------------------
-
     if (approval) {
+
       const review =
         approval.querySelector(
           ".ai-approval-review"
@@ -962,10 +987,9 @@ async function approveAIResponse(
 
 
       if (review) {
+
         review.innerHTML = `
-          <div
-            class="status-message success"
-          >
+          <div class="status-message success">
 
             <strong>
               ✓ AI response approved
@@ -978,13 +1002,16 @@ async function approveAIResponse(
 
 
     if (status) {
+
       status.className =
         "status-message success";
 
       status.textContent =
         "AI response approved.";
     }
+
   } catch (error) {
+
     console.error(
       "AI approval error:",
       error
@@ -992,6 +1019,7 @@ async function approveAIResponse(
 
 
     if (status) {
+
       status.className =
         "status-message error";
 
@@ -1004,14 +1032,11 @@ async function approveAIResponse(
   }
 }
 
-
-// ============================================================
-// SHOW REJECTION FORM
-// ============================================================
-
+// SHOW REJECTION 
 function showAIRejection(
   approvalId
 ) {
+
   const form =
     document.getElementById(
       `ai-rejection-${approvalId}`
@@ -1038,14 +1063,11 @@ function showAIRejection(
   }
 }
 
-
-// ============================================================
 // REJECT AI RESPONSE
-// ============================================================
-
 async function rejectAIResponse(
   approvalId
 ) {
+
   const feedbackElement =
     document.getElementById(
       `ai-feedback-${approvalId}`
@@ -1061,7 +1083,9 @@ async function rejectAIResponse(
   const approval =
     document.querySelector(
       `[data-approval-id="${CSS.escape(
-        String(approvalId)
+        String(
+          approvalId
+        )
       )}"]`
     );
 
@@ -1075,15 +1099,13 @@ async function rejectAIResponse(
     feedbackElement.value.trim();
 
 
-  // ----------------------------------------------------------
-  // Require feedback
-  // ----------------------------------------------------------
-
   if (!feedback) {
+
     feedbackElement.focus();
 
 
     if (status) {
+
       status.className =
         "status-message error";
 
@@ -1096,11 +1118,8 @@ async function rejectAIResponse(
   }
 
 
-  // ----------------------------------------------------------
-  // Status
-  // ----------------------------------------------------------
-
   if (status) {
+
     status.className =
       "status-message info";
 
@@ -1108,12 +1127,9 @@ async function rejectAIResponse(
       "Sending feedback to Career Agent...";
   }
 
-
-  // ----------------------------------------------------------
-  // Disable buttons
-  // ----------------------------------------------------------
-
+  // Disable approval controls
   if (approval) {
+
     const buttons =
       approval.querySelectorAll(
         "button"
@@ -1129,6 +1145,7 @@ async function rejectAIResponse(
 
 
   try {
+
     const result =
       await submitAIApproval(
         approvalId,
@@ -1141,19 +1158,16 @@ async function rejectAIResponse(
       !result ||
       result.success === false
     ) {
+
       throw new Error(
         result?.error ||
-          "Could not submit feedback."
+        "Could not submit feedback."
       );
     }
 
-
-    // --------------------------------------------------------
-    // Mark original response as rejected.
-    // Keep original response visible.
-    // --------------------------------------------------------
-
+    // Mark old response as rejected
     if (approval) {
+
       const review =
         approval.querySelector(
           ".ai-approval-review"
@@ -1161,10 +1175,9 @@ async function rejectAIResponse(
 
 
       if (review) {
+
         review.innerHTML = `
-          <div
-            class="status-message error"
-          >
+          <div class="status-message error">
 
             <strong>
               ✕ AI response rejected
@@ -1189,16 +1202,12 @@ async function rejectAIResponse(
       }
     }
 
-
-    // --------------------------------------------------------
-    // Backend may return a new response
-    // requiring approval.
-    // --------------------------------------------------------
-
+    // Render regenerated response
     if (
       result.status ===
       "awaiting_approval"
     ) {
+
       const chat =
         document.getElementById(
           "chat-messages"
@@ -1206,6 +1215,7 @@ async function rejectAIResponse(
 
 
       if (chat) {
+
         renderAIApproval(
           chat,
           result
@@ -1215,24 +1225,24 @@ async function rejectAIResponse(
 
 
     if (status) {
+
       status.className =
         "status-message info";
 
       status.textContent =
         "New AI response generated. Please review the new response.";
     }
+
   } catch (error) {
+
     console.error(
       "AI rejection error:",
       error
     );
 
-
-    // --------------------------------------------------------
     // Re-enable buttons
-    // --------------------------------------------------------
-
     if (approval) {
+
       const buttons =
         approval.querySelectorAll(
           "button"
@@ -1248,6 +1258,7 @@ async function rejectAIResponse(
 
 
     if (status) {
+
       status.className =
         "status-message error";
 
@@ -1260,12 +1271,9 @@ async function rejectAIResponse(
   }
 }
 
-
-// ============================================================
 // CAREER AGENT CHAT
-// ============================================================
-
 async function sendMessage() {
+
   const input =
     document.getElementById(
       "chat-input"
@@ -1302,13 +1310,15 @@ async function sendMessage() {
   }
 
 
-  // ----------------------------------------------------------
+
   // Display user message
-  // ----------------------------------------------------------
+
 
   chat.innerHTML += `
     <div class="user-message">
-      ${escapeHtml(message)}
+      ${escapeHtml(
+        message
+      )}
     </div>
   `;
 
@@ -1324,9 +1334,9 @@ async function sendMessage() {
     "Career Agent is thinking...";
 
 
-  // ----------------------------------------------------------
+
   // Disable input
-  // ----------------------------------------------------------
+
 
   input.disabled = true;
 
@@ -1338,23 +1348,10 @@ async function sendMessage() {
 
 
   if (sendButton) {
-    sendButton.disabled =
-      true;
+    sendButton.disabled = true;
   }
 
-
   try {
-    // --------------------------------------------------------
-    // Send selected job ID to backend.
-    //
-    // Backend:
-    // 1. Loads selected job
-    // 2. Executes MCP/RAG
-    // 3. Retrieves organisation TXT files
-    // 4. Sends relevant context to AI
-    // 5. Returns response + sources
-    // --------------------------------------------------------
-
     const result =
       await sendChatMessage(
         message,
@@ -1366,26 +1363,26 @@ async function sendMessage() {
       !result ||
       result.success === false
     ) {
+
       throw new Error(
         result?.error ||
-          "AI request failed."
+        "AI request failed."
       );
     }
 
-
-    // --------------------------------------------------------
     // Human approval workflow
-    // --------------------------------------------------------
-
     if (
       result.status ===
       "awaiting_approval"
     ) {
+
       renderAIApproval(
         chat,
         result
       );
+
     } else {
+
       chat.innerHTML += `
         <div class="ai-message">
 
@@ -1406,20 +1403,17 @@ async function sendMessage() {
       `;
     }
 
-
-    // --------------------------------------------------------
     // Clear status
-    // --------------------------------------------------------
-
     status.className =
       "status-message";
 
     status.textContent = "";
 
 
-    chat.scrollTop =
-      chat.scrollHeight;
+    chat.scrollTop = chat.scrollHeight;
+
   } catch (error) {
+
     console.error(
       "Career Agent error:",
       error
@@ -1435,17 +1429,13 @@ async function sendMessage() {
         error.message ||
         "Unknown error"
       }`;
+
   } finally {
-    // --------------------------------------------------------
-    // Re-enable input
-    // --------------------------------------------------------
 
     input.disabled = false;
 
-
     if (sendButton) {
-      sendButton.disabled =
-        false;
+      sendButton.disabled = false;
     }
 
 
@@ -1453,14 +1443,11 @@ async function sendMessage() {
   }
 }
 
-
-// ============================================================
 // ENTER TO SEND
-// ============================================================
-
 document.addEventListener(
   "DOMContentLoaded",
   () => {
+
     const input =
       document.getElementById(
         "chat-input"
@@ -1475,10 +1462,12 @@ document.addEventListener(
     input.addEventListener(
       "keydown",
       (event) => {
+
         if (
           event.key === "Enter" &&
           !event.shiftKey
         ) {
+
           event.preventDefault();
 
           sendMessage();
@@ -1488,11 +1477,7 @@ document.addEventListener(
   }
 );
 
-
-// ============================================================
 // PAGE START
-// ============================================================
-
 document.addEventListener(
   "DOMContentLoaded",
   () => {

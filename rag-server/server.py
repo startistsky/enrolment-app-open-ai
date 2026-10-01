@@ -214,21 +214,77 @@ def retrieve_event():
 # student 5 Career RAG 
 @app.post("/retrieve/career")
 def retrieve_career():
-    try:
-        data = request.get_json() or {}
+    if not request.is_json:
 
-        query = data.get("query", "")
-        top_k = int(data.get("top_k", 4))
+        return jsonify({
+            "success": False,
+            "error": (
+                "Content-Type must be "
+                "application/json"
+            ),
+        }), 400
+
+    body = request.get_json(
+        silent=True
+    )
+
+    if not isinstance(
+        body,
+        dict,
+    ):
+
+        return jsonify({
+            "success": False,
+            "error": (
+                "Request body must be "
+                "a JSON object"
+            ),
+        }), 400
+
+    query = str(
+        body.get("query", "")
+    ).strip()
+
+    if not query:
+
+        return jsonify({
+            "success": False,
+            "error": "Query is required.",
+            "results": [],
+            "sources": [],
+            "context": "",
+            "confidence": "low",
+        }), 400
+
+    try:
+
+        top_k = int(
+            body.get(
+                "top_k",
+                4,
+            )
+        )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        top_k = 4
+
+    try:
 
         result = retrieve_career_context(
             query,
-            top_k
+            top_k,
         )
 
         return jsonify(result), 200
 
     except Exception as error:
+
         import traceback
+
         traceback.print_exc()
 
         return jsonify({
@@ -237,8 +293,9 @@ def retrieve_career():
             "results": [],
             "sources": [],
             "context": "",
-            "confidence": "low"
+            "confidence": "low",
         }), 500
+
 
 if __name__ == "__main__":
 

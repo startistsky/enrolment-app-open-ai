@@ -1,20 +1,46 @@
 import os
 import asyncio
+import json
+import requests
+
 from model.database import get_db
 
-# exposeRAG via MCP using the http
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
-# MCP configuration
-MCP_URL = os.getenv(
-    "MCP_URL",
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+MCP_SERVER_URL = os.getenv(
+    "MCP_SERVER_URL",
     "http://127.0.0.1:9001/mcp"
 )
 
-# Local database job tool
+RAG_SERVER_URL = os.getenv(
+    "RAG_SERVER_URL",
+    "http://127.0.0.1:9101"
+)
+
+
+# ============================================================
+# LOCAL DATABASE JOB TOOL
+# ============================================================
+
 def get_job_tool(job_id):
+    """
+    Retrieve a selected job from the local backend database.
+
+    This is used by the Career Agent to establish the selected
+    job context.
+
+    MCP also has a career_get_job_mcp tool. The agent can use
+    that tool when it needs MCP-validated job information.
+    """
+
     db = get_db()
+
     try:
         job = db.execute(
             """
@@ -31,18 +57,31 @@ def get_job_tool(job_id):
         return dict(job)
 
     finally:
-
         db.close()
 
-# MCP client
+
+# ============================================================
+# MCP CLIENT
+# ============================================================
+
 async def _call_mcp_tool(
     tool_name,
     arguments
 ):
-    async with streamable_http_client(MCP_URL) as (
+    """
+    Call a tool on the shared Smart Campus MCP server.
+
+    MCP server:
+        http://127.0.0.1:9001/mcp
+    """
+
+    async with streamable_http_client(
+        MCP_SERVER_URL
+    ) as (
         read_stream,
         write_stream
     ):
+
         async with ClientSession(
             read_stream,
             write_stream
@@ -58,14 +97,15 @@ async def _call_mcp_tool(
             return result
 
 
-
 def _extract_mcp_result(result):
     """
-    Convert MCP CallToolResult into a normal
-    Python value that the agent can use.
+    Convert MCP CallToolResult into a normal Python value.
     """
 
-    # If MCP returned structured content
+    # --------------------------------------------------------
+    # Structured content - SDK naming
+    # --------------------------------------------------------
+
     structured = getattr(
         result,
         "structuredContent",
@@ -73,11 +113,13 @@ def _extract_mcp_result(result):
     )
 
     if structured is not None:
-
         return structured
 
 
-    # Some SDK versions use structured_content
+    # --------------------------------------------------------
+    # Structured content - alternate SDK naming
+    # --------------------------------------------------------
+
     structured = getattr(
         result,
         "structured_content",
@@ -85,11 +127,13 @@ def _extract_mcp_result(result):
     )
 
     if structured is not None:
-
         return structured
 
 
-    # Otherwise inspect content blocks
+    # --------------------------------------------------------
+    # Text content
+    # --------------------------------------------------------
+
     content = getattr(
         result,
         "content",
@@ -98,7 +142,6 @@ def _extract_mcp_result(result):
 
     for item in content:
 
-        # TextContent
         text = getattr(
             item,
             "text",
@@ -106,16 +149,40 @@ def _extract_mcp_result(result):
         )
 
         if text:
-            import json
+
             try:
                 return json.loads(text)
+
             except json.JSONDecodeError:
+
                 return {
                     "success": True,
                     "result": text
                 }
 
+
+    # --------------------------------------------------------
+    # MCP error flag
+    # --------------------------------------------------------
+
+    is_error = getattr(
+        result,
+        "isError",
+        False
+    )
+
+    if is_error:
+
+        return {
+            "success": False,
+            "error": "MCP tool returned an error."
+        }
+
+
+    # --------------------------------------------------------
     # Fallback
+    # --------------------------------------------------------
+
     return {
         "success": True,
         "result": result
@@ -127,7 +194,7 @@ def call_mcp_tool(
     arguments
 ):
     """
-    Sync wrapper around the async MCP client
+    Synchronous wrapper around the asynchronous MCP client.
     """
 
     result = asyncio.run(
@@ -141,48 +208,53 @@ def call_mcp_tool(
         result
     )
 
-# MCP Job Analysis
-def analyse_job_tool(job):
+
+# ============================================================
+# MCP: SELECTED JOB
+# ============================================================
+
+def get_selected_job_mcp_tool(job):
+    """
+    Retrieve the selected job through the shared MCP server.
+    """
 
     try:
 
         return call_mcp_tool(
-            "career_analyse_selected_job",
+            "career_get_job_mcp",
             {
-                "job_id": job["id"]
+                "job_id": int(job["id"])
             }
         )
 
     except Exception as error:
 
         print(
-            "MCP JOB ANALYSIS ERROR:",
+            "MCP SELECTED JOB ERROR:",
             repr(error)
         )
 
-        # Fallback to existing local AI implementation
-        from .ai_service import analyse_job
+        return {
+            "success": False,
+            "error": str(error)
+        }
 
-        return analyse_job(
-            job.get(
-                "description",
-                ""
-            ),
-            job.get(
-                "requirements",
-                ""
-            )
-        )
 
-# Job Requirements
+# ============================================================
+# MCP: JOB REQUIREMENTS
+# ============================================================
+
 def get_job_requirements_tool(job):
+    """
+    Retrieve job requirements through MCP.
+    """
 
     try:
 
         return call_mcp_tool(
-            "career_get_job_requirements",
+            "career_get_job_requirements_mcp",
             {
-                "job_id": job["id"]
+                "job_id": int(job["id"])
             }
         )
 
@@ -193,9 +265,26 @@ def get_job_requirements_tool(job):
             repr(error)
         )
 
+        # ----------------------------------------------------
         # Local fallback
+        # ----------------------------------------------------
+
         return {
             "success": True,
+
+            "job_id": job.get(
+                "id"
+            ),
+
+            "title": job.get(
+                "title",
+                ""
+            ),
+
+            "company": job.get(
+                "company",
+                ""
+            ),
 
             "requirements": job.get(
                 "requirements",
@@ -205,31 +294,191 @@ def get_job_requirements_tool(job):
             "description": job.get(
                 "description",
                 ""
-            )
+            ),
+
+            "source": "local_fallback"
         }
 
-# RAG through MCP
-def get_career_rag_tool(message, job):
-    """
-    Retrieve general career guidance through MCP.
-    The selected job is used later by the response generator
-    for job-specific facts.
-    """
 
-    query = str(message or "").strip()
+# ============================================================
+# MCP: JOB ANALYSIS
+# ============================================================
+
+def analyse_job_tool(job):
+    """
+    Analyse the selected job through the shared MCP server.
+    """
 
     try:
+
         return call_mcp_tool(
-            "career_retrieve_knowledge",
+            "career_analyse_selected_job_mcp",
             {
-                "query": query,
-                "top_k": 4
+                "job_id": int(job["id"])
             }
         )
 
     except Exception as error:
+
         print(
-            "MCP RAG ERROR:",
+            "MCP JOB ANALYSIS ERROR:",
+            repr(error)
+        )
+
+        # ----------------------------------------------------
+        # Existing local AI fallback
+        # ----------------------------------------------------
+
+        try:
+
+            from .ai_service import analyse_job
+
+            return analyse_job(
+                job.get(
+                    "description",
+                    ""
+                ),
+                job.get(
+                    "requirements",
+                    ""
+                )
+            )
+
+        except Exception as fallback_error:
+
+            return {
+                "success": False,
+                "error": str(fallback_error)
+            }
+
+
+# ============================================================
+# RAG CLIENT
+# ============================================================
+
+def get_career_rag_tool(
+    message,
+    job=None
+):
+    """
+    Retrieve career knowledge from the dedicated RAG server.
+
+    IMPORTANT:
+    RAG is NOT called through MCP.
+
+    Architecture:
+
+        Agent
+          |
+          +---- MCP 9001
+          |
+          +---- RAG 9101
+    """
+
+    query = str(
+        message or ""
+    ).strip()
+
+    if not query:
+
+        return {
+            "success": False,
+            "error": "RAG query is empty.",
+            "results": [],
+            "sources": [],
+            "confidence": "low"
+        }
+
+
+    # --------------------------------------------------------
+    # Build RAG request
+    # --------------------------------------------------------
+
+    payload = {
+        "query": query,
+        "top_k": 4
+    }
+
+
+    # Optional job context.
+    if job:
+
+        payload["job"] = {
+            "id": job.get("id"),
+            "title": job.get(
+                "title",
+                ""
+            ),
+            "company": job.get(
+                "company",
+                ""
+            )
+        }
+
+
+    try:
+
+        # ----------------------------------------------------
+        # Primary RAG endpoint
+        # ----------------------------------------------------
+
+        response = requests.post(
+            f"{RAG_SERVER_URL}/retrieve/career",
+            json=payload,
+            timeout=30
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+
+        # ----------------------------------------------------
+        # Normalise response
+        # ----------------------------------------------------
+
+        if not isinstance(
+            data,
+            dict
+        ):
+
+            return {
+                "success": False,
+                "error": "Invalid RAG response.",
+                "results": [],
+                "sources": [],
+                "confidence": "low"
+            }
+
+
+        data.setdefault(
+            "success",
+            True
+        )
+
+        data.setdefault(
+            "results",
+            []
+        )
+
+        data.setdefault(
+            "sources",
+            []
+        )
+
+        data.setdefault(
+            "confidence",
+            "low"
+        )
+
+
+        return data
+
+
+    except requests.RequestException as error:
+
+        print(
+            "RAG ERROR:",
             repr(error)
         )
 

@@ -5,56 +5,67 @@ from .ai_service import (
 )
 
 from .agent_tools import (
-    get_job_tool,
+    get_selected_job_mcp_tool,
     analyse_job_tool,
     get_job_requirements_tool,
     get_career_rag_tool
 )
 
 
-# Plan 
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+MAX_AGENT_STEPS = 4
+
+
+# ============================================================
+# PLAN
+# ============================================================
+
 def choose_action(message):
-    
     """
-    Decide which tools to use
+    Decide which tool the agent should use first.
+
+    Available actions:
+
+        job_information
+        requirements
+        analyse_job
+        career_rag
     """
-    text = message.lower()
 
-    # Career / interview guidance
-    if any(
-        word in text
-        for word in [
-            "how should",
-            "how can",
-            "advice",
-            "guidance",
-            "preparation",
-            "interview",
-            "interviewing",
-            "apply",
-            "application",
-            "career",
-            "what should i",
-            "tips"
-        ]
-    ):
-        return "career_rag"
+    text = str(
+        message or ""
+    ).lower().strip()
 
-    # Job / ATS analysis
+
+    # --------------------------------------------------------
+    # Job analysis / ATS
+    # --------------------------------------------------------
+
     if any(
         word in text
         for word in [
             "ats",
             "keyword",
+            "keywords",
             "resume",
             "cv",
             "match",
-            "matching"
+            "matching",
+            "analyse",
+            "analyze",
+            "analysis"
         ]
     ):
         return "analyse_job"
 
-    # Job requirements
+
+    # --------------------------------------------------------
+    # Requirements
+    # --------------------------------------------------------
+
     if any(
         word in text
         for word in [
@@ -70,123 +81,491 @@ def choose_action(message):
     ):
         return "requirements"
 
+
+    # --------------------------------------------------------
+    # Career guidance
+    # --------------------------------------------------------
+
+    if any(
+        word in text
+        for word in [
+            "how should",
+            "how can",
+            "advice",
+            "guidance",
+            "preparation",
+            "prepare",
+            "interview",
+            "interviewing",
+            "apply",
+            "application",
+            "career",
+            "what should i",
+            "tips"
+        ]
+    ):
+        return "career_rag"
+
+
+    # --------------------------------------------------------
+    # Default
+    # --------------------------------------------------------
+
     return "job_information"
 
 
-# Observe
-def observe_result(action, tool_result, message):
+# ============================================================
+# OBSERVE
+# ============================================================
+
+def observe_result(
+    action,
+    tool_result,
+    message
+):
     """
-    Evaluate the result returned by the selected tool.
+    Inspect the result returned by an agent tool.
+
+    IMPORTANT:
+
+    We do NOT call evaluate_agent_result() for known structured
+    MCP/RAG tools.
+
+    These tools already have predictable response schemas.
+
+    This prevents valid MCP responses such as:
+
+        {
+            "success": True,
+            "requirements": "...",
+            "description": "..."
+        }
+
+    from being incorrectly marked as failures by the generic
+    LLM evaluator.
     """
 
+    # --------------------------------------------------------
+    # No result
+    # --------------------------------------------------------
+
     if tool_result is None:
+
         return {
             "success": False,
             "needs_adaptation": True,
             "reason": "Tool returned no result."
         }
 
-    if action == "career_rag":
 
-        if not isinstance(tool_result, dict):
-            return {
-                "success": False,
-                "needs_adaptation": True,
-                "reason": "Invalid RAG response."
-            }
+    # --------------------------------------------------------
+    # Invalid result
+    # --------------------------------------------------------
 
-        if tool_result.get("success") is False:
-            return {
-                "success": False,
-                "needs_adaptation": True,
-                "reason": tool_result.get(
-                    "error",
-                    "RAG request failed."
-                )
-            }
-
-        results = tool_result.get("results", [])
-
-        if not results:
-            return {
-                "success": False,
-                "needs_adaptation": True,
-                "reason": "RAG returned no relevant career knowledge."
-            }
+    if not isinstance(
+        tool_result,
+        dict
+    ):
 
         return {
-            "success": True,
-            "needs_adaptation": False,
-            "reason": "Relevant career knowledge was retrieved.",
+            "success": False,
+            "needs_adaptation": True,
+            "reason": "Tool returned an invalid response."
+        }
+
+
+    # --------------------------------------------------------
+    # Explicit failure
+    # --------------------------------------------------------
+
+    if tool_result.get("success") is False:
+
+        return {
+            "success": False,
+            "needs_adaptation": True,
+            "reason": tool_result.get(
+                "error",
+                "Tool request failed."
+            )
+        }
+
+
+    # ========================================================
+    # RAG
+    # ========================================================
+
+    if action == "career_rag":
+
+        results = tool_result.get(
+            "results",
+            []
+        )
+
+        sources = tool_result.get(
+            "sources",
+            []
+        )
+
+        confidence = tool_result.get(
+            "confidence",
+            "low"
+        )
+
+
+        # ----------------------------------------------------
+        # RAG returned useful information
+        # ----------------------------------------------------
+
+        if results:
+
+            return {
+                "success": True,
+
+                "needs_adaptation": False,
+
+                "reason": (
+                    "Relevant career knowledge was "
+                    "successfully retrieved from Career RAG."
+                ),
+
+                "rag": {
+                    "sources": sources,
+                    "confidence": confidence,
+                    "results": results
+                }
+            }
+
+
+        # ----------------------------------------------------
+        # RAG succeeded technically but returned no results
+        # ----------------------------------------------------
+
+        return {
+            "success": False,
+
+            "needs_adaptation": True,
+
+            "reason": (
+                "Career RAG returned no relevant "
+                "career knowledge."
+            ),
+
             "rag": {
-                "sources": tool_result.get("sources", []),
-                "confidence": tool_result.get("confidence", "low")
+                "sources": sources,
+                "confidence": confidence,
+                "results": []
             }
         }
 
-    evaluation = evaluate_agent_result(
-        message,
-        tool_result
-    )
+
+    # ========================================================
+    # MCP: JOB INFORMATION
+    # ========================================================
+
+    if action == "job_information":
+
+        job_data = tool_result.get(
+            "job"
+        )
+
+
+        if not job_data:
+
+            return {
+                "success": False,
+
+                "needs_adaptation": True,
+
+                "reason": (
+                    "MCP returned successfully but did not "
+                    "include job information."
+                ),
+
+                "mcp": {
+                    "tool": "career_get_job_mcp"
+                }
+            }
+
+
+        return {
+            "success": True,
+
+            "needs_adaptation": False,
+
+            "reason": (
+                "Selected job information was successfully "
+                "retrieved through MCP."
+            ),
+
+            "mcp": {
+                "tool": "career_get_job_mcp"
+            }
+        }
+
+
+    # ========================================================
+    # MCP: REQUIREMENTS
+    # ========================================================
+
+    if action == "requirements":
+
+        requirements = tool_result.get(
+            "requirements",
+            ""
+        )
+
+        description = tool_result.get(
+            "description",
+            ""
+        )
+
+
+        if not requirements and not description:
+
+            return {
+                "success": False,
+
+                "needs_adaptation": True,
+
+                "reason": (
+                    "MCP returned successfully but did not "
+                    "include job requirements or description."
+                ),
+
+                "mcp": {
+                    "tool": "career_get_job_requirements_mcp"
+                }
+            }
+
+
+        return {
+            "success": True,
+
+            "needs_adaptation": False,
+
+            "reason": (
+                "Job requirements and/or description were "
+                "successfully retrieved through MCP."
+            ),
+
+            "mcp": {
+                "tool": "career_get_job_requirements_mcp"
+            }
+        }
+
+
+    # ========================================================
+    # MCP: ANALYSIS
+    # ========================================================
+
+    if action == "analyse_job":
+
+        analysis = tool_result.get(
+            "analysis"
+        )
+
+
+        # ----------------------------------------------------
+        # Some backends return analysis directly.
+        # ----------------------------------------------------
+
+        if analysis is None:
+
+            analysis = tool_result
+
+
+        if not analysis:
+
+            return {
+                "success": False,
+
+                "needs_adaptation": True,
+
+                "reason": (
+                    "MCP analysis returned no analysis data."
+                ),
+
+                "mcp": {
+                    "tool": "career_analyse_selected_job_mcp"
+                }
+            }
+
+
+        return {
+            "success": True,
+
+            "needs_adaptation": False,
+
+            "reason": (
+                "Job analysis was successfully completed "
+                "through MCP."
+            ),
+
+            "mcp": {
+                "tool": "career_analyse_selected_job_mcp"
+            }
+        }
+
+
+    # ========================================================
+    # UNKNOWN ACTION
+    # ========================================================
 
     return {
-        "success": evaluation["adequate"],
-        "needs_adaptation": not evaluation["adequate"],
-        "reason": evaluation["reason"]
+        "success": False,
+
+        "needs_adaptation": True,
+
+        "reason": f"Unknown action: {action}"
     }
 
-# Adapt
+
+# ============================================================
+# ADAPT
+# ============================================================
+
 def adapt_action(
     action,
     observation,
     message
 ):
     """
-    ADAPT
+    Decide what the agent should do after observation.
 
-    Decide what the agent should do after
-    observing the previous tool result.
+    Fallback chain:
+
+        career_rag
+            ↓
+        job_information
+
+        analyse_job
+            ↓
+        requirements
+            ↓
+        job_information
+
+        requirements
+            ↓
+        job_information
+
+        job_information
+            ↓
+        requirements
     """
 
-    if not observation["needs_adaptation"]:
+    # --------------------------------------------------------
+    # Current result is good.
+    # Do not adapt.
+    # --------------------------------------------------------
 
+    if not observation.get(
+        "needs_adaptation",
+        True
+    ):
         return action
 
 
-    # If RAG could not find useful knowledge,
-    # fall back to the actual job information.
+    # --------------------------------------------------------
+    # RAG failed.
+    #
+    # Fall back to the selected job itself so that the LLM
+    # can still answer using the job description, requirements,
+    # company, etc.
+    # --------------------------------------------------------
+
     if action == "career_rag":
 
         return "job_information"
 
 
-    # If job analysis failed, use requirements.
+    # --------------------------------------------------------
+    # Analysis failed.
+    #
+    # Requirements gives the LLM useful structured job data.
+    # --------------------------------------------------------
+
     if action == "analyse_job":
 
         return "requirements"
 
 
-    # If requirements were unavailable,
-    # use general job information.
+    # --------------------------------------------------------
+    # Requirements failed.
+    #
+    # Complete job information is the next useful source.
+    # --------------------------------------------------------
+
     if action == "requirements":
 
         return "job_information"
 
 
+    # --------------------------------------------------------
+    # Job information failed.
+    #
+    # Try requirements as a secondary MCP tool.
+    # --------------------------------------------------------
+
+    if action == "job_information":
+
+        return "requirements"
+
+
+    # --------------------------------------------------------
+    # Safety fallback.
+    # --------------------------------------------------------
+
     return "job_information"
 
 
-# Act 
+# ============================================================
+# ACT
+# ============================================================
+
 def execute_action(
     action,
     job,
     message
 ):
     """
-    ACT
+    Execute the selected agent action.
 
-    Execute the tool selected during planning.
+    MCP actions:
+
+        job_information
+        requirements
+        analyse_job
+
+    RAG action:
+
+        career_rag
     """
+
+    # ========================================================
+    # MCP: COMPLETE JOB INFORMATION
+    # ========================================================
+
+    if action == "job_information":
+
+        return get_selected_job_mcp_tool(
+            job
+        )
+
+
+    # ========================================================
+    # MCP: REQUIREMENTS
+    # ========================================================
+
+    if action == "requirements":
+
+        return get_job_requirements_tool(
+            job
+        )
+
+
+    # ========================================================
+    # MCP: ANALYSIS
+    # ========================================================
 
     if action == "analyse_job":
 
@@ -195,14 +574,11 @@ def execute_action(
         )
 
 
-    elif action == "requirements":
+    # ========================================================
+    # RAG: CAREER KNOWLEDGE
+    # ========================================================
 
-        return get_job_requirements_tool(
-            job
-        )
-
-
-    elif action == "career_rag":
+    if action == "career_rag":
 
         return get_career_rag_tool(
             message,
@@ -210,29 +586,42 @@ def execute_action(
         )
 
 
-    else:
+    # ========================================================
+    # UNKNOWN ACTION
+    # ========================================================
 
-        return get_job_tool(
-            job["id"]
-        )
+    return {
+        "success": False,
+        "error": f"Unknown agent action: {action}"
+    }
 
 
-# Response generation
+# ============================================================
+# RESPONSE GENERATION
+# ============================================================
+
 def generate_response(
     message,
     job,
     action,
     tool_result,
-    observation
+    observation,
+    previous_result=None
 ):
     """
-    Generate the final response using:
+    Generate the final AI response.
+
+    The LLM receives:
 
         selected job
         user question
-        tool result
+        final action
+        final tool result
         observation
-        RAG evidence
+        previous tool result
+
+    The model is instructed through the
+    generate_response prompt loaded by load_prompt().
     """
 
     prompt = load_prompt(
@@ -246,95 +635,117 @@ def generate_response(
 
         tool_result=tool_result,
 
-        observation=observation
+        observation=observation,
+
+        previous_result=previous_result
     )
+
 
     return ask_smart(
         prompt
     )
 
 
-# Human approval 
+# ============================================================
+# HUMAN APPROVAL
+# ============================================================
+
 def create_pending_approval(
     response,
     planned_action,
     action,
     observation,
-    tool_result
+    tool_result,
+    previous_result=None
 ):
     """
-    HUMAN REVIEW
+    Return the AI response together with agent execution
+    evidence.
 
-    Return the AI response together with
-    evidence about the agentic process.
-
-    RAG source and confidence information
-    are also returned to the frontend.
+    Human approval is required before the response is
+    considered final.
     """
 
     result = {
 
         "success": True,
 
-        "status":
-            "awaiting_approval",
+        "status": "awaiting_approval",
 
-        "response":
-            response,
+        "response": response,
 
-        "planned_action":
-            planned_action,
+        "planned_action": planned_action,
 
-        "action":
-            action,
+        "action": action,
 
-        "observation":
-            observation,
+        "observation": observation,
 
-        "adapted":
-            (
-                planned_action != action
-            ),
+        "adapted": (
+            planned_action != action
+        ),
 
-        "requires_human_approval":
-            True
+        "requires_human_approval": True
     }
 
 
-    # Include RAG evidence when RAG was used.
+    # ========================================================
+    # MCP EVIDENCE
+    # ========================================================
+
+    if observation.get("mcp"):
+
+        result["mcp"] = {
+            **observation["mcp"]
+        }
+
+
+    # ========================================================
+    # RAG EVIDENCE
+    # ========================================================
+
     if action == "career_rag":
 
         result["rag"] = {
 
-            "sources":
-                tool_result.get(
-                    "sources",
-                    []
-                ),
+            "sources": tool_result.get(
+                "sources",
+                []
+            ),
 
-            "confidence":
-                tool_result.get(
-                    "confidence",
-                    "low"
-                ),
+            "confidence": tool_result.get(
+                "confidence",
+                "low"
+            ),
 
-            "results":
-                tool_result.get(
-                    "results",
-                    []
-                )
+            "results": tool_result.get(
+                "results",
+                []
+            )
         }
+
+
+    # ========================================================
+    # PREVIOUS TOOL RESULT
+    # ========================================================
+
+    if previous_result is not None:
+
+        result["previous_result"] = previous_result
 
 
     return result
 
-# Agentic Loop 
+
+# ============================================================
+# AGENTIC LOOP
+# ============================================================
+
 def run_career_agent(
     job,
     message
 ):
     """
-    Agentic AI Workflow
+    R1/R0-style Career Agent loop:
 
         PLAN
           ↓
@@ -342,25 +753,26 @@ def run_career_agent(
           ↓
         OBSERVE
           ↓
-        ADAPT if required
+        ADAPT
           ↓
-        ACT again
+        ACT
           ↓
-        OBSERVE again
+        OBSERVE
+          ↓
+        ...
           ↓
         GENERATE RESPONSE
           ↓
-        HUMAN REVIEW
+        HUMAN APPROVAL
 
-    Supported tools:
-
-        job_information
-        requirements
-        analyse_job
-        career_rag
+    Maximum number of tool executions is controlled by
+    MAX_AGENT_STEPS.
     """
 
-    # Validate job
+    # ========================================================
+    # VALIDATE JOB
+    # ========================================================
+
     if not job:
 
         return {
@@ -368,8 +780,14 @@ def run_career_agent(
             "error": "Job not found."
         }
 
-    # Validate message
-    if not message or not message.strip():
+
+    # ========================================================
+    # VALIDATE MESSAGE
+    # ========================================================
+
+    if not message or not str(
+        message
+    ).strip():
 
         return {
             "success": False,
@@ -379,7 +797,10 @@ def run_career_agent(
 
     try:
 
-        # plan 
+        # ====================================================
+        # PLAN
+        # ====================================================
+
         planned_action = choose_action(
             message
         )
@@ -388,7 +809,7 @@ def run_career_agent(
 
 
         print(
-            "---PLAN---"
+            "--- PLAN ---"
         )
 
         print(
@@ -396,82 +817,68 @@ def run_career_agent(
         )
 
         print(
-            f"Planned action: "
-            f"{planned_action}"
+            f"Planned action: {planned_action}"
         )
 
 
-        # act 
-        tool_result = execute_action(
-            action,
-            job,
-            message
-        )
+        # ====================================================
+        # LOOP STATE
+        # ====================================================
+
+        previous_result = None
+
+        observation = None
+
+        tool_result = None
+
+        executed_actions = []
+
+        adapted = False
 
 
-        print(
-            "---ACT---"
-        )
+        # ====================================================
+        # AGENT LOOP
+        # ====================================================
 
-        print(
-            f"Executing action: {action}"
-        )
-
-        print(
-            f"Tool result received: "
-            f"{tool_result}"
-        )
-
-
-        # observe
-        observation = observe_result(
-            action,
-            tool_result,
-            message
-        )
-
-
-        print(
-            "---OBSERVE---"
-        )
-
-        print(
-            f"Observation: "
-            f"{observation}"
-        )
-
-
-        # adapt
-        adapted_action = adapt_action(
-            action,
-            observation,
-            message
-        )
-
-
-        print(
-            "---ADAPT---"
-        )
-
-        print(
-            f"Original action: {action}"
-        )
-
-        print(
-            f"Adapted action: "
-            f"{adapted_action}"
-        )
-
-        # second act/observe
-        if adapted_action != action:
-            action = adapted_action
-
-            print("---ADAPTATION---")
+        for step in range(
+            MAX_AGENT_STEPS
+        ):
 
             print(
-                f"Changing action to: "
-                f"{action}"
+                f"--- AGENT STEP {step + 1}/{MAX_AGENT_STEPS} ---"
             )
+
+
+            # ------------------------------------------------
+            # Prevent accidental repeated action.
+            # ------------------------------------------------
+
+            if action in executed_actions:
+
+                print(
+                    f"Action '{action}' was already executed."
+                )
+
+                break
+
+
+            executed_actions.append(
+                action
+            )
+
+
+            # =================================================
+            # ACT
+            # =================================================
+
+            print(
+                "--- ACT ---"
+            )
+
+            print(
+                f"Executing action: {action}"
+            )
+
 
             tool_result = execute_action(
                 action,
@@ -480,13 +887,14 @@ def run_career_agent(
             )
 
 
-            print("---SECOND ACT---")
-
             print(
-                f"Tool result: "
-                f"{tool_result}"
+                f"Tool result: {tool_result}"
             )
 
+
+            # =================================================
+            # OBSERVE
+            # =================================================
 
             observation = observe_result(
                 action,
@@ -494,44 +902,159 @@ def run_career_agent(
                 message
             )
 
-            print("---SECOND OBSERVE---")
 
             print(
-                f"Observation after adaptation: "
-                f"{observation}"
+                "--- OBSERVE ---"
+            )
+
+            print(
+                f"Observation: {observation}"
             )
 
 
-        # Generate reponse
+            # ------------------------------------------------
+            # Successful result.
+            # Stop tool execution.
+            # ------------------------------------------------
+
+            if not observation.get(
+                "needs_adaptation",
+                True
+            ):
+
+                print(
+                    "Observation successful. "
+                    "No further adaptation required."
+                )
+
+                break
+
+
+            # =================================================
+            # ADAPT
+            # =================================================
+
+            next_action = adapt_action(
+                action,
+                observation,
+                message
+            )
+
+
+            print(
+                "--- ADAPT ---"
+            )
+
+            print(
+                f"Original action: {action}"
+            )
+
+            print(
+                f"Next action: {next_action}"
+            )
+
+
+            # ------------------------------------------------
+            # No useful next action.
+            # ------------------------------------------------
+
+            if next_action == action:
+
+                print(
+                    "No different action available."
+                )
+
+                break
+
+
+            # ------------------------------------------------
+            # Store first/previous result.
+            # ------------------------------------------------
+
+            if previous_result is None:
+
+                previous_result = tool_result
+
+
+            adapted = True
+
+            action = next_action
+
+
+        # ====================================================
+        # MAX STEPS REACHED
+        # ====================================================
+
+        if (
+            observation
+            and observation.get(
+                "needs_adaptation",
+                False
+            )
+            and len(executed_actions) >= MAX_AGENT_STEPS
+        ):
+
+            print(
+                "--- MAX AGENT STEPS REACHED ---"
+            )
+
+
+        # ====================================================
+        # FALLBACK IF NO RESULT
+        # ====================================================
+
+        if tool_result is None:
+
+            return {
+                "success": False,
+                "error": "Agent did not receive a tool result."
+            }
+
+
+        # ====================================================
+        # GENERATE RESPONSE
+        # ====================================================
+
         response = generate_response(
             message,
             job,
             action,
             tool_result,
-            observation
+            observation,
+            previous_result
         )
 
 
         print(
-            "---AI RESPONSE---"
+            "--- AI RESPONSE ---"
         )
 
         print(
             response
         )
 
-        # Human review
+
+        # ====================================================
+        # HUMAN REVIEW
+        # ====================================================
+
         result = create_pending_approval(
-            response,
-            planned_action,
-            action,
-            observation,
-            tool_result
+            response=response,
+
+            planned_action=planned_action,
+
+            action=action,
+
+            observation=observation,
+
+            tool_result=tool_result,
+
+            previous_result=previous_result
         )
 
 
         print(
-            "---HUMAN REVIEW REQUIRED---"
+            "--- HUMAN REVIEW REQUIRED ---"
         )
 
 

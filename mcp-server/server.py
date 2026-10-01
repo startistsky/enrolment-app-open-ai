@@ -26,7 +26,6 @@ from tools.student5_career_tools import (
     get_selected_job,
     get_job_requirements,
     analyse_selected_job,
-    retrieve_career_knowledge,
 )
 
 mcp = MCPServer("Smart Campus MCP")
@@ -40,10 +39,9 @@ AVAILABLE_TOOLS = [
     "event_by_title",
     "project_files",
     "ci_report",
-    "career_get_job",
-    "career_get_job_requirements",
-    "career_analyse_selected_job",
-    "career_retrieve_knowledge"
+    "career_get_job_mcp",
+    "career_get_job_requirements_mcp",
+    "career_analyse_selected_job_mcp",
 ]
 
 @mcp.tool()
@@ -81,28 +79,19 @@ def event_by_title(event_title: str):
 
 # student 5 tools
 @mcp.tool()
-def career_get_job(job_id: int):
+def career_get_job_mcp(job_id: int):
     """Get complete information about a selected career job."""
     return get_selected_job(job_id)
 
 @mcp.tool()
-def career_get_job_requirements(job_id: int):
+def career_get_job_requirements_mcp(job_id: int):
     """Get requirements and description of a selected job."""
     return get_job_requirements(job_id)
 
 @mcp.tool()
-def career_analyse_selected_job(job_id: int):
+def career_analyse_selected_job_mcp(job_id: int):
     """Analyse the selected career job."""
     return analyse_selected_job(job_id)
-
-
-@mcp.tool()
-def career_retrieve_knowledge(
-    query: str,
-    top_k: int = 4
-):
-    """Retrieve grounded career knowledge from the RAG server."""
-    return retrieve_career_knowledge(query, top_k)
 
 # general tools
 @mcp.tool()

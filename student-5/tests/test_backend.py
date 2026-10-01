@@ -28,7 +28,6 @@ from agent.agent import (
     choose_action,
     observe_result,
     adapt_action,
-    create_pending_approval,
     run_career_agent,
 )
 
