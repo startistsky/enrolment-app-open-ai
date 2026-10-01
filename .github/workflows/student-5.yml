@@ -15,44 +15,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # setup python
+        # setup Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      # install backend dependecies
+        # install dependencies
       - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r student-5/backend/requirements.txt
 
-        # run automated test
-      - name: Run Student 5 tests
-        run: |
-          cd student-5
-          export PYTHONPATH="$PWD/backend"
-          python -m pytest tests/ -v
-
-      # build student 5 image using the shared docker
-      - name: Build Student 5 Docker images
-        run: |
-          docker compose build database backend frontend
-
-      # start student 5 service
-      - name: Start Student 5 services
-        run: |
-          docker compose up -d database ollama backend frontend
-
-      # show container status for CI evidence/debugging
-      - name: Show running containers
-        run: |
-          docker compose ps
-
-      # check syntax
+      # check Python syntax
       - name: Check Python syntax
         run: |
           python -m py_compile student-5/backend/app.py
@@ -64,68 +43,121 @@ jobs:
           python -m py_compile student-5/backend/model/database.py
           python -m py_compile student-5/backend/model/seed.py
 
-      # validation configuration
+      # tests
+      - name: Run Student 5 tests
+        run: |
+          cd student-5
+          export PYTHONPATH="$PWD/backend"
+          python -m pytest tests/ -v
+
+      # Docker compose validation
       - name: Validate Docker Compose
         run: |
           docker compose config
 
-      # build docker service
+      # Build
       - name: Build Student 5 Docker services
         run: |
           docker compose build student5-database student5-backend
 
-      # start
-      - name: Start Student 5 Docker services
+      - name: Start services
         run: |
-          docker compose up -d student5-database student5-backend
+          docker compose up -d \
+            student5-database \
+            student5-backend \
+            ollama
 
-      # wait for service to start
-      - name: Wait for services
-        run: |
-          echo "Waiting for Student 5 services to start..."
-          sleep 15
-
-      # check container
-      - name: Check running containers
+      # Show inital status
+      - name: Show running containers
         run: |
           docker compose ps
 
-      # test health
+      # Wait for services
+      - name: Wait for Student 5 services
+        run: |
+          echo "Waiting for Student 5 services..."
+
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8005/health > /dev/null 2>&1; then
+              echo "Student 5 backend is ready."
+              break
+            fi
+
+            echo "Waiting for backend... attempt $i/30"
+            sleep 2
+          done
+
+      # Backend health
       - name: Test backend health
         run: |
-          curl --fail --retry 5 --retry-delay 5 http://localhost:8005/health
+          curl --fail \
+            --retry 10 \
+            --retry-delay 3 \
+            --retry-connrefused \
+            http://localhost:8005/health
 
-      - name: Test Jobs endpoints
+      # Jobs api
+      - name: Test Jobs endpoint
         run: |
-          curl --fail --retry 10 --retry-delay 3 \
+          curl --fail \
+            --retry 10 \
+            --retry-delay 3 \
+            --retry-connrefused \
             http://localhost:8005/api/jobs
 
-      # check MCP
+      # Run MCP server
       - name: Check shared MCP server
         run: |
-          curl --fail --retry 10 --retry-delay 3 \
+          echo "Checking MCP server..."
+
+          curl --fail \
+            --retry 10 \
+            --retry-delay 3 \
+            --retry-connrefused \
             http://localhost:9001/mcp
 
-      # check RAG
+      # RUn RAG server
       - name: Check shared RAG server
         run: |
-          curl --fail --retry 10 --retry-delay 3 \
+          echo "Checking RAG server..."
+
+          curl --fail \
+            --retry 10 \
+            --retry-delay 3 \
+            --retry-connrefused \
             http://localhost:9101
 
-      # show failure logs
+      # MCP and RAG test
+      - name: Run MCP and RAG integration tests
+        run: |
+          cd student-5
+          export PYTHONPATH="$PWD/backend"
+
+          python -m pytest \
+            tests/test_rag_mcp.py \
+            -v
+
+      - name: Show final container status
+        if: always()
+        run: |
+          docker compose ps
+
+      # Failure log
       - name: Show Docker logs on failure
         if: failure()
         run: |
+          echo "Student 5 Backend Logs"
+          docker compose logs student5-backend || true
+
           echo "Student 5 Database Logs"
           docker compose logs student5-database || true
 
-          echo "Student 5 Backend Logs
-          docker compose logs student5-backend || true
+          echo "Ollama Logs"
+          docker compose logs ollama || true
 
           echo "Docker Compose Status"
           docker compose ps
 
-      # stop Docker service
       - name: Stop Docker services
         if: always()
         run: |
