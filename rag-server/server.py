@@ -12,13 +12,15 @@ from retrievers.student4_event_retriever import (
     retrieve_event_context,
 )
 
+from retrievers.student5_career_retriever import (
+    retrieve_career_context,
+)
 
 app = Flask(__name__)
 
 
 @app.get("/health")
 def health():
-
     return jsonify({
         "service": "Smart Campus RAG Server",
         "status": "ok",
@@ -209,6 +211,91 @@ def retrieve_event():
         result
     )
 
+# student 5 Career RAG 
+@app.post("/retrieve/career")
+def retrieve_career():
+    if not request.is_json:
+
+        return jsonify({
+            "success": False,
+            "error": (
+                "Content-Type must be "
+                "application/json"
+            ),
+        }), 400
+
+    body = request.get_json(
+        silent=True
+    )
+
+    if not isinstance(
+        body,
+        dict,
+    ):
+
+        return jsonify({
+            "success": False,
+            "error": (
+                "Request body must be "
+                "a JSON object"
+            ),
+        }), 400
+
+    query = str(
+        body.get("query", "")
+    ).strip()
+
+    if not query:
+
+        return jsonify({
+            "success": False,
+            "error": "Query is required.",
+            "results": [],
+            "sources": [],
+            "context": "",
+            "confidence": "low",
+        }), 400
+
+    try:
+
+        top_k = int(
+            body.get(
+                "top_k",
+                4,
+            )
+        )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        top_k = 4
+
+    try:
+
+        result = retrieve_career_context(
+            query,
+            top_k,
+        )
+
+        return jsonify(result), 200
+
+    except Exception as error:
+
+        import traceback
+
+        traceback.print_exc()
+
+        return jsonify({
+            "success": False,
+            "error": str(error),
+            "results": [],
+            "sources": [],
+            "context": "",
+            "confidence": "low",
+        }), 500
+
 
 if __name__ == "__main__":
 
@@ -243,6 +330,12 @@ if __name__ == "__main__":
     print(
         "Event RAG endpoint: "
         "http://localhost:9101/retrieve/event",
+        flush=True
+    )
+
+    print(
+        "Career RAG endpoint: "
+        "http://localhost:9101/retrieve/career",
         flush=True
     )
 

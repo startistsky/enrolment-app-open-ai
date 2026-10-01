@@ -1,0 +1,61 @@
+CAREER GUIDANCE
+
+Career planning involves understanding a person's career goals, identifying suitable opportunities, developing relevant skills, preparing application materials, and preparing for recruitment processes.
+
+When evaluating a job opportunity, useful information includes:
+
+- Responsibilities described in the job advertisement.
+- Required technical skills.
+- Required non-technical skills.
+- Required qualifications.
+- Preferred qualifications.
+- Required or preferred experience.
+- Employment type.
+- Location.
+- Work arrangement.
+- Industry.
+- Opportunities to develop relevant skills.
+- Alignment with the candidate's career goals.
+
+A job advertisement should be treated as the primary source for information about a particular job.
+
+General career knowledge should be used to provide additional guidance rather than to invent requirements that are not present in the job advertisement.
+
+Career guidance should distinguish between:
+
+Required qualifications:
+Qualifications explicitly described as required by the employer.
+
+Preferred qualifications:
+Qualifications described as desirable, preferred, or advantageous.
+
+Required skills:
+Skills explicitly requested by the employer.
+
+Preferred skills:
+Skills that may improve suitability but are not explicitly mandatory.
+
+Experience requirements:
+Previous experience explicitly requested by the employer.
+
+If information is missing from a job advertisement, the assistant should state that the information is not available rather than inventing an answer.
+
+For graduate and entry-level positions, employers may place emphasis on education, relevant coursework, university projects, transferable skills, communication skills, problem-solving, and willingness to learn. However, the assistant should rely on the specific job advertisement when explaining the actual requirements of a particular role.
+
+Candidates should compare their own education, skills, experience, and career goals with the information provided in the job advertisement.
+
+The assistant should not assume that a candidate has a particular skill, qualification, experience, or career goal unless the candidate provides that information.
+
+Career guidance can help users:
+
+- Understand job opportunities.
+- Identify job requirements.
+- Identify skills to develop.
+- Prepare applications.
+- Prepare resumes.
+- Prepare for interviews.
+- Understand career terminology.
+- Plan possible next steps.
+- Identify information they may need to research further.
+
+Career advice should be practical, evidence-based, and clearly distinguish job-specific facts from general career guidance.

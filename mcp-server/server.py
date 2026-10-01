@@ -22,6 +22,11 @@ from tools.shared_tools import (
     read_ci_report,
 )
 
+from tools.student5_career_tools import (
+    get_selected_job,
+    get_job_requirements,
+    analyse_selected_job,
+)
 
 mcp = MCPServer("Smart Campus MCP")
 
@@ -34,14 +39,15 @@ AVAILABLE_TOOLS = [
     "event_by_title",
     "project_files",
     "ci_report",
+    "career_get_job_mcp",
+    "career_get_job_requirements_mcp",
+    "career_analyse_selected_job_mcp",
 ]
-
 
 @mcp.tool()
 def course_count():
     """Return the total number of Course Management records."""
     return get_course_count()
-
 
 @mcp.tool()
 def course_by_code(course_code: str):
@@ -66,13 +72,28 @@ def event_count():
     """Return the total number of Campus Event records."""
     return get_event_count()
 
-
 @mcp.tool()
 def event_by_title(event_title: str):
     """Return a Campus Event record matching the supplied title."""
     return get_event_by_title(event_title)
 
+# student 5 tools
+@mcp.tool()
+def career_get_job_mcp(job_id: int):
+    """Get complete information about a selected career job."""
+    return get_selected_job(job_id)
 
+@mcp.tool()
+def career_get_job_requirements_mcp(job_id: int):
+    """Get requirements and description of a selected job."""
+    return get_job_requirements(job_id)
+
+@mcp.tool()
+def career_analyse_selected_job_mcp(job_id: int):
+    """Analyse the selected career job."""
+    return analyse_selected_job(job_id)
+
+# general tools
 @mcp.tool()
 def project_files(directory_path: str = ".."):
     """List direct children of a directory inside the project repository."""
@@ -84,7 +105,7 @@ def ci_report(report_path: str = "../reports/report.json"):
     """Read the CI evidence JSON report when it is available."""
     return read_ci_report(report_path)
 
-
+# main
 if __name__ == "__main__":
     print("Starting Smart Campus MCP Server...", file=sys.stderr)
     print("Server status: RUNNING", file=sys.stderr)

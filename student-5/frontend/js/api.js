@@ -19,7 +19,11 @@ async function apiRequest(url, options = {}) {
     }
 
     if (!response.ok) {
-        throw new Error(data.error || "Request failed");
+        throw new Error(
+            data.error || 
+            data.detail || 
+            `Request failed (${response.status})`
+        );
     }
 
     return data;
@@ -107,19 +111,28 @@ async function analyseJobAPI(id) {
     });
 }
 
-// AI career agent chat for a selected chat
+//Carere Agent 
+// Frontend sends the selected job id
+// Backend will: 
+// 1. Load the selected job 
+// 2. Call MCP 
+// 3. Call RAG 
+// 4. Pass the retrieved information to the AI 
+// 5. Return the reponse and RAG sources 
+// The browser never connects directly to MCP/RAG 
+
 async function sendChatMessage(message, jobId = null) {
     return apiRequest("/ai/chat", {
         method: "POST",
 
         body: JSON.stringify({
             message: message,
-            job_id: jobId,
+            job_id: jobId ? Number(jobId): null,
         }),
     });
 }
 
-// AI human approval
+// Human approval
 async function submitAIApproval(approvalId, approved, feedback = "") {
     return apiRequest("/ai/approval", {
         method: "POST",
@@ -130,11 +143,6 @@ async function submitAIApproval(approvalId, approved, feedback = "") {
             feedback: feedback,
         }),
     });
-}
-
-// AI status
-async function getAIStatus() {
-    return apiRequest("/ai/status");
 }
 
 // AI status

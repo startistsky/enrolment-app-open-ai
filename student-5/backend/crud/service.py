@@ -622,3 +622,128 @@ def delete_application(application_id):
         "message":
             "Application deleted"
     })
+
+# save a resume
+@service.route(
+    "/resume",
+    methods=["POST"]
+)
+def save_resume():
+
+    data = request.json or {}
+
+    filename = data.get("filename")
+    content = data.get("content")
+
+    if not filename:
+        return jsonify({
+            "error": "Filename is required"
+        }), 400
+
+    if not content or not content.strip():
+        return jsonify({
+            "error": "Resume content is required"
+        }), 400
+
+    db = get_db()
+
+    try:
+
+        # Keep only one current resume.
+        db.execute(
+            """
+            DELETE FROM resumes
+            """
+        )
+
+        cursor = db.execute(
+            """
+            INSERT INTO resumes (
+                filename,
+                content
+            )
+            VALUES (?, ?)
+            """,
+            (
+                filename,
+                content
+            )
+        )
+
+        db.commit()
+
+        return jsonify({
+            "message": "Resume saved successfully",
+            "resume_id": cursor.lastrowid
+        }), 201
+
+    finally:
+        db.close()
+
+
+# get current resume
+@service.route(
+    "/resume",
+    methods=["GET"]
+)
+def get_resume():
+
+    db = get_db()
+
+    try:
+
+        resume = db.execute(
+            """
+            SELECT *
+            FROM resumes
+            ORDER BY created_at DESC
+            LIMIT 1
+            """
+        ).fetchone()
+
+        if not resume:
+
+            return jsonify({
+                "error": "No resume found"
+            }), 404
+
+        return jsonify(
+            dict(resume)
+        )
+
+    finally:
+        db.close()
+
+
+# delete current resume
+@service.route(
+    "/resume",
+    methods=["DELETE"]
+)
+def delete_resume():
+
+    db = get_db()
+
+    try:
+
+        cursor = db.execute(
+            """
+            DELETE FROM resumes
+            """
+        )
+
+        db.commit()
+
+        if cursor.rowcount == 0:
+
+            return jsonify({
+                "error": "No resume found"
+            }), 404
+
+        return jsonify({
+            "message": "Resume deleted successfully"
+        })
+
+    finally:
+        db.close()
+

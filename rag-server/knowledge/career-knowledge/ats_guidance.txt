@@ -1,0 +1,44 @@
+ATS GUIDANCE
+
+Applicant Tracking Systems (ATS) are software systems that organisations may use to collect, organise, and manage job applications.
+
+ATS systems may process information contained in application documents such as resumes and application forms.
+
+General ATS preparation guidance includes:
+
+- Use clear and standard section headings in a resume.
+- Make the resume easy to read.
+- Clearly state education, skills, experience, projects, and qualifications.
+- Use terminology that accurately reflects the job advertisement.
+- Include relevant technical skills when the candidate genuinely has those skills.
+- Include relevant qualifications when the candidate genuinely holds those qualifications.
+- Describe relevant projects and experience clearly.
+- Avoid adding skills or qualifications that the candidate does not have.
+- Ensure that dates, job titles, education details, and other information are accurate.
+- Proofread the application before submission.
+
+When tailoring a resume for a particular job, candidates can compare the resume with the job advertisement.
+
+Useful areas to compare include:
+
+- Job title.
+- Required qualifications.
+- Required technical skills.
+- Preferred skills.
+- Experience requirements.
+- Responsibilities.
+- Technologies and tools.
+- Relevant projects.
+- Relevant coursework.
+
+Keywords from a job advertisement should only be used when they accurately describe the candidate's actual skills, qualifications, education, or experience.
+
+Candidates should not add keywords solely to make an application appear more relevant if the candidate does not actually possess the corresponding skill or qualification.
+
+ATS optimisation should not involve misleading information.
+
+The assistant should not claim that a particular employer uses a specific ATS unless reliable information establishes that fact.
+
+The assistant should not guarantee that a resume will pass an ATS.
+
+ATS guidance should supplement, not replace, accurate and readable application content.

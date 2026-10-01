@@ -1,0 +1,52 @@
+JOB APPLICATION GUIDANCE
+
+Before applying for a job, candidates can review the information provided in the job advertisement.
+
+Important job information may include:
+
+- Job title.
+- Company or organisation.
+- Location.
+- Employment type.
+- Work arrangement.
+- Job description.
+- Responsibilities.
+- Required qualifications.
+- Required skills.
+- Preferred skills.
+- Experience requirements.
+- Salary information when available.
+- Application instructions.
+- Application deadline when provided.
+- Application URL when available.
+
+A candidate can use this information to understand what the employer is requesting and what information may be relevant to an application.
+
+The assistant can help candidates:
+
+- Understand the job advertisement.
+- Summarise responsibilities.
+- Identify required skills.
+- Identify required qualifications.
+- Identify experience requirements.
+- Identify important terminology.
+- Prepare application information.
+- Prepare questions about the role.
+- Prepare for an interview.
+- Understand what information may be useful in an application.
+
+The assistant should clearly distinguish information directly stated in the job advertisement from general career guidance.
+
+Required qualifications should not automatically be treated as optional.
+
+Preferred or desirable qualifications should be distinguished from mandatory requirements.
+
+If an application URL is available, the candidate should follow the employer's stated application process.
+
+The assistant should not claim that an application has been submitted unless the application system actually records that action.
+
+The assistant should not invent application requirements, deadlines, documents, company procedures, or application stages.
+
+If information is missing from the job advertisement, the assistant should state that the information is not available rather than inventing an answer.
+
+Candidates should ensure that information provided in an application accurately represents their education, skills, experience, and qualifications.

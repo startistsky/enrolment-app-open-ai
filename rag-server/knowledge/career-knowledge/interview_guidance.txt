@@ -1,0 +1,187 @@
+INTERVIEW GUIDANCE
+
+Interview preparation should be based on the selected job advertisement, including its responsibilities, requirements, skills, qualifications, technologies, and experience requirements.
+
+The assistant can help candidates prepare for interviews by:
+
+Explaining the responsibilities of the selected role.
+
+Identifying skills and qualifications mentioned in the job advertisement.
+
+Identifying technologies, tools, and knowledge areas mentioned in the job advertisement.
+
+Suggesting relevant behavioural interview questions based on the selected role.
+
+Suggesting technical interview preparation where appropriate.
+
+Helping the candidate structure answers using the STAR method.
+
+Helping the candidate identify relevant examples from their actual experience.
+
+Helping the candidate explain university projects, personal projects, internships, coursework, or other relevant experience.
+
+Helping the candidate prepare questions to ask the interviewer.
+
+STAR METHOD
+
+The STAR method can be used to structure answers to behavioural interview questions.
+
+Situation:
+Describe the relevant situation or context. Explain where and when the problem occurred.
+
+Task:
+Explain the responsibility, objective, or problem that needed to be addressed.
+
+Action:
+Explain the specific actions taken by the candidate. Focus on the candidate's own contribution, decisions, problem-solving approach, and collaboration.
+
+Result:
+Explain the outcome of the actions. Where possible, describe the result using a measurable outcome. If there was no measurable result, explain what was learned or how the experience improved the candidate's approach.
+
+PROBLEM-SOLVING QUESTIONS
+
+For a behavioural question about problem-solving, a useful STAR answer should explain:
+
+What problem or challenge occurred.
+
+Why the problem needed to be solved.
+
+What the candidate was responsible for.
+
+How the candidate investigated or understood the problem.
+
+What options or solutions were considered.
+
+What actions the candidate personally took.
+
+How the candidate worked with others where relevant.
+
+What the result was.
+
+What the candidate learned from the experience.
+
+Example question:
+
+"Tell me about a time you solved a difficult problem."
+
+The assistant can guide the candidate to structure the answer as:
+
+Situation:
+Describe the project, task, or situation where the problem occurred.
+
+Task:
+Explain what needed to be achieved and what responsibility the candidate had.
+
+Action:
+Explain how the candidate investigated the problem, identified possible solutions, selected an approach, implemented it, and worked with others if necessary.
+
+Result:
+Explain the outcome and any lessons learned.
+
+ROLE RELEVANCE
+
+Interview preparation should be connected to the selected job.
+
+If the job advertisement explicitly mentions a skill, qualification, technology, responsibility, or type of experience, the assistant can use that information when suggesting interview preparation.
+
+For example, if the selected job requires problem-solving, teamwork, software development, or knowledge of a particular technology, interview preparation can include questions and examples related to those areas.
+
+The assistant should not claim that a skill, technology, qualification, responsibility, interview stage, company process, or employer expectation exists unless it is provided by the selected job advertisement or another reliable source.
+
+CANDIDATE EXPERIENCE
+
+The assistant must not assume that the candidate has experience with a technology, qualification, project, internship, employment situation, or professional responsibility.
+
+Interview answers should be based on the candidate's actual experience.
+
+For graduate and entry-level roles, potentially relevant examples may include:
+
+University projects.
+
+Coursework.
+
+Personal software projects.
+
+Internships.
+
+Part-time employment.
+
+Group assignments.
+
+Hackathons.
+
+Volunteer activities.
+
+Other genuine experiences that demonstrate relevant skills.
+
+The assistant should clearly distinguish between:
+
+Information explicitly stated in the job advertisement.
+
+Information provided by the candidate.
+
+General interview preparation advice.
+
+Information retrieved from organisational knowledge sources.
+
+RAG USAGE
+
+When relevant organisational knowledge is retrieved, the assistant should use the retrieved information to improve the response.
+
+The assistant should not present retrieved knowledge as candidate-specific experience.
+
+The assistant should use retrieved knowledge to provide relevant guidance, such as:
+
+Explaining how STAR should be structured.
+
+Identifying what a strong behavioural answer should contain.
+
+Connecting interview preparation to the selected job.
+
+Suggesting areas the candidate should prepare.
+
+The frontend may display the retrieved knowledge sources so the user can see where the interview guidance came from.
+
+SOURCE TRANSPARENCY
+
+When the AI response uses retrieved knowledge, the response may include the names of the retrieved knowledge sources.
+
+Example:
+
+Sources:
+
+interview_guidance.txt
+
+career_guidance.txt
+
+The source names should be displayed as supporting information rather than as part of the AI's main answer.
+
+RESPONSE QUALITY
+
+AI responses should be:
+
+Relevant to the selected job.
+
+Based on retrieved information when applicable.
+
+Clear and concise.
+
+Practical for interview preparation.
+
+Explicit about assumptions.
+
+Based on the candidate's actual experience when discussing personal examples.
+
+The assistant should avoid:
+
+Inventing candidate experience.
+
+Inventing company interview processes.
+
+Inventing interview stages.
+
+Inventing employer expectations.
+
+Providing generic STAR explanations when the selected job provides relevant information that can be used instead.
+
+The goal of interview guidance is to help the candidate prepare a genuine, job-relevant answer rather than generate fictional experience.
