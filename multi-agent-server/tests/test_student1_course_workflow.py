@@ -212,7 +212,7 @@ def test_worker_valid_attribution(monkeypatch):
     output = {'answer': 'Database Systems', 'evidence_used': ['COMP3311'], 'missing_evidence': []}
     generate = Mock(return_value=output)
     monkeypatch.setattr(worker_agent, 'generate', generate)
-    assert worker_agent.run('Name the course', [{'course_code': 'COMP3311'}], {}) == output
+    assert worker_agent.run('Describe the supplied course', [{'course_code': 'COMP3311'}], {}) == output
     assert generate.call_count == 1
 
 
@@ -221,7 +221,7 @@ def test_worker_missing_attribution_retried_once(monkeypatch):
     corrected = {**missing, 'evidence_used': ['COMP3311']}
     generate = Mock(side_effect=[missing, corrected])
     monkeypatch.setattr(worker_agent, 'generate', generate)
-    assert worker_agent.run('Name the course', [{'course_code': 'COMP3311'}], {}) == corrected
+    assert worker_agent.run('Describe the supplied course', [{'course_code': 'COMP3311'}], {}) == corrected
     assert generate.call_count == 2
     context = generate.call_args.args[1]
     assert context['previous_worker_result'] == missing
@@ -234,7 +234,7 @@ def test_worker_invalid_attribution_fails_after_one_retry(monkeypatch, reference
     generate = Mock(return_value=output)
     monkeypatch.setattr(worker_agent, 'generate', generate)
     with pytest.raises(ModelError, match='evidence attribution after one corrective retry'):
-        worker_agent.run('Name the course', [{'course_code': 'COMP3311'}], {})
+        worker_agent.run('Describe the supplied course', [{'course_code': 'COMP3311'}], {})
     assert generate.call_count == 2
     assert output['evidence_used'] == references
 
@@ -243,14 +243,14 @@ def test_worker_empty_evidence_allows_empty_attribution(monkeypatch):
     output = {'answer': 'Insufficient evidence', 'evidence_used': [], 'missing_evidence': ['Course records']}
     generate = Mock(return_value=output)
     monkeypatch.setattr(worker_agent, 'generate', generate)
-    assert worker_agent.run('Name the course', [], {}) == output
+    assert worker_agent.run('Describe the supplied course', [], {}) == output
     assert generate.call_count == 1
 
 
 def test_worker_course_id_attribution(monkeypatch):
     output = {'answer': 'Database Systems', 'evidence_used': [12], 'missing_evidence': []}
     monkeypatch.setattr(worker_agent, 'generate', Mock(return_value=output))
-    assert worker_agent.run('Name the course', [{'course_id': 12}], {}) == output
+    assert worker_agent.run('Describe the supplied course', [{'course_id': 12}], {}) == output
 
 
 def test_worker_attribution_failure_is_structured(setup, monkeypatch):
@@ -286,7 +286,7 @@ def test_worker_exact_provenance_fallback(monkeypatch, answer, evidence, expecte
     output = {'answer': answer, 'evidence_used': [], 'missing_evidence': []}
     generate = Mock(side_effect=[output, output])
     monkeypatch.setattr(worker_agent, 'generate', generate)
-    assert worker_agent.run('Name the course', evidence, {})['evidence_used'] == expected
+    assert worker_agent.run('Describe the supplied course', evidence, {})['evidence_used'] == expected
     assert generate.call_count == 2
     assert 'correction_instruction' in generate.call_args.args[1]
     assert output['evidence_used'] == []
@@ -304,7 +304,7 @@ def test_worker_ambiguous_or_unmatched_fallback_fails(monkeypatch, answer, evide
     generate = Mock(return_value={'answer': answer, 'evidence_used': [], 'missing_evidence': []})
     monkeypatch.setattr(worker_agent, 'generate', generate)
     with pytest.raises(ModelError, match='evidence attribution after one corrective retry'):
-        worker_agent.run('Name the course', evidence, {})
+        worker_agent.run('Describe the supplied course', evidence, {})
     assert generate.call_count == 2
 
 
@@ -314,7 +314,7 @@ def test_model_attribution_preferred_over_fallback(monkeypatch):
     resolve = Mock(side_effect=AssertionError('Fallback must not run'))
     monkeypatch.setattr(worker_agent, 'generate', generate)
     monkeypatch.setattr(worker_agent, '_resolve_provenance', resolve)
-    assert worker_agent.run('Name the course', [{'course_code': 'COMP3311', 'course_name': 'Database Systems'}], {}) == output
+    assert worker_agent.run('Describe the supplied course', [{'course_code': 'COMP3311', 'course_name': 'Database Systems'}], {}) == output
     assert generate.call_count == 1
     resolve.assert_not_called()
 
@@ -325,7 +325,7 @@ def test_retry_attribution_preferred_over_fallback(monkeypatch):
     monkeypatch.setattr(worker_agent, 'generate', Mock(side_effect=[missing, corrected]))
     resolve = Mock(side_effect=AssertionError('Fallback must not run'))
     monkeypatch.setattr(worker_agent, '_resolve_provenance', resolve)
-    assert worker_agent.run('Name the course', [{'course_code': 'COMP3311', 'course_name': 'Database Systems'}], {}) == corrected
+    assert worker_agent.run('Describe the supplied course', [{'course_code': 'COMP3311', 'course_name': 'Database Systems'}], {}) == corrected
     resolve.assert_not_called()
 
 
@@ -336,7 +336,7 @@ def test_fallback_uses_retry_answer_and_replaces_invalid_references(monkeypatch)
     monkeypatch.setattr(worker_agent, 'generate', generate)
     evidence = [{'course_code': 'COMP3311', 'course_name': 'Database Systems'},
                 {'course_code': 'COMP1001', 'course_name': 'Programming'}]
-    result = worker_agent.run('Name the course', evidence, {})
+    result = worker_agent.run('Describe the supplied course', evidence, {})
     assert result == {**retry, 'evidence_used': ['COMP1001']}
     assert generate.call_count == 2
 
@@ -442,3 +442,244 @@ def test_reviewer_consistency_failure_is_structured(setup, monkeypatch):
     assert response.get_json()['reviewer_status'] == 'failed'
     assert response.get_json()['human_review']['status'] == 'unavailable'
     assert generate.call_count == 2
+
+
+COURSE_COMPLETENESS = [{'course_id': 4, 'course_code': 'COMP3311', 'course_name': 'Database Systems'}]
+
+
+@pytest.mark.parametrize('user_request,answer,valid', [
+    ('What is the name of COMP3311?', 'COMP3311', False),
+    ('What is the name of COMP3311?', 'Database Systems', True),
+    ('What is the name of COMP3311? Identify the supporting course code.', 'Database Systems (COMP3311)', True),
+    ('What is the name of COMP3311? Identify the supporting course code.', 'Database Systems', False),
+    ('What is the course code?', 'COMP3311', True),
+    ('What is the course ID of COMP3311?', '4', True),
+    ('What is the course ID of COMP3311?', 'COMP3311', False),
+    ('What is the lecturer name for COMP3311?', 'Not supplied', True),
+])
+def test_worker_requested_field_completeness(monkeypatch, user_request, answer, valid):
+    output = worker_output(answer)
+    generate = Mock(return_value=output)
+    monkeypatch.setattr(worker_agent, 'generate', generate)
+    if valid:
+        assert worker_agent.run(user_request, COURSE_COMPLETENESS, {}) == output
+        assert generate.call_count == 1
+    else:
+        result = worker_agent.run(user_request, COURSE_COMPLETENESS, {})
+        assert result.completion_source == 'deterministic_evidence_fallback'
+        from agents.course_request import missing_fields, requested_values
+        assert missing_fields(answer, requested_values(user_request, COURSE_COMPLETENESS))
+        assert not missing_fields(result['answer'], requested_values(user_request, COURSE_COMPLETENESS))
+        assert generate.call_count == 2
+
+
+def test_worker_completeness_retry_supplies_requested_categories(monkeypatch):
+    first = worker_output('COMP3311')
+    corrected = worker_output('Database Systems (COMP3311)')
+    generate = Mock(side_effect=[first, corrected])
+    monkeypatch.setattr(worker_agent, 'generate', generate)
+    assert worker_agent.run('What is the name of COMP3311? Identify the supporting course code.', COURSE_COMPLETENESS, {}) == corrected
+    assert generate.call_count == 2
+    context = generate.call_args.args[1]
+    assert context['requested_field_values'] == {'course_name': 'Database Systems', 'course_code': 'COMP3311'}
+    assert 'course_name' in context['correction_instruction']
+    assert first['answer'] == 'COMP3311'
+
+
+def test_worker_completeness_failure_is_structured(setup, monkeypatch):
+    spec = importlib.util.spec_from_file_location('actual_complete_worker', SERVER / 'agents' / 'worker_agent.py')
+    actual = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(actual)
+    generate = Mock(return_value=worker_output('COMP3311'))
+    monkeypatch.setattr(actual, 'generate', generate)
+    monkeypatch.setattr(worker_agent, 'run', actual.run)
+    response = setup[0].post('/workflow/course', json={**payload(), 'user_request': 'What is the name of COMP3311?', 'evidence': [{'course_code': 'COMP3311'}]})
+    assert response.status_code == 502
+    assert response.get_json()['failed_agent'] == 'worker'
+    assert 'Incomplete worker answer' in response.get_json()['error']
+    assert response.get_json()['human_review']['status'] == 'unavailable'
+    assert setup[2] == ['planner']
+    assert generate.call_count == 2
+
+
+@pytest.mark.parametrize('claim', [
+    'Worker correctly identified course ID 4 and course name Database Systems.',
+    'Worker provided Database Systems.',
+    'Worker correctly answered the course name.',
+    'Worker correctly answered the question.',
+])
+def test_reviewer_cannot_credit_absent_values(monkeypatch, claim):
+    bad = review_output(recommendation=claim)
+    good = review_output(risk='Incomplete answer', correction='Include the missing course name Database Systems.')
+    generate = Mock(side_effect=[bad, good])
+    monkeypatch.setattr(reviewer_agent, 'generate', generate)
+    assert reviewer_agent.run('What is the name of COMP3311?', COURSE_COMPLETENESS, {}, worker_output('COMP3311')) == good
+    assert generate.call_count == 2
+    facts = generate.call_args.args[1]['verified_completeness_facts']
+    assert facts['worker_answer_complete'] is False
+    assert facts['missing_requested_fields'] == ['course_name']
+
+
+def test_reviewer_repeated_absent_value_claim_fails(monkeypatch):
+    generate = Mock(return_value=review_output(recommendation='Worker correctly identified course ID 4 and course name Database Systems.'))
+    monkeypatch.setattr(reviewer_agent, 'generate', generate)
+    with pytest.raises(ModelError, match='reviewer evidence consistency after one corrective retry'):
+        reviewer_agent.run('What is the name of COMP3311?', COURSE_COMPLETENESS, {}, worker_output('COMP3311'))
+    assert generate.call_count == 2
+
+
+def test_reviewer_may_distinguish_evidence_from_worker_answer(monkeypatch):
+    output = review_output(risk='Incomplete answer', correction='Worker did not identify the course name. Evidence contains Database Systems; add the missing name.')
+    generate = Mock(return_value=output)
+    monkeypatch.setattr(reviewer_agent, 'generate', generate)
+    assert reviewer_agent.run('What is the name of COMP3311?', COURSE_COMPLETENESS, {}, worker_output('COMP3311')) == output
+    assert generate.call_count == 1
+
+
+@pytest.mark.parametrize('user_request,expected_answer', [
+    ('What is the name of COMP3311? Identify the supporting course code.', 'Database Systems (COMP3311)'),
+    ('What is the name of COMP3311?', 'Database Systems'),
+    ('What is the course code?', 'COMP3311'),
+    ('What is the course ID of COMP3311?', '4'),
+])
+def test_deterministic_completion_after_exactly_one_retry(monkeypatch, user_request, expected_answer):
+    generate = Mock(return_value=worker_output(''))
+    monkeypatch.setattr(worker_agent, 'generate', generate)
+    result = worker_agent.run(user_request, COURSE_COMPLETENESS, {})
+    assert result == {'answer': expected_answer, 'evidence_used': ['COMP3311'], 'missing_evidence': []}
+    assert result.completion_source == 'deterministic_evidence_fallback'
+    assert set(result) == {'answer', 'evidence_used', 'missing_evidence'}
+    assert generate.call_count == 2
+
+
+@pytest.mark.parametrize('user_request,evidence', [
+    ('What is the name of COMP3311?', COURSE_COMPLETENESS + [{'course_code': 'COMP3311', 'course_name': 'Other name'}]),
+    ('What is the name of COMP3311?', [{'course_code': 'COMP3311'}]),
+    ('What is the name of COMP3311 and its lecturer?', COURSE_COMPLETENESS),
+    ('What is the name of COMP9999?', COURSE_COMPLETENESS),
+    ('What is the course name?', COURSE_COMPLETENESS + [{'course_code': 'COMP1001', 'course_name': 'Programming'}]),
+    ('What is the name of COMP3311 and its credit points?', COURSE_COMPLETENESS),
+])
+def test_deterministic_completion_refuses_ambiguous_missing_or_unsupported(monkeypatch, user_request, evidence):
+    generate = Mock(return_value=worker_output('COMP3311'))
+    monkeypatch.setattr(worker_agent, 'generate', generate)
+    with pytest.raises(ModelError, match='Incomplete worker answer after one corrective retry'):
+        worker_agent.run(user_request, evidence, {})
+    assert generate.call_count == 2
+
+
+@pytest.mark.parametrize('retry', [False, True])
+def test_complete_model_output_keeps_model_source(monkeypatch, retry):
+    complete = worker_output('Database Systems (COMP3311)')
+    generate = Mock(side_effect=[worker_output('COMP3311'), complete] if retry else [complete])
+    monkeypatch.setattr(worker_agent, 'generate', generate)
+    result = worker_agent.run('What is the name of COMP3311? Identify the supporting course code.', COURSE_COMPLETENESS, {})
+    assert result == complete
+    assert result.completion_source == 'model'
+    assert generate.call_count == 2 if retry else generate.call_count == 1
+
+
+@pytest.mark.parametrize('fallback', [True, False])
+def test_workflow_records_completion_source_and_reviews_final_answer(setup, monkeypatch, fallback):
+    spec = importlib.util.spec_from_file_location('actual_fallback_worker', SERVER / 'agents' / 'worker_agent.py')
+    actual = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(actual)
+    answer = 'COMP3311' if fallback else 'Database Systems (COMP3311)'
+    generate = Mock(return_value=worker_output(answer))
+    monkeypatch.setattr(actual, 'generate', generate)
+    monkeypatch.setattr(worker_agent, 'run', actual.run)
+    reviewer = Mock(return_value=review_output())
+    monkeypatch.setattr(reviewer_agent, 'run', reviewer)
+    response = setup[0].post('/workflow/course', json={**payload(),
+        'user_request': 'What is the name of COMP3311? Identify the supporting course code.', 'evidence': COURSE_COMPLETENESS})
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body['worker_result']['answer'] == 'Database Systems (COMP3311)'
+    assert reviewer.call_args.args[3] == body['worker_result']
+    assert '4' not in body['worker_result']['answer']
+    source = 'deterministic_evidence_fallback' if fallback else 'model'
+    assert 'worker_completion_source' not in body['worker_result']
+    for file in ('history.jsonl', 'audit.jsonl'):
+        last = json.loads((setup[3] / file).read_text().splitlines()[-1])
+        assert last['worker_completion_source'] == source
+    setup[0].post(f"/workflow/{body['workflow_id']}/decision", json={'decision': 'Accept'})
+    final = json.loads((setup[3] / 'history.jsonl').read_text().splitlines()[-1])
+    assert final['worker_completion_source'] == source
+
+
+def test_reviewer_cannot_invent_id_for_final_completion(monkeypatch):
+    correct = review_output(risk='None')
+    generate = Mock(side_effect=[review_output(recommendation='Worker identified course ID 4.'), correct])
+    monkeypatch.setattr(reviewer_agent, 'generate', generate)
+    result = reviewer_agent.run('What is the name of COMP3311? Identify the supporting course code.',
+                               COURSE_COMPLETENESS, {}, worker_output('Database Systems (COMP3311)'))
+    assert result == correct
+    assert generate.call_count == 2
+    facts = generate.call_args.args[1]['verified_completeness_facts']
+    assert facts['worker_answer_complete'] is True
+
+
+@pytest.mark.parametrize('user_request,fields', [
+    ('What is the name of COMP3311? Identify the supporting course code.', ['course_name', 'course_code']),
+    ('What is the name of COMP3311?', ['course_name']),
+    ('What is the course code?', ['course_code']),
+    ('What is the course ID of COMP3311?', ['course_id']),
+])
+def test_planner_model_and_fallback_fields(monkeypatch, user_request, fields):
+    correct = {'plan': 'Identify ' + ' and '.join(fields), 'evidence_required': fields}
+    generate = Mock(return_value=correct)
+    monkeypatch.setattr(planner_agent, 'generate', generate)
+    result = planner_agent.run(user_request, COURSE_COMPLETENESS)
+    assert result == correct
+    assert result.completion_source == 'model'
+    assert generate.call_count == 1
+    generate.reset_mock()
+    generate.return_value = {'plan': 'Unrelated task', 'evidence_required': []}
+    result = planner_agent.run(user_request, COURSE_COMPLETENESS)
+    assert result.completion_source == 'deterministic_evidence_fallback'
+    assert generate.call_count == 2
+    assert result['evidence_required'] == [{field: COURSE_COMPLETENESS[0][field] for field in fields}]
+    assert set(result) == {'plan', 'evidence_required'}
+    assert planner_agent._fields(result['plan']) == set(fields)
+
+
+def test_planner_substituted_id_gets_one_retry(monkeypatch):
+    bad = {'plan': 'Identify course ID and course name', 'evidence_required': ['course_id', 'course_name']}
+    good = {'plan': 'Identify course name and supporting course code', 'evidence_required': ['course_name', 'course_code']}
+    generate = Mock(side_effect=[bad, good])
+    monkeypatch.setattr(planner_agent, 'generate', generate)
+    result = planner_agent.run('What is the name of COMP3311? Identify the supporting course code.', COURSE_COMPLETENESS)
+    assert result == good
+    assert result.completion_source == 'corrective_retry'
+    assert generate.call_count == 2
+    assert generate.call_args.args[1]['explicit_requested_fields'] == ['course_name', 'course_code']
+
+
+@pytest.mark.parametrize('evidence,user_request', [
+    (COURSE_COMPLETENESS + [{'course_code': 'COMP3311', 'course_name': 'Other'}], 'What is the name of COMP3311?'),
+    ([{'course_code': 'COMP3311'}], 'What is the name of COMP3311?'),
+    (COURSE_COMPLETENESS, 'What is the name of COMP3311 and its lecturer?'),
+])
+def test_planner_unresolvable_fallback_fails(monkeypatch, evidence, user_request):
+    generate = Mock(return_value={'plan': 'Identify course ID', 'evidence_required': ['course_id']})
+    monkeypatch.setattr(planner_agent, 'generate', generate)
+    with pytest.raises(ModelError, match='planner request-field alignment after one corrective retry'):
+        planner_agent.run(user_request, evidence)
+    assert generate.call_count == 2
+
+
+@pytest.mark.parametrize('source', ['model', 'corrective_retry', 'deterministic_evidence_fallback'])
+def test_workflow_records_planner_source(setup, monkeypatch, source):
+    planner = planner_agent.PlannerResult({'plan': 'Summarise records', 'evidence_required': ['course_code']}, source)
+    monkeypatch.setattr(planner_agent, 'run', Mock(return_value=planner))
+    monkeypatch.setattr(worker_agent, 'run', Mock(return_value=worker_output('COMP1001', ['COMP1001'])))
+    monkeypatch.setattr(reviewer_agent, 'run', Mock(return_value=review_output()))
+    response = setup[0].post('/workflow/course', json=payload())
+    assert response.status_code == 200
+    body = response.get_json()
+    assert set(body['planner_result']) == {'plan', 'evidence_required'}
+    for file in ('history.jsonl', 'audit.jsonl'):
+        row = json.loads((setup[3] / file).read_text().splitlines()[-1])
+        assert row['planner_completion_source'] == source
+    setup[0].post(f"/workflow/{body['workflow_id']}/decision", json={'decision': 'Accept'})
+    assert json.loads((setup[3] / 'history.jsonl').read_text().splitlines()[-1])['planner_completion_source'] == source

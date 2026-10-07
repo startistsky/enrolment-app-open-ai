@@ -61,3 +61,6 @@ multi-agent-server/coordination_audit.jsonl
 # Local security tooling and generated linter caches
 .venv*/
 .ruff_cache/
+
+# Local assessment review execution evidence
+agentic-review-logs/

@@ -23,6 +23,8 @@ class Coordinator:
         self.audit_path = Path(audit_path)
         self.workflows = {}
         self.user_requests = {}
+        self.worker_completion_sources = {}
+        self.planner_completion_sources = {}
         self.lock = RLock()
 
     def record(self, workflow, event):
@@ -37,6 +39,12 @@ class Coordinator:
             "human_review_status": workflow["human_review"]["status"],
             "human_decision": workflow["human_review"].get("decision"),
         }
+        source = self.worker_completion_sources.get(workflow["workflow_id"])
+        if source:
+            row["worker_completion_source"] = source
+        planner_source = self.planner_completion_sources.get(workflow["workflow_id"])
+        if planner_source:
+            row["planner_completion_source"] = planner_source
         # Audit excludes application content; history captures completed review states.
         # Do not persist raw evidence, service configuration or credentials.
         with self.lock:
@@ -53,6 +61,10 @@ class Coordinator:
                        for role in ("planner", "worker", "reviewer")},
                     "human_review": workflow["human_review"],
                 }
+                if planner_source:
+                    snapshot["planner_completion_source"] = planner_source
+                if source:
+                    snapshot["worker_completion_source"] = source
                 with self.history_path.open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps(snapshot) + "\n")
 
@@ -86,7 +98,11 @@ class Coordinator:
                     self.record(workflow, "model_error")
                     return copy.deepcopy(workflow), exc.status
             with self.lock:
-                workflow[f"{role}_result"] = result
+                if role == "planner":
+                    self.planner_completion_sources[workflow["workflow_id"]] = getattr(result, "completion_source", "model")
+                if role == "worker":
+                    self.worker_completion_sources[workflow["workflow_id"]] = getattr(result, "completion_source", "model")
+                workflow[f"{role}_result"] = dict(result)
                 workflow[f"{role}_status"] = "completed"
                 self.record(workflow, f"{role}_completed")
         with self.lock:

@@ -247,3 +247,49 @@ vulnerability scan or remediation.**
 Tool references: [Ruff security rules](https://docs.astral.sh/ruff/rules/),
 [detect-secrets baseline workflow](https://github.com/Yelp/detect-secrets),
 [pip-audit requirements and pre-commit usage](https://github.com/pypa/pip-audit).
+
+## Structured review evidence
+
+This summary records the actual dual-mode results above. Accepted findings remain
+unresolved; this block does not claim a clean raw scan.
+
+```json
+{
+  "review_evidence": {
+    "ruff": "PASS",
+    "detect_secrets": "PASS",
+    "pip_audit_raw": "FAIL",
+    "pip_audit_gate": "PASS",
+    "unresolved_findings": [
+      {
+        "advisory_id": "GHSA-f4j7-r4q5-qw2c",
+        "accepted": true,
+        "resolved": false,
+        "rationale": "No patched version listed for audited chromadb 1.5.9",
+        "mitigation": "No listed patch; embedded PersistentClient, no Chroma HTTP/model-repository configuration API."
+      },
+      {
+        "advisory_id": "GHSA-36p7-vc44-83pf",
+        "accepted": true,
+        "resolved": false,
+        "rationale": "No patched version listed for audited chromadb 1.5.9",
+        "mitigation": "No listed patch; no exposed Chroma UPDATE_COLLECTION/model-repository API."
+      },
+      {
+        "advisory_id": "GHSA-xph7-9rjv-w5fr",
+        "accepted": true,
+        "resolved": false,
+        "rationale": "No patched version listed for audited chromadb 1.5.9",
+        "mitigation": "No listed patch; embedded local collection, no Chroma HTTP RBAC service or tenant permission boundary."
+      },
+      {
+        "advisory_id": "GHSA-2wm9-hf6c-p5cr",
+        "accepted": true,
+        "resolved": false,
+        "rationale": "No patched version listed for audited chromadb 1.5.9",
+        "mitigation": "No listed patch; no exposed Chroma multi-tenant collection HTTP API."
+      }
+    ]
+  }
+}
+```

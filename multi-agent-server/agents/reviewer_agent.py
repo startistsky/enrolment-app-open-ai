@@ -1,5 +1,6 @@
 import re
 
+from agents.course_request import FIELDS, contains, missing_fields, requested_values
 from agents.worker_agent import _valid_attribution
 from llm_client import ModelError, generate
 
@@ -67,23 +68,64 @@ def _contradicts(result, facts):
     return facts["whole_answer_exact_match"] and any(cue in risk for cue in unsupported_cues)
 
 
+
+def _misstates_worker(result, worker_result, evidence, completeness):
+    """Reject explicit positive attribution of evidence-only facts to the Worker."""
+    text = " ".join([result["risk"], result["correction"], result["recommendation"],
+                     *(claim for claim in result["unsupported_claims"] if isinstance(claim, str))])
+    if completeness["missing_requested_fields"]:
+        normalised = _normalise(text)
+        # A supported but incomplete answer must be reviewed as incomplete.
+        if not re.search(r"\b(incomplete|incompleteness|missing|omitted|omit|include|provide|add|not answered)\b", normalised):
+            return True
+        if re.search(r"\b(worker|answer|output|response)\b.*\b(correctly answered|fully answered|fully satisfies)\b", normalised):
+            return True
+    for sentence in re.split(r"[.!?;]", text):
+        sentence = _normalise(sentence)
+        if not re.search(r"\b(worker|answer|output|response)\b", sentence):
+            continue
+        if not re.search(r"\b(identified|provided|returned|answered|included|named|stated|correctly answered)\b", sentence):
+            continue
+        if re.search(r"\b(not|never|missing|omitted|should|must|needs|fails|failed|doesn't|didn't)\b", sentence):
+            continue
+        for record in evidence:
+            for field in FIELDS:
+                value = record.get(field)
+                if (isinstance(value, (str, int)) and not isinstance(value, bool)
+                        and str(value).strip() and contains(sentence, value)
+                        and not contains(worker_result["answer"], value)):
+                    return True
+        for field in completeness["missing_requested_fields"]:
+            label = field.replace("_", " ")
+            if contains(sentence, label):
+                return True
+    return False
+
 def run(user_request, evidence, planner_result, worker_result):
     facts = _support_facts(evidence, planner_result, worker_result)
+    expected = requested_values(user_request, evidence)
+    completeness = {"requested_field_values": expected,
+                    "missing_requested_fields": missing_fields(worker_result["answer"], expected)}
+    completeness["worker_answer_complete"] = not completeness["missing_requested_fields"]
     context = {"user_request": user_request, "evidence": evidence,
                "planner_result": planner_result, "worker_result": worker_result,
-               "verified_support_facts": facts}
+               "verified_support_facts": facts, "verified_completeness_facts": completeness}
     fields = {"risk": str, "unsupported_claims": list, "correction": str, "recommendation": str}
     result = generate("reviewer", context, fields)
-    if _contradicts(result, facts):
+    if _contradicts(result, facts) or _misstates_worker(result, worker_result, evidence, completeness):
         context["previous_reviewer_result"] = result
         context["correction_instruction"] = (
             "Your review contradicts verified_support_facts. Do not classify verified "
             "exact values as unsupported. Only report genuinely absent factual claims. "
             "Review plan compliance, formatting and completeness separately in risk, "
             "correction or recommendation, never as unsupported factual claims. "
-            "Return the same Reviewer JSON schema; do not make a human decision."
+            "Use verified_completeness_facts separately from factual support and plan "
+            "compliance. Never say the Worker identified a supplied value that is "
+            "absent from worker_result.answer. Identify missing requested fields as "
+            "incompleteness, not unsupported facts. Return the same Reviewer JSON "
+            "schema; do not make a human decision."
         )
         result = generate("reviewer", context, fields)
-        if _contradicts(result, facts):
+        if _contradicts(result, facts) or _misstates_worker(result, worker_result, evidence, completeness):
             raise ModelError("Invalid reviewer evidence consistency after one corrective retry")
     return result

@@ -8,3 +8,5 @@ select = ["S"]
 "student-1/tests/*.py" = ["S101"]
 "multi-agent-server/tests/*.py" = ["S101"]
 "rag-server/tests/*.py" = ["S101"]
+# Release 2 review fixtures assert expected validation outcomes only.
+"shared/tests/*.py" = ["S101"]
