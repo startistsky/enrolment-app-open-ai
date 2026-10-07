@@ -25,7 +25,7 @@ def upstream(backend_app, monkeypatch):
     return database, post, evidence
 
 
-def test_proxy(backend_client, backend_app, upstream):
+def test_course_workflow_endpoint_proxy(backend_client, backend_app, upstream):
     assert backend_client.post(URL, json={'user_request': ' Summarise '}).status_code == 200
     upstream[0].assert_called_once_with('GET', '/courses')
     upstream[1].assert_called_once_with(f'{backend_app.MULTI_AGENT_SERVER_URL}/workflow/course',
@@ -66,7 +66,7 @@ def test_upstream_error(backend_client, upstream):
     assert result.get_json()['detail'] == 'Ollama unavailable'
 
 
-def test_decision_proxy(backend_client, upstream):
+def test_course_workflow_decision_endpoint_proxy(backend_client, upstream):
     body = workflow()
     body['status'] = 'completed'
     body['human_review'].update(status='completed', decision='Accept', reason='Checked')

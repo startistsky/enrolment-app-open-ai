@@ -62,6 +62,13 @@ jobs:
       - name: Validate frontend JavaScript
         run: node --check student-1/frontend/public/js/courses.js
 
+      - name: Post-commit endpoint tests
+        run: |
+          python -m pytest \
+            student-1/tests/test_multi_agent_integration.py::test_course_workflow_endpoint_proxy \
+            student-1/tests/test_multi_agent_integration.py::test_course_workflow_decision_endpoint_proxy \
+            -v
+
       - name: Run Student 1 tests
         run: python -m pytest student-1/tests rag-server/tests/test_student1_semantic.py multi-agent-server/tests -q
 
