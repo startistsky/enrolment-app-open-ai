@@ -53,3 +53,11 @@ student-5/database/career.db-shm
 
 # ChromaDB generated data
 rag-server/chroma/
+
+# Local Multi-Agent assessment evidence (runtime data)
+multi-agent-server/workflow_history.jsonl
+multi-agent-server/coordination_audit.jsonl
+
+# Local security tooling and generated linter caches
+.venv*/
+.ruff_cache/

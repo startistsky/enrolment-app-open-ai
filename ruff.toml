@@ -1,0 +1,10 @@
+extend-exclude = [".venv*", "venv", "env", "__pycache__", "chroma", "chroma-data", "docker-data", "ollama-data", "*.jsonl"]
+
+[lint]
+select = ["S"]
+
+[lint.per-file-ignores]
+# pytest assertions are test expectations, never production input validation.
+"student-1/tests/*.py" = ["S101"]
+"multi-agent-server/tests/*.py" = ["S101"]
+"rag-server/tests/*.py" = ["S101"]

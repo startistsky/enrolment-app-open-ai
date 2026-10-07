@@ -340,6 +340,6 @@ if __name__ == "__main__":
     )
 
     app.run(
-        host="0.0.0.0",
+        host="0.0.0.0",  # noqa: S104 -- intentional local Docker/host service ingress; not a public deployment.
         port=9101
     )

@@ -137,4 +137,4 @@ def delete_course(course_id):
 if __name__ == "__main__":
     init_db()
     print("Database initialized with 10 courses.")
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=False)  # noqa: S104 -- intentional local Docker/host service ingress; not a public deployment.
