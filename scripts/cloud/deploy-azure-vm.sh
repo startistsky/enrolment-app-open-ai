@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 trap 'echo "Azure deployment failed at line $LINENO" >&2' ERR
 RESOURCE_GROUP=${RESOURCE_GROUP:-asd-group5-rg}
-LOCATION=${LOCATION:-australiaeast}
+LOCATION=${LOCATION:-eastasia}
 VM_NAME=${VM_NAME:-asd-group5-vm}
 VM_SIZE=${VM_SIZE:-Standard_B2s}
 ADMIN_USERNAME=${ADMIN_USERNAME:-azureuser}

@@ -124,3 +124,47 @@ def test_private_source_archive_excludes_credentials_and_preserves_checkout(tmp_
     (source / 'student-2/backend/linked.py').symlink_to(tmp_path / 'outside.py')
     with pytest.raises(ValueError, match='non-regular'):
         packager.package(source, output)
+
+
+def test_selected_region_and_managed_identity_oidc_configuration():
+    import re
+    import yaml
+
+    script = (ROOT / 'scripts/cloud/deploy-azure-vm.sh').read_text()
+    workflow = yaml.safe_load((ROOT / '.github/workflows/cloud-deployment.yml').read_text())
+    documentation = (ROOT / 'docs/AZURE_DEPLOYMENT.md').read_text()
+    assert 'LOCATION=${LOCATION:-eastasia}' in script
+    # PyYAML's YAML 1.1 loader interprets the GitHub 'on' key as boolean True.
+    assert workflow.get('on', workflow.get(True)).keys() == {'workflow_dispatch'}
+    assert workflow['permissions'] == {'contents': 'read', 'id-token': 'write'}
+    job = workflow['jobs']['deploy']
+    assert job['environment'] == 'azure-assessment'
+    login_steps = [step for step in job['steps'] if step.get('uses') == 'azure/login@v2']
+    assert len(login_steps) == 1
+    assert login_steps[0]['with'] == {
+        'client-id': '${{ secrets.AZURE_CLIENT_ID }}',
+        'tenant-id': '${{ secrets.AZURE_TENANT_ID }}',
+        'subscription-id': '${{ secrets.AZURE_SUBSCRIPTION_ID }}',
+    }
+    deploy_step = next(step for step in job['steps'] if 'SSH_PRIVATE_KEY' in step.get('env', {}))
+    assert deploy_step['env']['LOCATION'] == 'eastasia'
+    assert deploy_step['env']['RESOURCE_GROUP'] == 'asd-group5-rg'
+    workflow_text = (ROOT / '.github/workflows/cloud-deployment.yml').read_text().lower()
+    assert 'client-secret' not in workflow_text and 'azure_credentials' not in workflow_text
+    assert 'asd-group5-github-oidc-mi' in documentation
+    assert 'repo:startistsky/enrolment-app-open-ai:environment:azure-assessment' in documentation
+    assert 'Contributor scoped only to `asd-group5-rg`' in documentation
+    # Historical region mentions must describe resource-group metadata, never deployment.
+    metadata_region = 'australia' + 'east'
+    matching_lines = [line for line in documentation.splitlines() if metadata_region in line.lower()]
+    assert matching_lines and all('resource-group metadata location' in line for line in matching_lines)
+    assert 'australia' + ' east' not in documentation.lower()
+    cloud_files = [ROOT / 'docker-compose.cloud.yml', ROOT / '.github/workflows/cloud-deployment.yml',
+                   *list((ROOT / 'scripts/cloud').glob('*.sh')), *list((ROOT / 'scripts/cloud').glob('*.py'))]
+    for path in cloud_files:
+        content = path.read_text().lower()
+        assert metadata_region not in content, path
+        assert 'az ad app create' not in content, path
+    for line in documentation.splitlines():
+        if re.match(r'export LOCATION=', line):
+            assert line == 'export LOCATION=eastasia'

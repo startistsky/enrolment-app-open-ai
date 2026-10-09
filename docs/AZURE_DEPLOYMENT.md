@@ -1,13 +1,21 @@
 # Group 5 Azure deployment preparation
 
-Status: repository prepared for validation. No Azure resources have been created
-by this work, and no deployment or Cloud Deployment Review PASS is claimed.
+Status: Azure/GitHub authentication preparation is complete. The existing resource
+group `asd-group5-rg`, User-Assigned Managed Identity `asd-group5-github-oidc-mi`,
+Contributor role assignment and federated identity credential are already configured.
+No Azure VM, NSG, VNet, NIC, public IP or OS disk has been created yet. The application
+has not been deployed, and Cloud Deployment Review must not be marked PASS.
 
 ## Architecture and subscription
 
 GitHub Actions (manual dispatch, Azure OIDC) → Azure Linux VM (Ubuntu 24.04) →
 Docker Compose frontend/backend/SQLite baseline. The existing resource group is
-`asd-group5-rg`, region `australiaeast`, subscription context **Azure for Students**.
+`asd-group5-rg`, subscription context **Azure for Students**.
+The resource-group metadata location is `australiaeast`; it remains unchanged.
+Deployable resources use **East Asia (`eastasia`)** due to the subscription's
+Azure for Students region policy. The permitted deployment regions are
+`koreacentral`, `centralindia`, `polandcentral`, `indonesiacentral` and `eastasia`.
+The resource group's metadata location does not select the deployment region.
 Confirm the selected subscription with `az account show` before executing scripts.
 The scripts intentionally do not create or delete the shared resource group.
 
@@ -70,13 +78,13 @@ and receives no repository token or Git metadata. The workflow's selected privat
 branch must contain these files when deployment is later dispatched. Local deployment
 can use the current checkout, including eligible uncommitted/untracked source files.
 This preparation does not commit, push, execute deployment scripts or create resources.
-Confirm the `Standard_B2s` quota/availability in Australia East for Azure for Students.
+Confirm the `Standard_B2s` quota/availability in East Asia (`eastasia`) for Azure for Students.
 
 Authenticate with Azure CLI and configure on a developer machine:
 
 ```sh
 export RESOURCE_GROUP=asd-group5-rg
-export LOCATION=australiaeast
+export LOCATION=eastasia
 export VM_NAME=asd-group5-vm
 export SOURCE_DIR="$PWD"
 export SSH_PUBLIC_KEY="$(cat ~/.ssh/id_ed25519.pub)"
@@ -137,7 +145,7 @@ Normal error handling closes SSH; forced runner termination or Azure API failure
 can leave `CloudDeploymentSSH` behind. Check/delete that rule after cancelled/failed
 runs. Any leftover rule is still restricted to the single deployment IPv4 address.
 
-Expected named resources created in the existing group:
+Expected application resources the script would create in `eastasia`, inside the existing group:
 
 - VM `asd-group5-vm`, Ubuntu 24.04, size `Standard_B2s`.
 - Managed OS disk `asd-group5-vm-osdisk`, 32 GiB, Standard LRS.
@@ -155,25 +163,45 @@ this is not an arbitrary existing-VM migration tool.
 ## GitHub manual workflow
 
 `.github/workflows/cloud-deployment.yml` has only `workflow_dispatch`.
-Create an `azure-assessment` GitHub environment and configure its branch policy
-and optional approval protection. Configure an Entra application/service principal
-with an OIDC federated credential for
-`repo:OWNER/REPOSITORY:environment:azure-assessment`; grant deployment permissions
-scoped to `asd-group5-rg` (Contributor is sufficient; refine if required).
-No client secret is required. See Microsoft's
-[Azure GitHub OIDC instructions](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure-openid-connect).
+The GitHub Environment `azure-assessment` already exists with the deployment
+secrets and HTTP CIDR variable configured. The UTS tenant does not allow the student
+account to create applications, so authentication uses the existing User-Assigned
+Managed Identity rather than an application registration.
 
-Required repository/environment secrets:
+The real authentication path is:
+
+GitHub Actions → GitHub OIDC token → User-Assigned Managed Identity
+`asd-group5-github-oidc-mi` → Contributor scoped only to `asd-group5-rg` → Azure resources.
+
+The managed identity is in `asd-group5-rg`, location `eastasia`. Its federated
+credential is already configured as:
+
+| Setting | Configured value |
+| --- | --- |
+| Name | `github-azure-assessment` |
+| Issuer | `https://token.actions.githubusercontent.com` |
+| Subject | `repo:startistsky/enrolment-app-open-ai:environment:azure-assessment` |
+| Audience | `api://AzureADTokenExchange` |
+
+`AZURE_CLIENT_ID` is the **client ID of this User-Assigned Managed Identity**.
+No Azure client secret is used. `azure/login@v2` exchanges the workflow's GitHub
+OIDC token for Azure access using that identity; `contents: read` and
+`id-token: write` remain configured. The workflow explicitly supplies
+`LOCATION: eastasia` and `RESOURCE_GROUP: asd-group5-rg` to deployment.
+Environment approval/branch policies may be reviewed without changing the secrets.
+See Microsoft's [Azure GitHub OIDC instructions](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure-openid-connect).
+
+Already configured GitHub Environment secrets (values are not recorded here):
 
 | Secret | Value |
 | --- | --- |
-| `AZURE_CLIENT_ID` | Entra application client ID |
+| `AZURE_CLIENT_ID` | Client ID of User-Assigned Managed Identity `asd-group5-github-oidc-mi` |
 | `AZURE_TENANT_ID` | Directory tenant ID |
 | `AZURE_SUBSCRIPTION_ID` | Azure for Students subscription ID |
 | `AZURE_VM_SSH_PUBLIC_KEY` | Matching OpenSSH public key text |
 | `AZURE_VM_SSH_PRIVATE_KEY` | Dedicated deployment private key, unencrypted |
 
-Required repository/environment variable: `AZURE_HTTP_SOURCE_CIDR`, the source CIDR
+Already configured GitHub Environment variable: `AZURE_HTTP_SOURCE_CIDR`, the source CIDR
 allowed to browse the frontend. Use the assessor/team `/32` for a restricted demo;
 `0.0.0.0/0` is supported when public HTTP assessment access is explicitly desired.
 The HTTP rule never includes backend, database or AI ports. The six published

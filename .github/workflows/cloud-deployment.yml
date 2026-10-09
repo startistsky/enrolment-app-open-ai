@@ -35,6 +35,8 @@ jobs:
           for script in scripts/cloud/*.sh; do bash -n "$script"; done
       - name: Deploy baseline and check VM health
         env:
+          LOCATION: eastasia
+          RESOURCE_GROUP: asd-group5-rg
           SOURCE_DIR: ${{ github.workspace }}
           SSH_PRIVATE_KEY: ${{ secrets.AZURE_VM_SSH_PRIVATE_KEY }}
           SSH_PUBLIC_KEY: ${{ secrets.AZURE_VM_SSH_PUBLIC_KEY }}
