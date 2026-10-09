@@ -11,8 +11,8 @@ python shared/agentic_loop.py --mode testing-review \
   --ci-report reports/student-1-post-commit-ci-report.md \
   --output agentic-review-logs/testing-review-summary.json
 python shared/agentic_loop.py --mode multi-agent-review \
-  --workflow-history multi-agent-server/workflow_history.jsonl \
-  --coordination-audit multi-agent-server/coordination_audit.jsonl
+  --workflow-history ai-services/multi-agent-server/workflow_history.jsonl \
+  --coordination-audit ai-services/multi-agent-server/coordination_audit.jsonl
 python shared/agentic_loop.py --mode cloud-review \
   --cloud-report reports/cloud-deployment-report.md
 ```
@@ -63,8 +63,8 @@ and human approval. Enabled baseline AI services fail validation.
 Verification:
 
 ```sh
-python -m pytest shared/tests multi-agent-server/tests student-1/tests rag-server/tests/test_student1_semantic.py -q
-python -m compileall -q shared multi-agent-server student-1/backend
+python -m pytest shared/tests ai-services/multi-agent-server/tests student-1/tests rag-server/tests/test_student1_semantic.py -q
+python -m compileall -q shared ai-services/multi-agent-server student-1/backend
 pre-commit run --all-files
 ```
 

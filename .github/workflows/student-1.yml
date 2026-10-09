@@ -6,7 +6,8 @@ on:
       - "student-1/**"
       - "mcp-server/**"
       - "rag-server/**"
-      - "multi-agent-server/**"
+      - "ai-services/multi-agent-server/**"
+      - "shared/**"
       - "docker-compose.yml"
       - ".github/workflows/student-1.yml"
   pull_request:
@@ -14,7 +15,8 @@ on:
       - "student-1/**"
       - "mcp-server/**"
       - "rag-server/**"
-      - "multi-agent-server/**"
+      - "ai-services/multi-agent-server/**"
+      - "shared/**"
       - "docker-compose.yml"
       - ".github/workflows/student-1.yml"
 
@@ -44,7 +46,7 @@ jobs:
             -r student-1/tests/requirements.txt \
             -r mcp-server/requirements.txt \
             -r rag-server/requirements.txt \
-            -r multi-agent-server/requirements.txt
+            -r ai-services/multi-agent-server/requirements.txt
 
       - name: Check Python dependencies
         run: python -m pip check
@@ -57,7 +59,8 @@ jobs:
             student-1/tests \
             mcp-server \
             rag-server \
-            multi-agent-server
+            ai-services/multi-agent-server \
+            shared
 
       - name: Validate frontend JavaScript
         run: node --check student-1/frontend/public/js/courses.js
@@ -70,7 +73,7 @@ jobs:
             -v
 
       - name: Run Student 1 tests
-        run: python -m pytest student-1/tests rag-server/tests/test_student1_semantic.py multi-agent-server/tests -q
+        run: python -m pytest student-1/tests rag-server/tests/test_student1_semantic.py ai-services/multi-agent-server/tests shared/tests -q
 
       - name: Build Student 1 database image
         run: docker build -t student1-database-ci student-1/database

@@ -17,11 +17,11 @@ From the repository root:
 
 ```sh
 python -m venv .venv-multi-agent
-.venv-multi-agent/bin/python -m pip install -r multi-agent-server/requirements.txt
-docker compose up -d --build student1-database student1-backend student1-frontend ollama
-docker compose exec ollama ollama pull qwen2.5:0.5b
-docker compose exec ollama ollama pull llama3.1:8b
-.venv-multi-agent/bin/python multi-agent-server/app.py
+.venv-multi-agent/bin/python -m pip install -r ai-services/multi-agent-server/requirements.txt
+source .venv-multi-agent/bin/activate
+docker compose up -d --build student1-database student1-backend student1-frontend ollama ollama-init
+docker compose wait ollama-init
+python ai-services/multi-agent-server/app.py
 ```
 
 Leave that terminal running. Open `http://localhost:8081`, add courses if
@@ -80,7 +80,11 @@ Health reports service liveness, not Ollama model readiness.
 
 ## Evidence and lifecycle
 
-Both JSONL files are ignored by Git and created when first written. The audit
+Both JSONL files live under `ai-services/multi-agent-server/`, are ignored by Git,
+and are created when first written. Existing evidence left under the old
+`multi-agent-server/` directory can be manually copied to the new directory
+before starting the service; preserve the originals and avoid overwriting any
+new evidence. The audit
 log records metadata for workflow starts, completed stages, model failures,
 pending reviews and human decisions: timestamps, IDs, feature, agent statuses,
 evidence count and human review status/decision. Workflow history appends full
@@ -109,8 +113,8 @@ Use the existing development Python environment with Student 1 test dependencies
 
 ```sh
 python -m pytest student-1/tests rag-server/tests/test_student1_semantic.py -q
-python -m pytest multi-agent-server/tests -q
-python -m compileall -q multi-agent-server student-1/backend
+python -m pytest ai-services/multi-agent-server/tests -q
+python -m compileall -q ai-services/multi-agent-server student-1/backend
 node --check student-1/frontend/public/js/courses.js
 ```
 

@@ -5,7 +5,7 @@ No commit or push was performed.
 
 ## Scope and tools
 
-Ruff scans Python in `student-1/`, `multi-agent-server/`, `mcp-server/`,
+Ruff scans Python in `student-1/`, `ai-services/multi-agent-server/`, `mcp-server/`,
 `rag-server/`, `shared/` and `scripts/`, selecting the full stable S rule family.
 Secret detection covers repository source (including untracked files in the manual
 run). Virtual environments, caches, Chroma persistence, generated data and runtime
@@ -82,7 +82,7 @@ Review new results before accepting a baseline; never baseline real credentials.
 Executed test command in both environments:
 
 ```sh
-python -m pytest multi-agent-server/tests student-1/tests rag-server/tests/test_student1_semantic.py -q
+python -m pytest ai-services/multi-agent-server/tests student-1/tests rag-server/tests/test_student1_semantic.py -q
 ```
 
 The isolated compatibility environment installed the updated backend, database

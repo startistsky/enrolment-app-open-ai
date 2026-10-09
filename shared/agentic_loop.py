@@ -320,8 +320,8 @@ def parse_args():
         help="Validation mode: mcp, rag, or all.",
     )
 
-    parser.add_argument("--workflow-history", default="multi-agent-server/workflow_history.jsonl")
-    parser.add_argument("--coordination-audit", default="multi-agent-server/coordination_audit.jsonl")
+    parser.add_argument("--workflow-history", default="ai-services/multi-agent-server/workflow_history.jsonl")
+    parser.add_argument("--coordination-audit", default="ai-services/multi-agent-server/coordination_audit.jsonl")
     parser.add_argument("--security-report", default="reports/student-1-pre-commit-security-report.md")
     parser.add_argument("--ci-report", default="reports/student-1-post-commit-ci-report.md")
     parser.add_argument("--cloud-report", default="reports/cloud-deployment-report.md")

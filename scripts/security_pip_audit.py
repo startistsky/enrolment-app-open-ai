@@ -11,7 +11,7 @@ REQUIREMENTS = (
     "student-1/backend/requirements.txt",
     "student-1/database/requirements.txt",
     "student-1/tests/requirements.txt",
-    "multi-agent-server/requirements.txt",
+    "ai-services/multi-agent-server/requirements.txt",
     "mcp-server/requirements.txt",
     "rag-server/requirements.txt",
 )

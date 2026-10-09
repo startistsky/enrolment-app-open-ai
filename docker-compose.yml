@@ -242,10 +242,12 @@ services:
     environment:
       OLLAMA_HOST: http://ollama:11434
     entrypoint: >
-      sh -c " until ollama list >/dev/null 2>&1; do
+      sh -ec " until ollama list >/dev/null 2>&1; do
         echo 'Waiting for Ollama...';
         sleep 2;
-      done; echo 'Ensuring qwen2.5:0.5b is available...'; ollama pull qwen2.5:0.5b; echo 'Ollama model is ready.'; "
+      done; echo 'Ensuring qwen2.5:0.5b is available...'; ollama pull qwen2.5:0.5b;
+      echo 'Ensuring llama3.1:8b is available...'; ollama pull llama3.1:8b;
+      echo 'Ollama models are ready.'; "
 
 volumes:
   database_data:

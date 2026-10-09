@@ -55,8 +55,8 @@ student-5/database/career.db-shm
 rag-server/chroma/
 
 # Local Multi-Agent assessment evidence (runtime data)
-multi-agent-server/workflow_history.jsonl
-multi-agent-server/coordination_audit.jsonl
+ai-services/multi-agent-server/workflow_history.jsonl
+ai-services/multi-agent-server/coordination_audit.jsonl
 
 # Local security tooling and generated linter caches
 .venv*/
@@ -64,3 +64,7 @@ multi-agent-server/coordination_audit.jsonl
 
 # Local assessment review execution evidence
 agentic-review-logs/
+
+# Preserve pre-refactor local evidence until manually migrated.
+/multi-agent-server/workflow_history.jsonl
+/multi-agent-server/coordination_audit.jsonl
