@@ -31,6 +31,11 @@ RAG_SERVER_URL = os.getenv(
     "RAG_SERVER_URL", "http://host.docker.internal:9101"
 ).rstrip("/")
 RAG_REQUEST_TIMEOUT_SECONDS = 10
+MULTI_AGENT_SERVER_URL = os.getenv(
+    "MULTI_AGENT_SERVER_URL", "http://localhost:9201"
+).rstrip("/")
+MULTI_AGENT_TIMEOUT_SECONDS = float(os.getenv("MULTI_AGENT_TIMEOUT_SECONDS", "390"))
+HUMAN_DECISIONS = ["Accept", "Partially Accept", "Reject"]
 
 REQUIRED_COURSE_FIELDS = [
     "course_code",
@@ -668,6 +673,95 @@ def validate_ai_recommendation(recommendation):
     return True, "The response contains a summary and exactly three recommendations"
 
 
+def multi_agent_response(path, payload, expected_id=None):
+    """Proxy the local workflow and reject malformed upstream contracts."""
+    try:
+        response = requests.post(
+            f"{MULTI_AGENT_SERVER_URL}{path}", json=payload,
+            timeout=MULTI_AGENT_TIMEOUT_SECONDS,
+        )
+    except (requests.ConnectionError, requests.Timeout):
+        return jsonify(error="Multi-Agent Server unavailable"), 503
+    except requests.RequestException:
+        return jsonify(error="Multi-Agent protocol request failed"), 502
+    try:
+        body = response.json()
+    except ValueError:
+        return jsonify(error="Invalid response from Multi-Agent Server"), 502
+    if not isinstance(body, dict):
+        return jsonify(error="Invalid response from Multi-Agent Server"), 502
+    if response.status_code != 200:
+        # Preserve useful structured errors, while mapping upstream failures to 502.
+        if not isinstance(body.get("error"), str):
+            return jsonify(error="Invalid response from Multi-Agent Server"), 502
+        status = response.status_code if expected_id and response.status_code in (400, 404, 409) else 502
+        return jsonify(error="Multi-Agent workflow failed", detail=body["error"],
+                       upstream_status=response.status_code), status
+    human = body.get("human_review")
+    valid = (
+        body.get("feature") == "course_management"
+        and isinstance(body.get("workflow_id"), str) and bool(body["workflow_id"])
+        and (expected_id is None or body["workflow_id"] == expected_id)
+        and all(isinstance(body.get(f"{role}_result"), dict) and body[f"{role}_result"]
+                for role in ("planner", "worker", "reviewer"))
+        and isinstance(human, dict) and human.get("required") is True
+        and human.get("allowed_decisions") == HUMAN_DECISIONS
+    )
+    if valid and expected_id:
+        valid = (body.get("status") == "completed" and human.get("status") == "completed"
+                 and human.get("decision") == payload["decision"])
+    elif valid:
+        valid = (body.get("status") == "pending_human_review"
+                 and human.get("status") == "pending" and "decision" not in human)
+    if not valid:
+        return jsonify(error="Invalid response from Multi-Agent Server"), 502
+    return jsonify(body)
+
+
+@app.before_request
+def cloud_ai_guard():
+    if os.getenv("AI_SERVICES_ENABLED", "true").lower() == "false" and (
+        request.path.startswith(("/api/mcp/", "/api/rag/", "/api/multi-agent/", "/api/agentic/")) or request.path.endswith("/recommendation")
+    ):
+        return jsonify(error="AI, MCP, RAG and Multi-Agent services are disabled in this deployment"), 503
+
+
+@app.post("/api/multi-agent/course-workflow")
+def multi_agent_course_workflow():
+    body = request.get_json(silent=True)
+    user_request = body.get("user_request") if isinstance(body, dict) else None
+    if not isinstance(user_request, str) or not user_request.strip():
+        return jsonify(error="user_request is required"), 400
+    response, error = database_request("GET", "/courses")
+    if error:
+        return error
+    try:
+        evidence = response.json()
+    except ValueError:
+        return jsonify(error="Invalid response from database service"), 502
+    if response.status_code != 200 or not isinstance(evidence, list) or any(
+        not isinstance(row, dict) for row in evidence
+    ):
+        return jsonify(error="Invalid response from database service"), 502
+    return multi_agent_response("/workflow/course", {
+        "user_request": user_request.strip(), "feature": "course_management",
+        "evidence": evidence,
+    })
+
+
+@app.post("/api/multi-agent/course-workflow/<workflow_id>/decision")
+def multi_agent_human_decision(workflow_id):
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or body.get("decision") not in HUMAN_DECISIONS:
+        return jsonify(error="Invalid human decision"), 400
+    reason = body.get("reason", "")
+    if not isinstance(reason, str):
+        return jsonify(error="reason must be a string"), 400
+    return multi_agent_response(f"/workflow/{workflow_id}/decision", {
+        "decision": body["decision"], "reason": reason.strip(),
+    }, expected_id=workflow_id)
+
+
 @app.get("/health")
 def health():
     return jsonify({"status": "ok", "service": "course-backend"})
@@ -1020,4 +1114,4 @@ def validate_release1_agentic_workflow():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8001, debug=True)
+    app.run(host="0.0.0.0", port=8001, debug=False)  # noqa: S104 -- intentional local Docker/host service ingress; not a public deployment.

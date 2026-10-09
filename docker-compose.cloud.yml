@@ -1,0 +1,367 @@
+# Azure non-AI baseline. Keep separate from local docker-compose.yml.
+name: asd-group5-cloud
+services:
+  student3-database:
+    build:
+      context: .
+      dockerfile: student-3/database/Dockerfile
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:5004/health',
+        timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+    environment:
+      DATABASE_PATH: /data/campus_resources.db
+      FLASK_DEBUG: 'false'
+    volumes:
+    - student3-resource-data:/data
+  student3-backend:
+    build:
+      context: .
+      dockerfile: student-3/backend/Dockerfile
+    ports:
+    - 127.0.0.1:8003:8000
+    environment:
+      AI_SERVICE_URL: ''
+      DATABASE_API_URL: http://student3-database:5004
+      RAG_SERVER_URL: ''
+      MCP_SERVER_URL: ''
+      AI_SERVICES_ENABLED: 'false'
+      OLLAMA_URL: ''
+      MULTI_AGENT_SERVER_URL: ''
+      FLASK_DEBUG: 'false'
+    depends_on:
+      student3-database:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health',
+        timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+  student3-frontend:
+    build:
+      context: .
+      dockerfile: student-3/frontend/Dockerfile
+    ports:
+    - 8083:80
+    depends_on:
+      student3-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://127.0.0.1/
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  database:
+    build:
+      context: .
+      dockerfile: student-4/database/Dockerfile
+    environment:
+      DATABASE_PATH: /data/events.db
+      FLASK_DEBUG: 'false'
+    volumes:
+    - database_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:5002/health',
+        timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+  backend:
+    build:
+      context: .
+      dockerfile: student-4/backend/Dockerfile
+    ports:
+    - 127.0.0.1:8000:8000
+    environment:
+      AI_SERVICE_URL: ''
+      DATABASE_SERVICE_URL: http://database:5002
+      AI_SERVICES_ENABLED: 'false'
+      OLLAMA_URL: ''
+      MCP_SERVER_URL: ''
+      RAG_SERVER_URL: ''
+      MULTI_AGENT_SERVER_URL: ''
+      FLASK_DEBUG: 'false'
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health',
+        timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+  frontend:
+    build:
+      context: .
+      dockerfile: student-4/frontend/Dockerfile
+    ports:
+    - 8080:80
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://127.0.0.1/
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  student1-database:
+    build:
+      context: ./student-1/database
+    environment:
+      DATABASE_PATH: /data/courses.db
+    volumes:
+    - student1-course-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/health',
+        timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+  student1-backend:
+    build:
+      context: ./student-1/backend
+    ports:
+    - 127.0.0.1:8001:8001
+    environment:
+      DATABASE_SERVICE_URL: http://student1-database:5001
+      AI_SERVICE_URL: ''
+      MCP_SERVER_URL: ''
+      RAG_SERVER_URL: ''
+      MULTI_AGENT_SERVER_URL: ''
+      MULTI_AGENT_TIMEOUT_SECONDS: '390'
+      AI_SERVICES_ENABLED: 'false'
+      OLLAMA_URL: ''
+      FLASK_DEBUG: 'false'
+    depends_on:
+      student1-database:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health',
+        timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+  student1-frontend:
+    build:
+      context: ./student-1/frontend
+    ports:
+    - 8081:80
+    depends_on:
+      student1-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://127.0.0.1/
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  student2-database:
+    build:
+      context: .
+      dockerfile: student-2/database/Dockerfile
+    environment:
+      DATABASE_PATH: /data/assignments.db
+    volumes:
+    - assignment_data:/data
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:5002/health',
+        timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+  student2-backend:
+    build:
+      context: .
+      dockerfile: student-2/backend/Dockerfile
+    environment:
+      DATABASE_SERVICE_URL: http://student2-database:5002
+      OLLAMA_URL: ''
+      OLLAMA_MODEL: qwen2.5:0.5b
+      RAG_SERVER_URL: ''
+      AI_SERVICES_ENABLED: 'false'
+      AI_SERVICE_URL: ''
+      MCP_SERVER_URL: ''
+      MULTI_AGENT_SERVER_URL: ''
+      FLASK_DEBUG: 'false'
+    ports:
+    - 127.0.0.1:8002:8002
+    depends_on:
+      student2-database:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health',
+        timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+  student2-frontend:
+    build:
+      context: .
+      dockerfile: student-2/frontend/Dockerfile
+    ports:
+    - 8082:80
+    depends_on:
+      student2-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://127.0.0.1/
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  student5-database:
+    build:
+      context: .
+      dockerfile: ./student-5/database/Dockerfile
+    environment:
+      DATABASE_PATH: /data/career.db
+    volumes:
+    - student5-career-data:/data
+  student5-backend:
+    build:
+      context: .
+      dockerfile: ./student-5/backend/Dockerfile
+    ports:
+    - 127.0.0.1:8005:8005
+    environment:
+      AI_SERVICE_URL: ''
+      DATABASE_PATH: /data/career.db
+      MCP_SERVER_URL: ''
+      RAG_SERVER_URL: ''
+      AI_SERVICES_ENABLED: 'false'
+      OLLAMA_URL: ''
+      MULTI_AGENT_SERVER_URL: ''
+      FLASK_DEBUG: 'false'
+    volumes:
+    - student5-career-data:/data
+    depends_on:
+      student5-database:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8005/health',
+        timeout=5)
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+  student5-frontend:
+    build:
+      context: .
+      dockerfile: ./student-5/frontend/Dockerfile
+    ports:
+    - 8085:80
+    depends_on:
+      student5-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://127.0.0.1/
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  shared-frontend:
+    build:
+      context: ./shared/frontend
+      dockerfile: Dockerfile
+    ports:
+    - 8888:80
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://127.0.0.1/
+      interval: 10s
+      timeout: 5s
+      retries: 12
+volumes:
+  database_data: {}
+  student1-course-data: {}
+  assignment_data: {}
+  student5-career-data: {}
+  student3-resource-data: {}

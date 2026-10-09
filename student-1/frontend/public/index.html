@@ -9,17 +9,17 @@
 </head>
 <body>
 <header class="topbar">
-    <a class="brand" href="http://localhost:8888/">
+    <a class="brand" href="/" data-campus-port="8888">
         <span class="brand-mark" aria-hidden="true"></span>
         SmartCampus AI
     </a>
     <nav class="nav" aria-label="Main navigation">
-        <a href="http://localhost:8888/">Home</a>
-        <a class="active" href="http://localhost:8081/" aria-current="page">Courses</a>
-        <a href="http://localhost:8082/">Assignments</a>
-        <a href="http://localhost:8083/">Resources</a>
-        <a href="http://localhost:8080/">Events</a>
-        <a href="http://localhost:8085/">Career</a>
+        <a href="/" data-campus-port="8888">Home</a>
+        <a class="active" href="/" data-campus-port="8081" aria-current="page">Courses</a>
+        <a href="/" data-campus-port="8082">Assignments</a>
+        <a href="/" data-campus-port="8083">Resources</a>
+        <a href="/" data-campus-port="8080">Events</a>
+        <a href="/" data-campus-port="8085">Career</a>
     </nav>
 </header>
 <main class="app-shell">
@@ -174,6 +174,30 @@
             <p class="muted">Choose a mode and run the Release 1 agentic workflow.</p>
         </div>
     </section>
+    <section class="card multi-agent-card" aria-labelledby="multi-agent-heading">
+        <h2 id="multi-agent-heading">Release 2 Multi-Agent Course Workflow</h2>
+        <p class="muted">Planner → Worker → Reviewer → Human Review, using current course records.</p>
+        <div class="rag-controls">
+            <label for="multi-agent-request">Course Management request</label>
+            <textarea id="multi-agent-request" rows="3" placeholder="Summarise the available courses and flag missing information."></textarea>
+            <button id="multi-agent-run" class="button button-primary" type="button">Run Multi-Agent Workflow</button>
+        </div>
+        <p id="multi-agent-status" class="muted" role="status" aria-live="polite">Ready to run.</p>
+        <div class="multi-agent-results">
+            <section><h3>Planner result</h3><pre id="multi-agent-planner">Awaiting workflow.</pre></section>
+            <section><h3>Worker result</h3><pre id="multi-agent-worker">Awaiting workflow.</pre></section>
+            <section><h3>Reviewer result</h3><pre id="multi-agent-reviewer">Awaiting workflow.</pre></section>
+        </div>
+        <h3>Human Review</h3>
+        <label for="multi-agent-reason">Reason (optional)</label>
+        <textarea id="multi-agent-reason" rows="2"></textarea>
+        <div class="multi-agent-decisions">
+            <button class="button button-primary" type="button" data-human-decision="Accept" disabled>Accept</button>
+            <button class="button button-secondary" type="button" data-human-decision="Partially Accept" disabled>Partially Accept</button>
+            <button class="button button-secondary" type="button" data-human-decision="Reject" disabled>Reject</button>
+        </div>
+        <p id="multi-agent-decision" role="status" aria-live="polite">No human decision recorded.</p>
+    </section>
 </main>
 
 <dialog id="course-dialog" aria-labelledby="form-title">
@@ -219,5 +243,12 @@
         </div>
     </form>
 </dialog>
+<script>
+    document.querySelectorAll('a[data-campus-port]').forEach((link) => {
+      const url = new URL(link.getAttribute("href"), window.location.href);
+      url.port = link.dataset.campusPort;
+      link.href = url.href;
+    });
+  </script>
 </body>
 </html>

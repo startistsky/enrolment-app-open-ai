@@ -1,0 +1,5 @@
+# Development tools only; install in an isolated virtual environment.
+pre-commit==4.6.2
+ruff==0.16.10
+detect-secrets==1.5.0
+pip-audit==2.10.1

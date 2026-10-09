@@ -12,7 +12,7 @@ from mcp.client.streamable_http import streamable_http_client
 MCP_URL = "http://localhost:9001/mcp"
 RAG_URL = "http://localhost:9101"
 
-VALID_MODES = ["mcp", "rag", "all"]
+VALID_MODES = ["mcp", "rag", "all", "multi-agent-review", "testing-review", "cloud-review"]
 
 
 def print_section(title):
@@ -310,7 +310,7 @@ def validate_rag():
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Smart Campus shared Release 1 agentic validation loop."
+        description="Smart Campus shared Release 1 validation and Release 2 evidence reviews."
     )
 
     parser.add_argument(
@@ -320,6 +320,13 @@ def parse_args():
         help="Validation mode: mcp, rag, or all.",
     )
 
+    parser.add_argument("--workflow-history", default="ai-services/multi-agent-server/workflow_history.jsonl")
+    parser.add_argument("--coordination-audit", default="ai-services/multi-agent-server/coordination_audit.jsonl")
+    parser.add_argument("--security-report", default="reports/student-1-pre-commit-security-report.md")
+    parser.add_argument("--ci-report", default="reports/student-1-post-commit-ci-report.md")
+    parser.add_argument("--cloud-report", default="reports/cloud-deployment-report.md")
+    parser.add_argument("--log-dir", default="agentic-review-logs")
+    parser.add_argument("--output")
     return parser.parse_args()
 
 
@@ -330,6 +337,21 @@ def main():
 
     print(f"Validation mode: {args.mode}")
     print("Workflow: PLAN -> ACT -> OBSERVE -> REVIEW -> ADAPT")
+
+    if args.mode in ("multi-agent-review", "testing-review", "cloud-review"):
+        from release2_reviews import execute_review
+
+        paths = {
+            "multi-agent-review": (args.workflow_history, args.coordination_audit),
+            "testing-review": (args.security_report, args.ci_report),
+            "cloud-review": (args.cloud_report,),
+        }
+        try:
+            result = execute_review(args.mode, paths[args.mode], args.log_dir, args.output)
+        except OSError:
+            print("FAIL: Review log/output could not be written.")
+            return 1
+        return int(result["validation_status"] == "FAIL")
 
     results = []
 

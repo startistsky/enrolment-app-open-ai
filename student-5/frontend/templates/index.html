@@ -18,12 +18,12 @@
       </a>
       <!-- Navbar to other features -->
       <nav class="nav">
-        <a href="http://localhost:8888">Home</a>
-        <a href="http://localhost:8081">Courses</a>
-        <a href="http://localhost:8082">Assignments</a>
-        <a href="http://localhost:8083">Resources</a>
-        <a href="http://localhost:8080">Events</a>
-        <a href="http://localhost:8085" class="active">Career</a>
+        <a href="/" data-campus-port="8888">Home</a>
+        <a href="/" data-campus-port="8081">Courses</a>
+        <a href="/" data-campus-port="8082">Assignments</a>
+        <a href="/" data-campus-port="8083">Resources</a>
+        <a href="/" data-campus-port="8080">Events</a>
+        <a href="/" data-campus-port="8085" class="active">Career</a>
       </nav>
     </header>
 
@@ -111,5 +111,12 @@
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
 
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+  <script>
+    document.querySelectorAll('a[data-campus-port]').forEach((link) => {
+      const url = new URL(link.getAttribute("href"), window.location.href);
+      url.port = link.dataset.campusPort;
+      link.href = url.href;
+    });
+  </script>
   </body>
 </html>

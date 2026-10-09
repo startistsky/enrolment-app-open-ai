@@ -1,4 +1,4 @@
-const API = `${location.protocol}//${location.hostname}:8003`;
+const API = "";
 
 let resources = [];
 let editId = null;

@@ -113,6 +113,14 @@ def assignment_sort_key(assignment):
     )
 
 
+@app.before_request
+def cloud_ai_guard():
+    if os.getenv("AI_SERVICES_ENABLED", "true").lower() == "false" and (
+        request.path.startswith("/api/ai/")
+    ):
+        return jsonify(error="AI, MCP, RAG and Multi-Agent services are disabled in this deployment"), 503
+
+
 @app.get("/health")
 def health():
     """Return the health status of the Student 2 backend."""

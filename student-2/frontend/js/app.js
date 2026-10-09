@@ -1,4 +1,4 @@
-const API_BASE = window.ASSIGNMENT_API_URL || "http://localhost:8002/api";
+const API_BASE = window.ASSIGNMENT_API_URL || "/api";
 let assignments = [];
 
 const $ = (selector) => document.querySelector(selector);
