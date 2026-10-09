@@ -134,6 +134,8 @@ def test_selected_region_and_managed_identity_oidc_configuration():
     workflow = yaml.safe_load((ROOT / '.github/workflows/cloud-deployment.yml').read_text())
     documentation = (ROOT / 'docs/AZURE_DEPLOYMENT.md').read_text()
     assert 'LOCATION=${LOCATION:-eastasia}' in script
+    assert 'VM_SIZE=${VM_SIZE:-Standard_B2s_v2}' in script
+    assert re.search(r'VM `asd-group5-vm`,.*?size `([^`]+)`', documentation).group(1) == 'Standard_B2s_v2'
     # PyYAML's YAML 1.1 loader interprets the GitHub 'on' key as boolean True.
     assert workflow.get('on', workflow.get(True)).keys() == {'workflow_dispatch'}
     assert workflow['permissions'] == {'contents': 'read', 'id-token': 'write'}
@@ -149,6 +151,7 @@ def test_selected_region_and_managed_identity_oidc_configuration():
     deploy_step = next(step for step in job['steps'] if 'SSH_PRIVATE_KEY' in step.get('env', {}))
     assert deploy_step['env']['LOCATION'] == 'eastasia'
     assert deploy_step['env']['RESOURCE_GROUP'] == 'asd-group5-rg'
+    assert deploy_step['env'].get('VM_SIZE', 'Standard_B2s_v2') == 'Standard_B2s_v2'
     workflow_text = (ROOT / '.github/workflows/cloud-deployment.yml').read_text().lower()
     assert 'client-secret' not in workflow_text and 'azure_credentials' not in workflow_text
     assert 'asd-group5-github-oidc-mi' in documentation
@@ -164,6 +167,7 @@ def test_selected_region_and_managed_identity_oidc_configuration():
     for path in cloud_files:
         content = path.read_text().lower()
         assert metadata_region not in content, path
+        assert re.search(r'\bStandard_B2s\b', path.read_text()) is None, path
         assert 'az ad app create' not in content, path
     for line in documentation.splitlines():
         if re.match(r'export LOCATION=', line):

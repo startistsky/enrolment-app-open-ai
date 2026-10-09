@@ -78,7 +78,11 @@ and receives no repository token or Git metadata. The workflow's selected privat
 branch must contain these files when deployment is later dispatched. Local deployment
 can use the current checkout, including eligible uncommitted/untracked source files.
 This preparation does not commit, push, execute deployment scripts or create resources.
-Confirm the `Standard_B2s` quota/availability in East Asia (`eastasia`) for Azure for Students.
+Manual SKU verification with `az vm list-skus` is complete for `eastasia`:
+`Standard_B2s` is unavailable for this Azure for Students subscription
+(`NotAvailableForSubscription`). `Standard_B2s_v2` returned `Restrictions: None`
+and is the selected deployment default; it provides **2 vCPUs and 8 GiB RAM**.
+This verification did not create a VM; VM creation has still **not occurred**.
 
 Authenticate with Azure CLI and configure on a developer machine:
 
@@ -147,7 +151,7 @@ runs. Any leftover rule is still restricted to the single deployment IPv4 addres
 
 Expected application resources the script would create in `eastasia`, inside the existing group:
 
-- VM `asd-group5-vm`, Ubuntu 24.04, size `Standard_B2s`.
+- VM `asd-group5-vm`, Ubuntu 24.04, size `Standard_B2s_v2` (2 vCPUs, 8 GiB RAM).
 - Managed OS disk `asd-group5-vm-osdisk`, 32 GiB, Standard LRS.
 - VNet `asd-group5-vm-vnet` and subnet `cloud-baseline`.
 - NSG `asd-group5-vm-nsg`, rule `CloudFrontend` allowing TCP 8080, 8081, 8082, 8083, 8085
