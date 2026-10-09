@@ -30,7 +30,7 @@
         </div>
 
         <div class="student-grid">
-          <a href="http://localhost:8081/" class="student-card">
+          <a href="/" data-campus-port="8081" class="student-card">
             <div class="student-image">
               <span class="student-badge">Student 1</span>
               <div class="student-emoji">👨‍🎓</div>
@@ -43,7 +43,7 @@
             </div>
           </a>
 
-          <a href="http://localhost:8082" class="student-card">
+          <a href="/" data-campus-port="8082" class="student-card">
             <div class="student-image">
               <span class="student-badge">Student 2</span>
               <div class="student-emoji">👨‍🎓</div>
@@ -56,7 +56,7 @@
             </div>
           </a>
 
-          <a href="http://localhost:8083/" class="student-card">
+          <a href="/" data-campus-port="8083" class="student-card">
             <div class="student-image">
               <span class="student-badge">Student 3</span>
               <div class="student-emoji">👩‍🎓</div>
@@ -69,7 +69,7 @@
             </div>
           </a>
 
-          <a href="http://localhost:8080/" class="student-card">
+          <a href="/" data-campus-port="8080" class="student-card">
             <div class="student-image">
               <span class="student-badge">Student 4</span>
               <div class="student-emoji">👨‍🎓</div>
@@ -82,7 +82,7 @@
             </div>
           </a>
 
-          <a href="http://localhost:8085" class="student-card">
+          <a href="/" data-campus-port="8085" class="student-card">
             <div class="student-image">
               <span class="student-badge">Student 5</span>
               <div class="student-emoji">👩‍🎓</div>
@@ -97,5 +97,12 @@
         </div>
       </section>
     </main>
-  </body>
+  <script>
+    document.querySelectorAll('a[data-campus-port]').forEach((link) => {
+      const url = new URL(link.getAttribute("href"), window.location.href);
+      url.port = link.dataset.campusPort;
+      link.href = url.href;
+    });
+  </script>
+</body>
 </html>

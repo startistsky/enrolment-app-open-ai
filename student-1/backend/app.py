@@ -718,6 +718,14 @@ def multi_agent_response(path, payload, expected_id=None):
     return jsonify(body)
 
 
+@app.before_request
+def cloud_ai_guard():
+    if os.getenv("AI_SERVICES_ENABLED", "true").lower() == "false" and (
+        request.path.startswith(("/api/mcp/", "/api/rag/", "/api/multi-agent/", "/api/agentic/")) or request.path.endswith("/recommendation")
+    ):
+        return jsonify(error="AI, MCP, RAG and Multi-Agent services are disabled in this deployment"), 503
+
+
 @app.post("/api/multi-agent/course-workflow")
 def multi_agent_course_workflow():
     body = request.get_json(silent=True)

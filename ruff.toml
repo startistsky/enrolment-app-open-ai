@@ -10,3 +10,5 @@ select = ["S"]
 "rag-server/tests/*.py" = ["S101"]
 # Release 2 review fixtures assert expected validation outcomes only.
 "shared/tests/*.py" = ["S101"]
+# Cloud regression tests assert guard and persistence expectations.
+"scripts/cloud/tests/*.py" = ["S101"]

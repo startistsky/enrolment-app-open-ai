@@ -7,7 +7,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 DATABASE_DIR = BASE_DIR / "database"
 
-DATABASE = DATABASE_DIR / "career.db"
+DATABASE = Path(os.getenv("DATABASE_PATH", str(DATABASE_DIR / "career.db")))
+DATABASE_DIR = DATABASE.parent
 
 # Database connection
 def get_db():

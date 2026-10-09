@@ -1,0 +1,59 @@
+name: Azure Cloud Baseline Deployment
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: 'Pushed branch to deploy (must contain the cloud files)'
+        required: true
+        default: feature/student-1-release-2
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: azure-group5-cloud
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: azure-assessment
+    timeout-minutes: 45
+    steps:
+      - name: Checkout private application source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deploy_ref }}
+          persist-credentials: false
+      - name: Authenticate to Azure with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Validate cloud configuration
+        run: |
+          docker compose -f docker-compose.cloud.yml config -q
+          for script in scripts/cloud/*.sh; do bash -n "$script"; done
+      - name: Deploy baseline and check VM health
+        env:
+          SOURCE_DIR: ${{ github.workspace }}
+          SSH_PRIVATE_KEY: ${{ secrets.AZURE_VM_SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.AZURE_VM_SSH_PUBLIC_KEY }}
+          HTTP_SOURCE_CIDR: ${{ vars.AZURE_HTTP_SOURCE_CIDR }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          key_file=$(mktemp "$RUNNER_TEMP/group5-ssh-key.XXXXXX")
+          trap 'rm -f -- "$key_file"' EXIT
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$key_file"
+          chmod 600 "$key_file"
+          unset SSH_PRIVATE_KEY
+          export SSH_PRIVATE_KEY_PATH="$key_file"
+          bash scripts/cloud/deploy-azure-vm.sh
+      - name: Record workflow outcome
+        if: always()
+        env:
+          DEPLOY_STATUS: ${{ job.status }}
+        run: |
+          printf '### Azure cloud baseline workflow\nStatus: %s\nRun: %s/%s/actions/runs/%s\n' \
+            "$DEPLOY_STATUS" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Health checks do not establish complete CRUD or human release approval.' >> "$GITHUB_STEP_SUMMARY"

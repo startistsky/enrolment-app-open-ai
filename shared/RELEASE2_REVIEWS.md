@@ -70,3 +70,12 @@ pre-commit run --all-files
 
 The secret baseline includes a reviewed report-only false positive for the
 `detect_secrets` PASS status field. It is scanner outcome metadata, not a credential.
+
+## Azure assessment preparation
+
+The selected cloud platform is Microsoft Azure. See [Azure deployment](../docs/AZURE_DEPLOYMENT.md)
+for the manual VM baseline workflow and required real deployment evidence.
+Repository preparation is not deployment evidence. Do not run Cloud Deployment
+Review as a release approval until the Azure deployment, CRUD checks, disabled
+AI controls and human review have been evidenced. No cloud report is generated
+by the preparation scripts.

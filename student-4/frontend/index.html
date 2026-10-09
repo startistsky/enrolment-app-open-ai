@@ -8,17 +8,17 @@
   </head>
   <body>
     <header class="topbar">
-      <a href="http://localhost:8888" class="brand">
+      <a href="/" data-campus-port="8888" class="brand">
         <div class="brand-mark"></div>
         <span>CampusLife</span>
       </a>
       <nav class="nav">
-        <a href="http://localhost:8888">Home</a>
-        <a href="http://localhost:8081">Courses</a>
-        <a href="http://localhost:8082">Assignments</a>
-        <a href="http://localhost:8083">Resources</a>
-        <a href="http://localhost:8080" class="active">Events</a>
-        <a href="http://localhost:8085">Career</a>
+        <a href="/" data-campus-port="8888">Home</a>
+        <a href="/" data-campus-port="8081">Courses</a>
+        <a href="/" data-campus-port="8082">Assignments</a>
+        <a href="/" data-campus-port="8083">Resources</a>
+        <a href="/" data-campus-port="8080" class="active">Events</a>
+        <a href="/" data-campus-port="8085">Career</a>
       </nav>
       <div class="actions">
         <button
@@ -264,5 +264,12 @@
     </aside>
 
     <script src="js/events.js"></script>
+  <script>
+    document.querySelectorAll('a[data-campus-port]').forEach((link) => {
+      const url = new URL(link.getAttribute("href"), window.location.href);
+      url.port = link.dataset.campusPort;
+      link.href = url.href;
+    });
+  </script>
   </body>
 </html>

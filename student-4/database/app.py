@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from event_controller import event_bp
 
@@ -17,5 +18,5 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=5002,
-        debug=True
+        debug=os.getenv("FLASK_DEBUG", "true").lower() == "true"
     )
