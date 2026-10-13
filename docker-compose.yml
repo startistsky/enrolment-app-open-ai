@@ -155,6 +155,8 @@ services:
       OLLAMA_URL: http://ollama:11434/api/generate
       OLLAMA_MODEL: qwen2.5:0.5b
       RAG_SERVER_URL: http://host.docker.internal:9101
+      MULTI_AGENT_SERVER_URL: http://host.docker.internal:9201
+      MULTI_AGENT_TIMEOUT_SECONDS: "390"
 
     ports:
       - "8002:8002"

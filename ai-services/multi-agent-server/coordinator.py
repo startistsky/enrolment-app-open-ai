@@ -5,11 +5,26 @@ from pathlib import Path
 from threading import RLock
 from uuid import uuid4
 
-from agents import planner_agent, worker_agent, reviewer_agent
+from agents import (
+    assignment_planner_agent,
+    assignment_reviewer_agent,
+    assignment_worker_agent,
+    planner_agent,
+    reviewer_agent,
+    worker_agent,
+)
 from llm_client import ModelError
 
 
 DECISIONS = ["Accept", "Partially Accept", "Reject"]
+AGENT_SUITES = {
+    "course_management": (planner_agent, worker_agent, reviewer_agent),
+    "assignment_management": (
+        assignment_planner_agent,
+        assignment_worker_agent,
+        assignment_reviewer_agent,
+    ),
+}
 
 
 class Coordinator:
@@ -68,9 +83,11 @@ class Coordinator:
                 with self.history_path.open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps(snapshot) + "\n")
 
-    def run(self, user_request, evidence):
+    def run(self, user_request, evidence, feature="course_management"):
+        if feature not in AGENT_SUITES:
+            return {"error": "Unsupported workflow feature"}, 400
         workflow = {
-            "workflow_id": str(uuid4()), "feature": "course_management",
+            "workflow_id": str(uuid4()), "feature": feature,
             "status": "running", "evidence_count": len(evidence),
             "human_review": {"required": True, "status": "pending",
                              "allowed_decisions": DECISIONS.copy()},
@@ -80,7 +97,8 @@ class Coordinator:
             self.workflows[workflow["workflow_id"]] = workflow
             self.user_requests[workflow["workflow_id"]] = user_request
         self.record(workflow, "started")
-        for role, agent in (("planner", planner_agent), ("worker", worker_agent), ("reviewer", reviewer_agent)):
+        agents = AGENT_SUITES[feature]
+        for role, agent in zip(("planner", "worker", "reviewer"), agents):
             args = [user_request, evidence]
             if role != "planner":
                 args.append(workflow["planner_result"])

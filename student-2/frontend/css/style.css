@@ -52,3 +52,19 @@ h1 { margin:0 0 12px; font-size:46px; line-height:1; letter-spacing:-1.5px; }
 .modal-actions { justify-content:flex-end; }.ai-heading { display:flex; gap:14px; align-items:center; }.ai-icon { display:grid; place-items:center; width:46px; height:46px; color:#fff; background:var(--green); border-radius:14px; font-size:21px; }.ai-result { margin-top:18px; min-height:150px; padding:18px; white-space:pre-wrap; line-height:1.65; color:#344054; background:var(--green-soft); border:1px solid #cdebd7; border-radius:14px; }.ai-modal .button { margin-top:18px; }
 @media (max-width:1050px) { .nav { display:none; }.assignment-grid { grid-template-columns:repeat(2,1fr); }.summary-grid { grid-template-columns:repeat(2,1fr); } }
 @media (max-width:700px) { .topbar { height:auto; padding:16px 5vw; }.student-pill { display:none; }.hero,.workspace-head { align-items:flex-start; flex-direction:column; }.hero h1 { font-size:36px; }.summary-grid,.assignment-grid,.form-grid { grid-template-columns:1fr; }.form-grid .wide { grid-column:auto; }.workspace { padding:18px; }.controls { justify-content:flex-start; }.controls>* { width:100%; } }
+
+.multi-agent-card { margin-top:24px; }
+.multi-agent-controls { display:grid; gap:10px; }
+.multi-agent-controls label,.human-review label { color:#344054; font-size:13px; font-weight:700; }
+.multi-agent-controls textarea,.human-review textarea { width:100%; padding:12px; border:1px solid #d8dedb; border-radius:11px; resize:vertical; }
+.multi-agent-controls .button { justify-self:start; }
+#multiAgentStatus { margin-top:16px; }
+.multi-agent-results { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:18px 0; }
+.multi-agent-results section { min-width:0; padding:16px; border:1px solid var(--line); border-radius:14px; background:#fafcfb; }
+.multi-agent-results h3 { margin:0 0 10px; }
+.multi-agent-results pre { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; color:#344054; line-height:1.5; }
+.human-review { display:grid; gap:10px; padding-top:16px; border-top:1px solid var(--line); }
+.human-review h3 { margin:0; }
+.multi-agent-decisions { display:flex; flex-wrap:wrap; gap:10px; }
+.button:disabled { cursor:not-allowed; opacity:.5; box-shadow:none; }
+@media (max-width:900px) { .multi-agent-results { grid-template-columns:1fr; } }
