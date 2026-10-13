@@ -11,10 +11,13 @@ class ModelError(Exception):
         self.status = status
 
 
-def generate(role, context, required_fields):
+def generate(role, context, required_fields, prompt_name=None):
     """Request a deterministic JSON object; never substitute invented output."""
     model = os.getenv("OLLAMA_REVIEW_MODEL", "llama3.1:8b") if role == "reviewer" else "qwen2.5:0.5b"
-    instruction = (Path(__file__).parent / "prompts" / f"{role}_prompt.txt").read_text()
+    prompt_file = prompt_name or role
+    instruction = (
+        Path(__file__).parent / "prompts" / f"{prompt_file}_prompt.txt"
+    ).read_text(encoding="utf-8")
     json_types = {
         str: "string", list: "array", dict: "object",
         bool: "boolean", int: "integer", float: "number",

@@ -1,6 +1,6 @@
 # Student 2 - Assignment Management
 
-Assignment Management is Juncheng Pu's Release 0 feature. It provides an independent frontend, backend/API, and SQLite database service, plus local Ollama AI recommendations.
+Assignment Management is Juncheng Pu's feature. Release 2 preserves the independent frontend, backend/API and SQLite database service, and adds a local Planner → Worker → Reviewer workflow with mandatory human review.
 
 ## Structure
 
@@ -20,7 +20,30 @@ student-2/
 - Update Not Started, In Progress, and Completed states and 0-100% progress.
 - Validate required fields, priority, status, and progress in the database service.
 - Generate workload recommendations with Ollama/Qwen using Plan -> Act -> Observe -> Adapt.
+- Run a grounded Assignment Management Multi-Agent workflow using current database records.
+- Review Planner, Worker and Reviewer output before selecting Accept, Partially Accept or Reject.
 - Seed the assignments table with 10 records.
+
+## Run the Release 2 workflow locally
+
+From the repository root, start the required containers:
+
+```bash
+docker compose up -d --build student2-database student2-backend student2-frontend ollama ollama-init
+docker compose exec ollama ollama pull llama3.1:8b
+```
+
+In a separate terminal, install and start the shared non-containerised server:
+
+```bash
+python -m venv .venv-multi-agent
+.venv-multi-agent/Scripts/python -m pip install -r ai-services/multi-agent-server/requirements.txt
+.venv-multi-agent/Scripts/python ai-services/multi-agent-server/app.py
+```
+
+On macOS/Linux, replace `.venv-multi-agent/Scripts/python` with
+`.venv-multi-agent/bin/python`. Keep the server terminal open and visit
+`http://localhost:8082`.
 
 ## Run with Docker
 
@@ -54,3 +77,5 @@ Use `down -v` only when you intentionally want to delete the persisted assignmen
 - `PUT /api/assignments/<id>`
 - `DELETE /api/assignments/<id>`
 - `POST /api/ai/recommendations`
+- `POST /api/multi-agent/assignment-workflow`
+- `POST /api/multi-agent/assignment-workflow/<workflow_id>/decision`

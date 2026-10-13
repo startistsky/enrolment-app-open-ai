@@ -6,6 +6,10 @@ select = ["S"]
 [lint.per-file-ignores]
 # pytest assertions are test expectations, never production input validation.
 "student-1/tests/*.py" = ["S101"]
+"student-2/tests/*.py" = ["S101"]
+# Both Flask services intentionally bind all interfaces inside their containers.
+"student-2/backend/app.py" = ["S104"]
+"student-2/database/app.py" = ["S104"]
 "ai-services/multi-agent-server/tests/*.py" = ["S101"]
 "rag-server/tests/*.py" = ["S101"]
 # Release 2 review fixtures assert expected validation outcomes only.

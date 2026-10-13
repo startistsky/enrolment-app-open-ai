@@ -32,7 +32,29 @@ def create_app(history_path=None, audit_path=None):
         evidence = body.get("evidence")
         if not isinstance(evidence, list) or any(not isinstance(row, dict) for row in evidence):
             return jsonify(error="evidence must be a list of course objects"), 400
-        result, status = coordinator.run(user_request.strip(), evidence)
+        result, status = coordinator.run(
+            user_request.strip(), evidence, feature="course_management"
+        )
+        return jsonify(result), status
+
+    @app.post("/workflow/assignment")
+    def assignment_workflow():
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify(error="Request body must be a JSON object"), 400
+        user_request = body.get("user_request")
+        if not isinstance(user_request, str) or not user_request.strip():
+            return jsonify(error="user_request is required"), 400
+        if body.get("feature") != "assignment_management":
+            return jsonify(error="feature must be assignment_management"), 400
+        evidence = body.get("evidence")
+        if not isinstance(evidence, list) or any(
+            not isinstance(row, dict) for row in evidence
+        ):
+            return jsonify(error="evidence must be a list of assignment objects"), 400
+        result, status = coordinator.run(
+            user_request.strip(), evidence, feature="assignment_management"
+        )
         return jsonify(result), status
 
     @app.post("/workflow/<workflow_id>/decision")
