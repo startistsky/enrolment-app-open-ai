@@ -3,13 +3,13 @@ from flask import Flask, jsonify, request
 
 from ai import ai_bp
 from events import events_bp
-
+from multi_agent import multi_agent_bp
 
 app = Flask(__name__)
 
 app.register_blueprint(ai_bp)
 app.register_blueprint(events_bp)
-
+app.register_blueprint(multi_agent_bp)
 
 @app.before_request
 def cloud_ai_guard():
