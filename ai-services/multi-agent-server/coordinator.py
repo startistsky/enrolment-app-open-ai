@@ -11,6 +11,9 @@ from agents import (
     assignment_worker_agent,
     planner_agent,
     reviewer_agent,
+    resource_planner_agent,
+    resource_worker_agent,
+    resource_reviewer_agent,
     worker_agent,
 )
 from llm_client import ModelError
@@ -24,7 +27,13 @@ AGENT_SUITES = {
         assignment_worker_agent,
         assignment_reviewer_agent,
     ),
+    "resource_management": (
+        resource_planner_agent,
+        resource_worker_agent,
+        resource_reviewer_agent,
+    ),
 }
+
 
 
 class Coordinator:

@@ -32,7 +32,7 @@ AI_MODEL = os.getenv(
 @app.before_request
 def cloud_ai_guard():
     if os.getenv("AI_SERVICES_ENABLED", "true").lower() == "false" and (
-        request.path.startswith(("/recommend", "/rag/", "/api/mcp/"))
+        request.path.startswith(("/recommend", "/rag/", "/api/mcp/", "/api/multi-agent/"))
     ):
         return jsonify(error="AI, MCP, RAG and Multi-Agent services are disabled in this deployment"), 503
 
@@ -1012,6 +1012,62 @@ Grounded answer:
         return jsonify({
             "error": "AI service unavailable",
             "details": str(error),
+        }), 503
+
+
+@app.post("/api/multi-agent/resource")
+def resource_multi_agent():
+    """Run Student 3 Resource Multi-Agent Workflow with database evidence."""
+    question_data = request.get_json(silent=True)
+
+    if not isinstance(question_data, dict):
+        return jsonify({"error": "JSON object required"}), 400
+
+    question = question_data.get("question")
+
+    if not isinstance(question, str) or not question.strip():
+        return jsonify({"error": "question is required"}), 400
+
+    multi_agent_url = os.getenv(
+        "MULTI_AGENT_SERVICE_URL",
+        "http://localhost:9201"
+    ).rstrip("/")
+
+    try:
+        resources = fetch_resources()
+
+        if not isinstance(resources, list):
+            return jsonify({
+                "error": "Invalid resource database response"
+            }), 502
+
+        response = requests.post(
+            f"{multi_agent_url}/workflow/resource",
+            json={
+                "feature": "resource_management",
+                "user_request": question.strip(),
+                "evidence": resources,
+            },
+            timeout=180,
+        )
+
+        try:
+            result = response.json()
+        except ValueError:
+            return jsonify({
+                "error": "Invalid Multi-Agent Server response"
+            }), 502
+
+        return jsonify(result), response.status_code
+
+    except requests.Timeout:
+        return jsonify({
+            "error": "Resource Multi-Agent request timed out"
+        }), 504
+
+    except requests.RequestException:
+        return jsonify({
+            "error": "Resource Database or Multi-Agent Server unavailable"
         }), 503
 
 # Start

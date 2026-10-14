@@ -57,6 +57,35 @@ def create_app(history_path=None, audit_path=None):
         )
         return jsonify(result), status
 
+    @app.post("/workflow/resource")
+    def resource_workflow():
+        body = request.get_json(silent=True)
+
+        if not isinstance(body, dict):
+            return jsonify(error="JSON object required"), 400
+
+        user_request = body.get("user_request")
+        evidence = body.get("evidence")
+        feature = body.get("feature")
+
+        if feature != "resource_management":
+            return jsonify(error="feature must be resource_management"), 400
+
+        if not isinstance(user_request, str) or not user_request.strip():
+            return jsonify(error="user_request is required"), 400
+
+        if not isinstance(evidence, list) or not all(
+            isinstance(item, dict) for item in evidence
+        ):
+            return jsonify(error="evidence must be a list of objects"), 400
+
+        result, status = coordinator.run(
+            user_request.strip(),
+            evidence,
+            feature="resource_management",
+        )
+        return jsonify(result), status
+
     @app.post("/workflow/<workflow_id>/decision")
     def decision(workflow_id):
         body = request.get_json(silent=True)
