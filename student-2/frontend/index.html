@@ -10,9 +10,9 @@
 
 <body>
   <header class="topbar">
-    <a class="brand" href="http://localhost:8888/"><span class="brand-mark"></span>SmartCampus AI</a>
+    <a class="brand" href="/" data-campus-port="8888"><span class="brand-mark"></span>SmartCampus AI</a>
     <nav class="nav" aria-label="Main navigation">
-      <a href="http://localhost:8888/">Home</a>
+      <a href="/" data-campus-port="8888">Home</a>
       <span>Courses</span><span
         class="active">Assignments</span><span>Resources</span><span>Events</span><span>Career</span>
     </nav>
@@ -77,6 +77,53 @@
         <p>Change the filters or create a new assignment.</p>
       </div>
     </section>
+
+    <section class="workspace multi-agent-card" aria-labelledby="multiAgentTitle">
+      <div class="workspace-head">
+        <div>
+          <p class="eyebrow">MULTI-AGENT SYSTEM</p>
+          <h2 id="multiAgentTitle">Assignment planning workflow</h2>
+          <p class="muted">Planner → Worker → Reviewer → Human Review, grounded in current assignment records.</p>
+        </div>
+      </div>
+
+      <div class="multi-agent-controls">
+        <label for="multiAgentRequest">Assignment Management request</label>
+        <textarea id="multiAgentRequest"
+          rows="3">Review my current assignments and recommend what I should work on first.</textarea>
+        <button id="multiAgentRun" class="button primary" type="button">Run Multi-Agent Workflow</button>
+      </div>
+
+      <p id="multiAgentStatus" class="muted" role="status" aria-live="polite">Ready to run.</p>
+      <div class="multi-agent-results">
+        <section>
+          <h3>Planner result</h3>
+          <pre id="multiAgentPlanner">Awaiting workflow.</pre>
+        </section>
+        <section>
+          <h3>Worker result</h3>
+          <pre id="multiAgentWorker">Awaiting workflow.</pre>
+        </section>
+        <section>
+          <h3>Reviewer result</h3>
+          <pre id="multiAgentReviewer">Awaiting workflow.</pre>
+        </section>
+      </div>
+
+      <div class="human-review">
+        <h3>Human Review</h3>
+        <label for="multiAgentReason">Reason (optional)</label>
+        <textarea id="multiAgentReason" rows="2"
+          placeholder="Explain why you accept, partially accept, or reject the result."></textarea>
+        <div class="multi-agent-decisions">
+          <button class="button primary" type="button" data-human-decision="Accept" disabled>Accept</button>
+          <button class="button secondary" type="button" data-human-decision="Partially Accept" disabled>Partially
+            Accept</button>
+          <button class="button secondary" type="button" data-human-decision="Reject" disabled>Reject</button>
+        </div>
+        <p id="multiAgentDecision" role="status" aria-live="polite">No human decision recorded.</p>
+      </div>
+    </section>
   </main>
 
   <div class="modal-overlay" id="assignmentModal" hidden>
@@ -130,6 +177,13 @@
   </div>
 
   <script src="js/app.js"></script>
+  <script>
+    document.querySelectorAll('a[data-campus-port]').forEach((link) => {
+      const url = new URL(link.getAttribute("href"), window.location.href);
+      url.port = link.dataset.campusPort;
+      link.href = url.href;
+    });
+  </script>
 </body>
 
 </html>

@@ -29,6 +29,14 @@ AI_MODEL = os.getenv(
 
 # Health
 
+@app.before_request
+def cloud_ai_guard():
+    if os.getenv("AI_SERVICES_ENABLED", "true").lower() == "false" and (
+        request.path.startswith(("/recommend", "/rag/", "/api/mcp/"))
+    ):
+        return jsonify(error="AI, MCP, RAG and Multi-Agent services are disabled in this deployment"), 503
+
+
 @app.route("/health", methods=["GET"])
 def health_check():
     return jsonify({
@@ -1012,5 +1020,5 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=8000,
-        debug=True
+        debug=os.getenv("FLASK_DEBUG", "true").lower() == "true"
     )

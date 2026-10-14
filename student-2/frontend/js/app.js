@@ -1,4 +1,4 @@
-const API_BASE = window.ASSIGNMENT_API_URL || "http://localhost:8002/api";
+const API_BASE = window.ASSIGNMENT_API_URL || "/api";
 let assignments = [];
 
 const $ = (selector) => document.querySelector(selector);
@@ -133,3 +133,85 @@ $("#aiButton").addEventListener("click", () => { $("#aiModal").hidden = false; }
 document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => { $(`#${button.dataset.close}`).hidden = true; }));
 ["#studentFilter", "#statusFilter", "#priorityFilter", "#sortFilter"].forEach((selector) => $(selector).addEventListener("change", loadAssignments));
 loadAssignments();
+
+const multiAgent = {
+  workflowId: null,
+  run: $("#multiAgentRun"),
+  request: $("#multiAgentRequest"),
+  reason: $("#multiAgentReason"),
+  status: $("#multiAgentStatus"),
+  decision: $("#multiAgentDecision"),
+  buttons: [...document.querySelectorAll("[data-human-decision]")],
+};
+
+function enableHumanReview(enabled) {
+  multiAgent.buttons.forEach((button) => { button.disabled = !enabled; });
+}
+
+multiAgent.run.addEventListener("click", async () => {
+  multiAgent.workflowId = null;
+  enableHumanReview(false);
+  multiAgent.run.disabled = true;
+  multiAgent.reason.value = "";
+  multiAgent.decision.textContent = "No human decision recorded.";
+  multiAgent.status.textContent = "Running Planner → Worker → Reviewer…";
+  ["Planner", "Worker", "Reviewer"].forEach((role) => {
+    $(`#multiAgent${role}`).textContent = "Awaiting workflow.";
+  });
+
+  try {
+    const result = await api("/multi-agent/assignment-workflow", {
+      method: "POST",
+      body: JSON.stringify({
+        user_request: multiAgent.request.value.trim(),
+        student_id: $("#studentFilter").value.trim(),
+      }),
+    });
+    ["planner", "worker", "reviewer"].forEach((role) => {
+      const target = `#multiAgent${role[0].toUpperCase()}${role.slice(1)}`;
+      $(target).textContent = JSON.stringify(result[`${role}_result`], null, 2);
+    });
+    if (
+      result.workflow_id
+      && result.reviewer_result
+      && result.human_review?.status === "pending"
+    ) {
+      multiAgent.workflowId = result.workflow_id;
+      enableHumanReview(true);
+      multiAgent.status.textContent = `Workflow ${result.workflow_id}: awaiting your review.`;
+    } else {
+      throw new Error("The workflow did not return a pending human review.");
+    }
+  } catch (error) {
+    multiAgent.status.textContent = error.message;
+  } finally {
+    multiAgent.run.disabled = false;
+  }
+});
+
+multiAgent.buttons.forEach((button) => button.addEventListener("click", async () => {
+  if (!multiAgent.workflowId) return;
+  enableHumanReview(false);
+  multiAgent.run.disabled = true;
+  try {
+    const result = await api(
+      `/multi-agent/assignment-workflow/${encodeURIComponent(multiAgent.workflowId)}/decision`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          decision: button.dataset.humanDecision,
+          reason: multiAgent.reason.value.trim(),
+        }),
+      },
+    );
+    const reason = result.human_review.reason || "None supplied";
+    multiAgent.decision.textContent = `Final decision: ${result.human_review.decision}. Reason: ${reason}`;
+    multiAgent.status.textContent = "Human review completed.";
+    multiAgent.workflowId = null;
+  } catch (error) {
+    multiAgent.status.textContent = error.message;
+    enableHumanReview(true);
+  } finally {
+    multiAgent.run.disabled = false;
+  }
+}));

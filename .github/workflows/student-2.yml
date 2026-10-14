@@ -2,14 +2,16 @@ name: Student 2 Assignment Management
 
 on:
   push:
-    branches: [student_2]
+    branches: [student_2, feature/student2-release2]
     paths:
       - "student-2/**"
+      - "ai-services/multi-agent-server/**"
       - ".github/workflows/student-2.yml"
   pull_request:
     branches: [main]
     paths:
       - "student-2/**"
+      - "ai-services/multi-agent-server/**"
       - ".github/workflows/student-2.yml"
 
 jobs:
@@ -24,6 +26,7 @@ jobs:
         run: |
           pip install -r student-2/database/requirements.txt
           pip install -r student-2/backend/requirements.txt
+          pip install -r student-2/tests/requirements.txt
       - name: Initialise and validate database
         run: |
           python student-2/database/init_db.py
@@ -35,7 +38,11 @@ jobs:
           print(f"Validated {count} assignment records")
           PY
       - name: Compile Python source
-        run: python -m compileall -q student-2/backend student-2/database
+        run: python -m compileall -q student-2 ai-services/multi-agent-server
+      - name: Run Student 2 endpoint and Multi-Agent tests
+        run: |
+          python -m pytest student-2/tests -q
+          python -m pytest ai-services/multi-agent-server/tests/test_student2_assignment_workflow.py -q
       - name: Build Student 2 containers
         run: |
           docker build -f student-2/database/Dockerfile -t student2-database .

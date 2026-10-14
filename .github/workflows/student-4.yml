@@ -91,7 +91,7 @@ jobs:
       # 10. Start Student 4 services
       - name: Start Student 4 services
         run: |
-          docker compose up -d database ollama backend frontend
+          docker compose up -d --no-deps database backend frontend
 
       # 11. Show container status
       - name: Show running containers

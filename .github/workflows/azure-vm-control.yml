@@ -1,0 +1,79 @@
+name: Azure VM Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose whether to start or deallocate the Group 5 Azure VM"
+        required: true
+        type: choice
+        options:
+          - start
+          - deallocate
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-group5-cloud
+  cancel-in-progress: false
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    environment: azure-assessment
+    timeout-minutes: 10
+
+    steps:
+      - name: Authenticate to Azure with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Start Group 5 VM
+        if: ${{ inputs.action == 'start' }}
+        run: |
+          set -Eeuo pipefail
+          az vm start \
+            --resource-group asd-group5-rg \
+            --name asd-group5-vm
+
+      - name: Deallocate Group 5 VM
+        if: ${{ inputs.action == 'deallocate' }}
+        run: |
+          set -Eeuo pipefail
+          az vm deallocate \
+            --resource-group asd-group5-rg \
+            --name asd-group5-vm
+
+      - name: Record VM status
+        if: always()
+        run: |
+          set -Eeuo pipefail
+          status=$(az vm get-instance-view \
+            --resource-group asd-group5-rg \
+            --name asd-group5-vm \
+            --query "instanceView.statuses[?starts_with(code, 'PowerState/')].displayStatus | [0]" \
+            -o tsv)
+
+          echo "### Group 5 Azure VM Control" >> "$GITHUB_STEP_SUMMARY"
+          echo "Requested action: ${{ inputs.action }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Current VM status: $status" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ inputs.action }}" = "start" ]; then
+            public_ip=$(az vm show -d \
+              --resource-group asd-group5-rg \
+              --name asd-group5-vm \
+              --query publicIps \
+              -o tsv)
+            echo "Public IP: $public_ip" >> "$GITHUB_STEP_SUMMARY"
+            echo "Shared frontend: http://$public_ip:8888" >> "$GITHUB_STEP_SUMMARY"
+            echo "Student 1 Courses: http://$public_ip:8081" >> "$GITHUB_STEP_SUMMARY"
+            echo "Student 2 Assignments: http://$public_ip:8082" >> "$GITHUB_STEP_SUMMARY"
+            echo "Student 3 Resources: http://$public_ip:8083" >> "$GITHUB_STEP_SUMMARY"
+            echo "Student 4 Events: http://$public_ip:8080" >> "$GITHUB_STEP_SUMMARY"
+            echo "Student 5 Career: http://$public_ip:8085" >> "$GITHUB_STEP_SUMMARY"
+          fi

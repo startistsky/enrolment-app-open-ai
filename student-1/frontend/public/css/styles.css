@@ -1030,3 +1030,12 @@ dialog::backdrop {
         padding: 20px;
     }
 }
+
+
+.multi-agent-card { margin-top: 18px; }
+.multi-agent-results { display: grid; gap: 14px; margin: 18px 0; }
+.multi-agent-results section { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: #fafcfb; }
+.multi-agent-results h3 { margin-top: 0; }
+.multi-agent-results pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+.multi-agent-decisions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+#multi-agent-status { margin-top: 14px; }
