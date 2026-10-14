@@ -24,3 +24,10 @@ repos:
         additional_dependencies: ['pip-audit==2.10.1']
         pass_filenames: false
         always_run: true
+
+      - id: student-4-pytest
+        name: Student 4 Pre-commit Pytest
+        entry: python -m pytest student-4/tests/ -q
+        language: system
+        pass_filenames: false
+        files: ^student-4/

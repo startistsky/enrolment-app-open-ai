@@ -1,4 +1,4 @@
-name: Student 4 Release 1 CI
+name: Student 4 Release 2 CI
 
 on:
   push:
@@ -60,6 +60,28 @@ jobs:
       - name: Install RAG dependencies
         run: |
           pip install -r rag-server/requirements.txt
+
+      # Release 2: Pre-commit pytest validation
+      - name: Release 2 Pre-commit Pytest
+        working-directory: student-4
+        run: |
+          python -m pytest tests/ -v
+
+      # Release 2: Post-commit AI-assisted unit testing
+      - name: Release 2 Post-commit AI-assisted Unit Testing
+        working-directory: student-4
+        run: |
+          python -m pytest tests/ -v \
+            --junitxml=release2-test-results.xml
+
+      # Preserve test evidence for the technical report
+      - name: Upload Release 2 Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-4-release2-test-results
+          path: student-4/release2-test-results.xml
+          if-no-files-found: warn
 
       # 6. Run all Student 4 tests
       - name: Run Student 4 tests
