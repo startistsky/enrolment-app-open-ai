@@ -14,7 +14,9 @@ from agents import (
     worker_agent,
 )
 from llm_client import ModelError
-
+from agents import event_planner_agent
+from agents import event_worker_agent
+from agents import event_reviewer_agent
 
 DECISIONS = ["Accept", "Partially Accept", "Reject"]
 AGENT_SUITES = {
@@ -23,7 +25,13 @@ AGENT_SUITES = {
         assignment_planner_agent,
         assignment_worker_agent,
         assignment_reviewer_agent,
+        
     ),
+    "event_management": (
+    event_planner_agent,
+    event_worker_agent,
+    event_reviewer_agent,
+),
 }
 
 
