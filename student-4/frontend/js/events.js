@@ -868,15 +868,72 @@ function showAgentStatus(message) {
 }
 
 
+
 function showAgentOutput(element, data) {
   if (!element) return;
 
-  element.textContent = JSON.stringify(
-    data ?? {},
-    null,
-    2
-  );
+  // Display readable text while preserving the
+  // original API response and evidence references.
+  const result = data ?? {};
+
+  element.style.whiteSpace = "pre-wrap";
+  element.style.overflowWrap = "anywhere";
+  element.style.wordBreak = "normal";
+  element.style.maxWidth = "100%";
+  element.style.lineHeight = "1.7";
+
+  if (element.id === "plannerOutput") {
+    const required = Array.isArray(result.evidence_required)
+      ? result.evidence_required.join(", ")
+      : "Not specified";
+
+    element.textContent =
+      `Plan:\n${result.plan || "No plan provided."}` +
+      `\n\nRequired evidence: ${required}`;
+    return;
+  }
+
+  if (element.id === "workerOutput") {
+    const answer = String(result.answer || "No answer returned.");
+
+    // Convert literal \n sequences to readable lines.
+    const readableAnswer = answer.replace(/\\n/g, "\n");
+
+    const ids = Array.isArray(result.evidence_used)
+      ? result.evidence_used.join(", ")
+      : "";
+
+    const missing = Array.isArray(result.missing_evidence)
+      ? result.missing_evidence
+      : [];
+
+    element.textContent =
+      `Answer:\n${readableAnswer}` +
+      `\n\nEvidence IDs: ${ids || "None"}` +
+      `\nMissing evidence: ${
+        missing.length ? missing.join(", ") : "None"
+      }`;
+    return;
+  }
+
+  if (element.id === "reviewerOutput") {
+    const claims = Array.isArray(result.unsupported_claims)
+      ? result.unsupported_claims
+      : [];
+
+    element.textContent =
+      `Risk:\n${result.risk || "Not specified."}` +
+      `\n\nCorrection:\n${result.correction || "None."}` +
+      `\n\nRecommendation:\n${result.recommendation || "None."}` +
+      `\n\nUnsupported claims:\n${
+        claims.length ? claims.join("\n") : "None"
+      }`;
+    return;
+  }
+
+  element.textContent = JSON.stringify(result, null, 2);
 }
+
 
 
 function setReviewButtonsDisabled(disabled) {
