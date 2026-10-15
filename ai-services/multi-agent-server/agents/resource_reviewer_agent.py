@@ -84,40 +84,83 @@ def run(user_request, evidence, planner_result, worker_result):
             if record["resource_id"] in cited_ids
         ]
 
-        has_capacity = all(
+        has_capacity = bool(cited_records) and all(
             record.get("capacity") is not None
             for record in cited_records
         )
 
-        has_availability = all(
+        has_availability = bool(cited_records) and all(
             record.get("availability_status")
             for record in cited_records
         )
 
-        risk_text = result["risk"].casefold()
+        import re
 
-        missing_claim = (
-            "do not provide any information" in risk_text
-            or "missing availability" in risk_text
-            or "missing capacity" in risk_text
+        worker_answer = str(worker_result.get("answer", ""))
+        ids_in_answer = set(
+            re.findall(r"\bID\s*:\s*(\d+)\b", worker_answer, re.I)
+        )
+        ids_verified_in_answer = bool(cited_ids) and cited_ids.issubset(
+            ids_in_answer
         )
 
-        if (
-            cited_records
-            and has_capacity
-            and has_availability
-            and missing_claim
-        ):
-            result["risk"] = (
-                "No missing capacity or availability evidence "
-                "was identified for the cited resources."
+        def contradicts_verified_evidence(value):
+            if isinstance(value, dict):
+                text = " ".join(str(v) for v in value.values()).casefold()
+            else:
+                text = str(value).casefold()
+
+            missing_ids = ids_verified_in_answer and (
+                "missing resource id" in text
+                or "no resource id" in text
+                or "did not provide resource id" in text
+                or "does not provide resource id" in text
+                or ("does not specify" in text and "resource id" in text)
+                or ("should specify" in text and "resource id" in text)
+                or ("should provide" in text and "resource id" in text)
+                or ("does not provide" in text and "resource id" in text)
+                or "did not cite" in text
+                or "no citations" in text
             )
-            result["correction"] = (
-                "No correction required for capacity or availability."
+
+            missing_capacity = has_capacity and (
+                "missing capacity" in text
+                or "no capacity information" in text
+                or "capacity is not provided" in text
             )
-            result["recommendation"] = (
-                "Proceed to human review with verified resource evidence."
+
+            missing_availability = has_availability and (
+                "missing availability" in text
+                or "no availability information" in text
+                or "availability is not provided" in text
             )
+
+            return (
+                missing_ids
+                or missing_capacity
+                or missing_availability
+            )
+
+        result["unsupported_claims"] = [
+            claim
+            for claim in result["unsupported_claims"]
+            if not contradicts_verified_evidence(claim)
+        ]
+
+        for field in ("risk", "correction", "recommendation"):
+            if contradicts_verified_evidence(result[field]):
+                result[field] = {
+                    "risk": (
+                        "No unsupported resource ID, capacity or "
+                        "availability claim was verified."
+                    ),
+                    "correction": (
+                        "Use the verified resource evidence."
+                    ),
+                    "recommendation": (
+                        "Proceed to human review."
+                    ),
+                }[field]
 
     if findings:
         result["unsupported_claims"].extend(findings)
