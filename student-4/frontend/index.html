@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -6,12 +7,14 @@
     <title>Campus Events</title>
     <link rel="stylesheet" href="/shared/css/student_4.css" />
   </head>
+
   <body>
     <header class="topbar">
       <a href="/" data-campus-port="8888" class="brand">
         <div class="brand-mark"></div>
         <span>CampusLife</span>
       </a>
+
       <nav class="nav">
         <a href="/" data-campus-port="8888">Home</a>
         <a href="/" data-campus-port="8081">Courses</a>
@@ -20,6 +23,7 @@
         <a href="/" data-campus-port="8080" class="active">Events</a>
         <a href="/" data-campus-port="8085">Career</a>
       </nav>
+
       <div class="actions">
         <button
           class="mode-btn"
@@ -35,6 +39,9 @@
     </header>
 
     <main>
+      <!-- =========================
+           GUEST VIEW
+           ========================= -->
       <div id="guestView">
         <section class="hero">
           <div class="hero-content">
@@ -66,26 +73,170 @@
           </div>
         </section>
 
+        <!-- FEATURED EVENTS -->
         <section class="section">
           <div class="section-head">
             <h2>Featured events</h2>
 
-            <button class="view-all" type="button">View all events →</button>
+            <button class="view-all" type="button">
+              View all events →
+            </button>
           </div>
 
           <div class="grid" id="eventGrid"></div>
 
           <div class="result-count" id="count"></div>
         </section>
+
+        <!-- =========================
+             RELEASE 2 MULTI-AGENT
+             STUDENT 4
+             ========================= -->
+        <section
+          class="section"
+          id="multiAgentSection"
+          aria-labelledby="multiAgentHeading"
+        >
+          <div class="section-head">
+            <h2 id="multiAgentHeading">
+              Multi-Agent Event Analysis
+            </h2>
+          </div>
+
+          <p>
+            Analyse campus events using three AI agents:
+            Planner, Worker and Reviewer.
+            Review the results before making your final decision.
+          </p>
+
+          <div class="form-group">
+            <label for="agentRequest">
+              What would you like to know about campus events?
+            </label>
+
+            <textarea
+              id="agentRequest"
+              rows="3"
+              placeholder="e.g. What technology workshops are available? Include event titles, dates and locations."
+            ></textarea>
+          </div>
+
+          <button
+            id="runAgentButton"
+            class="primary-btn"
+            type="button"
+          >
+            ✨ Run Multi-Agent Analysis
+          </button>
+
+          <p
+            id="agentStatus"
+            role="status"
+            aria-live="polite"
+          ></p>
+
+          <!-- AGENT RESULTS -->
+          <div id="agentResults" hidden>
+            <div class="agent-result">
+              <h3>1. Planner Agent</h3>
+              <p>
+                Creates a plan based on your request
+                and the available event evidence.
+              </p>
+              <pre id="plannerOutput"></pre>
+            </div>
+
+            <div class="agent-result">
+              <h3>2. Worker Agent</h3>
+              <p>
+                Executes the plan using the supplied
+                campus event records.
+              </p>
+              <pre id="workerOutput"></pre>
+            </div>
+
+            <div class="agent-result">
+              <h3>3. Reviewer Agent</h3>
+              <p>
+                Reviews the answer for missing evidence,
+                unsupported claims and possible errors.
+              </p>
+              <pre id="reviewerOutput"></pre>
+            </div>
+
+            <!-- HUMAN REVIEW -->
+            <div
+              class="agent-result"
+              id="humanReviewSection"
+            >
+              <h3>4. Human Review</h3>
+
+              <p>
+                Check the Planner, Worker and Reviewer
+                outputs before submitting your decision.
+              </p>
+
+              <div class="form-group">
+                <label for="reviewReason">
+                  Review reason or comments
+                </label>
+
+                <textarea
+                  id="reviewReason"
+                  rows="3"
+                  placeholder="Explain why you accept, partially accept or reject the result."
+                ></textarea>
+              </div>
+
+              <div id="reviewButtons">
+                <button
+                  type="button"
+                  data-decision="Accept"
+                  class="primary-btn"
+                >
+                  Accept
+                </button>
+
+                <button
+                  type="button"
+                  data-decision="Partially Accept"
+                  class="secondary-btn"
+                >
+                  Partially Accept
+                </button>
+
+                <button
+                  type="button"
+                  data-decision="Reject"
+                  class="secondary-btn"
+                >
+                  Reject
+                </button>
+              </div>
+
+              <p
+                id="humanReviewStatus"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </div>
+          </div>
+        </section>
       </div>
+
+      <!-- =========================
+           ADMIN VIEW
+           ========================= -->
       <div id="adminView" class="admin-view">
         <section class="admin-section">
           <div class="admin-heading">
             <div>
               <p class="admin-eyebrow">Event Management</p>
               <h1>Manage Events</h1>
+
               <p class="admin-description">
-                Create, update and manage campus activities and events.
+                Create, update and manage campus
+                activities and events.
               </p>
             </div>
 
@@ -101,6 +252,7 @@
           <div class="admin-toolbar">
             <div class="admin-search">
               <span>⌕</span>
+
               <input
                 id="adminSearch"
                 type="text"
@@ -131,6 +283,10 @@
         </section>
       </div>
     </main>
+
+    <!-- =========================
+         EVENT MODAL
+         ========================= -->
     <div class="event-modal-backdrop" id="eventModal">
       <div class="event-modal">
         <div class="event-modal-head">
@@ -172,7 +328,11 @@
 
             <div class="form-group">
               <label for="eventDate">Date</label>
-              <input id="eventDate" type="date" required />
+              <input
+                id="eventDate"
+                type="date"
+                required
+              />
             </div>
           </div>
 
@@ -197,7 +357,10 @@
           </div>
 
           <div class="form-group">
-            <label for="eventDescription">Description</label>
+            <label for="eventDescription">
+              Description
+            </label>
+
             <textarea
               id="eventDescription"
               rows="4"
@@ -215,18 +378,33 @@
               Cancel
             </button>
 
-            <button class="primary-btn" id="eventSubmitButton" type="submit">
+            <button
+              class="primary-btn"
+              id="eventSubmitButton"
+              type="submit"
+            >
               Add Event
             </button>
           </div>
         </form>
       </div>
     </div>
+
+    <!-- FOOTER -->
     <footer class="footer">
-      CampusLife Events · ASD 2026 Student Project · Campus Event Management
+      CampusLife Events · ASD 2026 Student Project ·
+      Campus Event Management
     </footer>
 
-    <button class="chat-launcher" onclick="toggleChat()">💬</button>
+    <!-- =========================
+         AI CHAT ASSISTANT
+         ========================= -->
+    <button
+      class="chat-launcher"
+      onclick="toggleChat()"
+    >
+      💬
+    </button>
 
     <aside class="chat" id="chat">
       <div class="chat-head">
@@ -234,21 +412,38 @@
           <strong>Campus AI Assistant</strong><br />
           <span>Powered by Ollama in the real project</span>
         </div>
-        <button class="chat-close" onclick="toggleChat(false)">×</button>
+
+        <button
+          class="chat-close"
+          onclick="toggleChat(false)"
+        >
+          ×
+        </button>
       </div>
 
       <div class="messages" id="messages">
         <div class="msg bot">
-          Hi! Ask me about campus events, dates, categories or locations.
+          Hi! Ask me about campus events,
+          dates, categories or locations.
         </div>
       </div>
 
       <div class="quick">
-        <button onclick="askQuick('What events are happening this week?')">
+        <button
+          onclick="askQuick('What events are happening this week?')"
+        >
           This week?
         </button>
-        <button onclick="askQuick('Any career events?')">Career events?</button>
-        <button onclick="askQuick('What is happening at Building 11?')">
+
+        <button
+          onclick="askQuick('Any career events?')"
+        >
+          Career events?
+        </button>
+
+        <button
+          onclick="askQuick('What is happening at Building 11?')"
+        >
           Building 11?
         </button>
       </div>
@@ -259,17 +454,28 @@
           placeholder="Ask about events..."
           onkeydown="if (event.key === 'Enter') sendMessage();"
         />
-        <button onclick="sendMessage()">Send</button>
+
+        <button onclick="sendMessage()">
+          Send
+        </button>
       </div>
     </aside>
 
+    <!-- JAVASCRIPT -->
     <script src="js/events.js"></script>
-  <script>
-    document.querySelectorAll('a[data-campus-port]').forEach((link) => {
-      const url = new URL(link.getAttribute("href"), window.location.href);
-      url.port = link.dataset.campusPort;
-      link.href = url.href;
-    });
-  </script>
+
+    <script>
+      document.querySelectorAll(
+        'a[data-campus-port]'
+      ).forEach((link) => {
+        const url = new URL(
+          link.getAttribute("href"),
+          window.location.href
+        );
+
+        url.port = link.dataset.campusPort;
+        link.href = url.href;
+      });
+    </script>
   </body>
 </html>
