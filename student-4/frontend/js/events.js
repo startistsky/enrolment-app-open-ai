@@ -820,3 +820,331 @@ if (adminSearch) {
    ========================= */
 
 loadEvents();
+
+
+/* ==========================================
+   RELEASE 2 - EVENT MULTI-AGENT SYSTEM
+   Planner -> Worker -> Reviewer -> Human
+   ========================================== */
+
+let currentAgentWorkflowId = null;
+let agentBusy = false;
+
+const agentRequestInput =
+  document.getElementById("agentRequest");
+
+const runAgentButton =
+  document.getElementById("runAgentButton");
+
+const agentStatus =
+  document.getElementById("agentStatus");
+
+const agentResults =
+  document.getElementById("agentResults");
+
+const plannerOutput =
+  document.getElementById("plannerOutput");
+
+const workerOutput =
+  document.getElementById("workerOutput");
+
+const reviewerOutput =
+  document.getElementById("reviewerOutput");
+
+const reviewReason =
+  document.getElementById("reviewReason");
+
+const humanReviewStatus =
+  document.getElementById("humanReviewStatus");
+
+const reviewButtons =
+  document.getElementById("reviewButtons");
+
+
+function showAgentStatus(message) {
+  if (agentStatus) {
+    agentStatus.textContent = message;
+  }
+}
+
+
+function showAgentOutput(element, data) {
+  if (!element) return;
+
+  element.textContent = JSON.stringify(
+    data ?? {},
+    null,
+    2
+  );
+}
+
+
+function setReviewButtonsDisabled(disabled) {
+  if (!reviewButtons) return;
+
+  reviewButtons
+    .querySelectorAll("[data-decision]")
+    .forEach((button) => {
+      button.disabled = disabled;
+    });
+}
+
+
+async function readAgentResponse(response) {
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.error || `Request failed: ${response.status}`
+    );
+  }
+
+  return data;
+}
+
+
+/* ==========================================
+   START MULTI-AGENT WORKFLOW
+   ========================================== */
+
+async function runEventMultiAgent() {
+  if (agentBusy) return;
+
+  const userRequest = agentRequestInput?.value.trim();
+
+  if (!userRequest) {
+    showAgentStatus(
+      "Please enter a question about campus events."
+    );
+    return;
+  }
+
+  agentBusy = true;
+  currentAgentWorkflowId = null;
+
+  if (runAgentButton) {
+    runAgentButton.disabled = true;
+    runAgentButton.textContent = "Running AI Agents...";
+  }
+
+  if (agentResults) {
+    agentResults.hidden = true;
+  }
+
+  if (humanReviewStatus) {
+    humanReviewStatus.textContent = "";
+  }
+
+  if (reviewReason) {
+    reviewReason.value = "";
+  }
+
+  setReviewButtonsDisabled(true);
+
+  showAgentStatus(
+    "Planner, Worker and Reviewer are processing your request. This may take a few minutes."
+  );
+
+  try {
+    const response = await fetch(
+      "/api/multi-agent/event-workflow",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          user_request: userRequest
+        })
+      }
+    );
+
+    const data = await readAgentResponse(response);
+
+    showAgentOutput(
+      plannerOutput,
+      data.planner_result
+    );
+
+    showAgentOutput(
+      workerOutput,
+      data.worker_result
+    );
+
+    showAgentOutput(
+      reviewerOutput,
+      data.reviewer_result
+    );
+
+    if (agentResults) {
+      agentResults.hidden = false;
+    }
+
+    if (
+      data.status !== "pending_human_review" ||
+      !data.workflow_id
+    ) {
+      showAgentStatus(
+        `Workflow status: ${data.status || "unknown"}. Human review is not available.`
+      );
+      return;
+    }
+
+    currentAgentWorkflowId = data.workflow_id;
+
+    setReviewButtonsDisabled(false);
+
+    showAgentStatus(
+      "All three agents completed. Please review the results and submit your decision."
+    );
+
+  } catch (error) {
+    showAgentStatus(
+      `Multi-Agent error: ${error.message}`
+    );
+    console.error("Multi-Agent workflow error:", error);
+
+  } finally {
+    agentBusy = false;
+
+    if (runAgentButton) {
+      runAgentButton.disabled = false;
+      runAgentButton.textContent =
+        "✨ Run Multi-Agent Analysis";
+    }
+  }
+}
+
+
+/* ==========================================
+   HUMAN REVIEW DECISION
+   ========================================== */
+
+async function submitHumanReview(decision) {
+  if (agentBusy || !currentAgentWorkflowId) {
+    return;
+  }
+
+  const allowed = [
+    "Accept",
+    "Partially Accept",
+    "Reject"
+  ];
+
+  if (!allowed.includes(decision)) {
+    return;
+  }
+
+  const reason = reviewReason?.value.trim() || "";
+
+  if (
+    decision !== "Accept" &&
+    !reason
+  ) {
+    if (humanReviewStatus) {
+      humanReviewStatus.textContent =
+        "Please provide a reason for this decision.";
+    }
+    return;
+  }
+
+  agentBusy = true;
+  setReviewButtonsDisabled(true);
+
+  if (runAgentButton) {
+    runAgentButton.disabled = true;
+  }
+
+  if (humanReviewStatus) {
+    humanReviewStatus.textContent =
+      "Submitting your review...";
+  }
+
+  try {
+    const response = await fetch(
+      `/api/multi-agent/event-workflow/${encodeURIComponent(
+        currentAgentWorkflowId
+      )}/decision`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          decision: decision,
+          reason: reason
+        })
+      }
+    );
+
+    const data = await readAgentResponse(response);
+
+    if (data.status !== "completed") {
+      throw new Error(
+        `Unexpected workflow status: ${data.status}`
+      );
+    }
+
+    if (humanReviewStatus) {
+      humanReviewStatus.textContent =
+        `Review completed: ${decision}.`;
+    }
+
+    showAgentStatus(
+      "Multi-Agent workflow and Human Review completed successfully."
+    );
+
+    currentAgentWorkflowId = null;
+
+  } catch (error) {
+    if (humanReviewStatus) {
+      humanReviewStatus.textContent =
+        `Review error: ${error.message}`;
+    }
+
+    // Allow retry if the decision was not confirmed.
+    setReviewButtonsDisabled(true);
+
+    if (currentAgentWorkflowId) {
+      setReviewButtonsDisabled(false);
+    }
+
+  } finally {
+    agentBusy = false;
+
+    if (runAgentButton) {
+      runAgentButton.disabled = false;
+    }
+  }
+}
+
+
+/* ==========================================
+   EVENT LISTENERS
+   ========================================== */
+
+if (runAgentButton) {
+  runAgentButton.addEventListener(
+    "click",
+    runEventMultiAgent
+  );
+}
+
+if (reviewButtons) {
+  reviewButtons.addEventListener(
+    "click",
+    (event) => {
+      const button = event.target.closest(
+        "[data-decision]"
+      );
+
+      if (!button || !reviewButtons.contains(button)) {
+        return;
+      }
+
+      submitHumanReview(
+        button.dataset.decision
+      );
+    }
+  );
+}
