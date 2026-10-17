@@ -249,7 +249,11 @@ def detect_resource_types(question):
             continue
 
         if any(
-            keyword in text
+            (
+                keyword in text.split()
+                if keyword == "lab"
+                else keyword in text
+            )
             for keyword in keywords
         ):
             requested_types.add(
@@ -857,6 +861,92 @@ def rag_recommend():
         match.get("context", "")
         for match in grounded_matches
     )
+
+    # Validate live availability for availability-specific questions.
+    if requires_available_resource(question):
+        try:
+            resources = fetch_resources()
+            candidates = select_candidates(resources, question)
+        except requests.RequestException:
+            return jsonify({
+                "error": "Resource database unavailable"
+            }), 503
+
+        # Match retrieved knowledge against verified database records.
+        verified_names = {
+            resource.get("resource_name")
+            for resource in candidates
+        }
+
+        grounded_matches = [
+            match
+            for match in grounded_matches
+            if match.get("resource_name") in verified_names
+        ]
+
+        if not grounded_matches:
+            return jsonify({
+                "question": question,
+                "mode": "rag",
+                "answer": (
+                    "No retrieved campus resources are currently "
+                    "verified as available for this request."
+                ),
+                "model": AI_MODEL,
+                "citations": [],
+                "confidence": "low",
+                "matches": matches,
+            }), 200
+
+        context = "\n\n".join(
+            match.get("context", "")
+            for match in grounded_matches
+        )
+
+        # Build a verified answer from live database records.
+        # Do not let the LLM invent availability or capacity.
+        verified_resources = [
+            resource
+            for resource in candidates
+            if resource.get("resource_name") in {
+                match.get("resource_name")
+                for match in grounded_matches
+            }
+        ]
+
+        citations = list(dict.fromkeys(
+            match.get("citation")
+            for match in grounded_matches
+            if match.get("citation")
+        ))
+
+        confidence = (
+            "high"
+            if any(
+                match.get("confidence") == "high"
+                for match in grounded_matches
+            )
+            else "medium"
+        )
+
+        recommendations = [
+            (
+                f"{resource['resource_name']} is currently available "
+                f"and can accommodate {resource['capacity']} students. "
+                f"Location: {resource['location']}."
+            )
+            for resource in verified_resources
+        ]
+
+        return jsonify({
+            "question": question,
+            "mode": "rag",
+            "answer": "\n".join(recommendations),
+            "model": AI_MODEL,
+            "citations": citations,
+            "confidence": confidence,
+            "matches": matches,
+        }), 200
 
     # Stop unsupported procedural answers
     if detect_procedure_request(question):

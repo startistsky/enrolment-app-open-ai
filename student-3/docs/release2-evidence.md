@@ -141,3 +141,167 @@ Student 3 Release 2 delivers an independent Resource Management Multi-Agent work
 Two live workflows were completed with recorded human decisions, and 17 Multi-Agent automated tests passed in GitHub Actions.
 
 Together, these results provide evidence of workflow orchestration, human oversight, testing and CI integration.
+
+## 10. Release 2 Additional Validation — 17 October 2026
+
+Additional live integration testing and debugging were performed on the Student 3 Resource Management application.
+
+### RAG Recommendation Accuracy
+
+A live RAG request was tested using:
+
+`Find an available study room for 6 students`
+
+The initial response included incorrect availability claims and confused room capacity with the number of available rooms.
+
+The Student 3 backend was improved to validate availability and capacity against live database records before returning recommendations for availability-specific requests.
+
+The final verified response was:
+
+> Building 11 Study Room 1 is currently available and can accommodate 6 students. Location: Building 11, Level 4.
+
+The response included the citation:
+
+`campus_resources.txt#Building-11-Study-Room-1`
+
+The availability-specific response uses verified database values rather than allowing the LLM to generate unsupported capacity or availability claims.
+
+**Result: PASS**
+
+## 11. Resource Type Detection Bug Fix
+
+During live AI Recommendation testing, the request:
+
+`Find an available study room for 6 students`
+
+incorrectly detected both `Computer Lab` and `Study Room`.
+
+### Root Cause
+
+The keyword `lab` was matched as a substring of `available`, causing a false-positive Computer Lab classification.
+
+### Correction
+
+The backend resource type detection logic was updated so the standalone keyword `lab` requires an exact word match.
+
+### Regression Testing
+
+| Test Scenario | Expected Result | Status |
+|---|---|---|
+| Available study room | Study Room | PASS |
+| Computer lab | Computer Lab | PASS |
+| Study room or computer lab | Both types | PASS |
+| Available computer lab | Computer Lab | PASS |
+
+Four automated regression cases were added in:
+
+`student-3/tests/test_resource_type_detection.py`
+
+**Result: 4/4 PASS**
+
+## 12. Updated Automated Testing and Code Quality
+
+The complete Student 3 test suite was executed locally after the changes.
+
+Command:
+
+`python -m pytest student-3/tests/ -v`
+
+**Result: 35 passed in 26.23 seconds**
+
+The RAG integration suite included 11 passing tests, including a new regression test verifying that Busy resources are excluded from availability-specific recommendations and that capacity is described correctly.
+
+Code quality command:
+
+`ruff check student-3/backend/app.py student-3/tests/`
+
+**Result: All checks passed!**
+
+These results are local validation evidence. The earlier GitHub Actions CI result remains separately documented in Section 6.
+
+## 13. Additional Live Multi-Agent and Human Review Evidence
+
+A new Resource Management workflow was executed on 17 October 2026.
+
+**Workflow ID:** `9789c1ed-9f2d-4d4d-aaa9-d1a7e482af37`
+
+**User Request:** Find an available study room for 6 students.
+
+**Database Evidence:** 10 campus resources.
+
+### Agent Execution
+
+| Component | Evidence | Result |
+|---|---|---|
+| Planner | Identified resource IDs 2 and 8 | Completed |
+| Worker | Recommended available resources with verified capacities | Completed |
+| Reviewer | Reviewed evidence and returned correction guidance | Completed |
+| Human Review | Partially Accept | Completed |
+| Overall Workflow | Final status completed | PASS |
+
+The Worker recommended:
+
+- Building 11 Study Room 1: ID 2, capacity 6, Available.
+- Building 1 Quiet Study Area: ID 8, capacity 20, Available.
+
+The human reviewer selected **Partially Accept** because the dedicated Study Room should be prioritised over the open study area.
+
+### Persistent Workflow History
+
+Two snapshots were verified in:
+
+`ai-services/multi-agent-server/workflow_history.jsonl`
+
+| Snapshot | Workflow Status | Human Review |
+|---|---|---|
+| Before decision | pending_human_review | pending |
+| After decision | completed | Partially Accept |
+
+### Coordination Audit Trail
+
+Six ordered events were verified in:
+
+`ai-services/multi-agent-server/coordination_audit.jsonl`
+
+1. `started`
+2. `planner_completed`
+3. `worker_completed`
+4. `reviewer_completed`
+5. `human_review_pending`
+6. `human_decision`
+
+The audit record confirmed:
+
+- `feature`: resource_management
+- `evidence_count`: 10
+- `planner_completion_source`: model
+- `worker_completion_source`: model
+- `human_review_status`: completed
+- `human_decision`: Partially Accept
+- `status`: completed
+
+The Workflow Status API independently confirmed that the workflow was completed.
+
+An earlier failed workflow also remained visible in the status history and was not counted as a successful workflow.
+
+**Result: PASS — Live Multi-Agent Execution, Human Review and Persistent Audit Evidence verified.**
+
+## 14. Updated Validation Summary
+
+| Validation Area | Result |
+|---|---|
+| Resource CRUD and Database | Previously validated |
+| MCP Integration | PASS |
+| RAG Recommendation | PASS |
+| RAG Regression Tests | 11/11 PASS |
+| Resource Type Regression Tests | 4/4 PASS |
+| Full Student 3 Automated Test Suite | 35/35 PASS |
+| Ruff Code Quality | PASS |
+| Multi-Agent Workflow | PASS |
+| Human-in-the-Loop Review | PASS |
+| Workflow History and Audit Persistence | PASS |
+| Existing GitHub Actions CI | SUCCESS — previously recorded |
+
+The additional testing demonstrates iterative debugging, evidence-grounded recommendations, regression testing, mandatory human oversight and auditable workflow execution.
+
+The latest local changes still require Git review and a new CI run after they are committed and pushed.
