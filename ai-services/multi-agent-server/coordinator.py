@@ -18,6 +18,10 @@ from agents import event_planner_agent
 from agents import event_worker_agent
 from agents import event_reviewer_agent
 
+from agents import resource_planner_agent
+from agents import resource_reviewer_agent
+from agents import resource_worker_agent
+
 DECISIONS = ["Accept", "Partially Accept", "Reject"]
 AGENT_SUITES = {
     "course_management": (planner_agent, worker_agent, reviewer_agent),
@@ -25,7 +29,12 @@ AGENT_SUITES = {
         assignment_planner_agent,
         assignment_worker_agent,
         assignment_reviewer_agent,
-        
+
+    ),
+    "resource_management": (
+        resource_planner_agent,
+        resource_worker_agent,
+        resource_reviewer_agent,
     ),
     "event_management": (
     event_planner_agent,

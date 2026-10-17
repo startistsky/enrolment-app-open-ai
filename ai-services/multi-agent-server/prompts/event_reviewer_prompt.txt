@@ -32,4 +32,3 @@ Use an empty unsupported_claims array if no unsupported claims
 are identified.
 
 Do not include any additional fields or text outside the JSON object.
-

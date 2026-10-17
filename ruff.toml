@@ -16,3 +16,12 @@ select = ["S"]
 "shared/tests/*.py" = ["S101"]
 # Cloud regression tests assert guard and persistence expectations.
 "scripts/cloud/tests/*.py" = ["S101"]
+
+# Student 3 pytest assertions are test expectations.
+"student-3/tests/*.py" = ["S101"]
+
+# Student 3 backend listens on the container network.
+"student-3/backend/app.py" = ["S104"]
+
+# Student 3 database API listens on the container network.
+"student-3/database/database_api.py" = ["S104"]

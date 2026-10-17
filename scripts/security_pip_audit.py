@@ -11,6 +11,9 @@ REQUIREMENTS = (
     "student-1/backend/requirements.txt",
     "student-1/database/requirements.txt",
     "student-1/tests/requirements.txt",
+    "student-3/backend/requirements.txt",
+    "student-3/database/requirements.txt",
+    "student-3/tests/requirements.txt",
     "ai-services/multi-agent-server/requirements.txt",
     "mcp-server/requirements.txt",
     "rag-server/requirements.txt",
@@ -76,22 +79,51 @@ def audit_result(report, returncode, gate):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--gate", action="store_true", help="Apply exact documented no-fix acceptances; default is raw audit")
+    parser.add_argument("--gate", action="store_true",
+                        help="Apply documented temporary no-fix acceptances")
     args = parser.parse_args()
-    command = [sys.executable, "-m", "pip_audit", "--progress-spinner", "off", "--format", "json"]
-    for path in REQUIREMENTS:
-        command.extend(["-r", path])
-    print("Auditing all six requirements files, including resolved transitive dependencies.", flush=True)
-    # Fixed executable/arguments; no shell or user-controlled command input.
-    result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True)  # noqa: S603
-    if result.stderr:
-        print(result.stderr, file=sys.stderr, end="", flush=True)
-    try:
-        report = json.loads(result.stdout)
-    except ValueError:
-        print("Audit returned no valid JSON: FAIL", flush=True)
-        return 2
-    return audit_result(report, result.returncode, args.gate)
+
+    overall_status = 0
+
+    for requirement in REQUIREMENTS:
+        print(f"\\n===== Auditing {requirement} =====", flush=True)
+
+        command = [
+            sys.executable, "-m", "pip_audit",
+            "--progress-spinner", "off",
+            "--format", "json",
+            "-r", requirement,
+        ]
+
+        # Fixed pip-audit command; requirements paths come from a trusted constant.
+        result = subprocess.run(  # noqa: S603
+            command,
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.stderr:
+            print(result.stderr, file=sys.stderr, end="", flush=True)
+
+        try:
+            report = json.loads(result.stdout)
+        except ValueError:
+            print(f"Audit returned no valid JSON for {requirement}: FAIL",
+                  flush=True)
+            overall_status = 2
+            continue
+
+        status = audit_result(report, result.returncode, args.gate)
+        overall_status = max(overall_status, status)
+
+    print(
+        f"\\nOverall dependency audit: "
+        f"{'PASS' if overall_status == 0 else 'FAIL'}",
+        flush=True,
+    )
+    return overall_status
 
 
 if __name__ == "__main__":
