@@ -1,4 +1,5 @@
-name: Student 4 Release 1 CI
+
+name: Student 4 Release 2 CI
 
 on:
   push:
@@ -6,6 +7,7 @@ on:
       - "student-4/**"
       - "mcp-server/**"
       - "rag-server/**"
+      - "ai-services/multi-agent-server/**"
       - "docker-compose.yml"
       - ".github/workflows/student-4.yml"
 
@@ -16,6 +18,7 @@ on:
       - "student-4/**"
       - "mcp-server/**"
       - "rag-server/**"
+      - "ai-services/multi-agent-server/**"
       - "docker-compose.yml"
       - ".github/workflows/student-4.yml"
 
@@ -28,37 +31,89 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Python
+      # 2. Free disk space
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo docker system prune -af || true
+          df -h
+
+      # 3. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      # 3. Install Student 4 backend dependencies
+      # 4. Install Student 4 backend dependencies
       - name: Install Student 4 backend dependencies
         working-directory: student-4
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
-          pip install pytest
+          python -m pip install -r backend/requirements.txt
+          python -m pip install pytest
 
-      # 4. Install shared MCP dependencies
+      # 5. Install shared MCP dependencies
       - name: Install MCP dependencies
         run: |
-          pip install -r mcp-server/requirements.txt
+          python -m pip install -r mcp-server/requirements.txt
 
-      # 5. Install shared RAG dependencies
+      # 6. Install shared RAG dependencies
       - name: Install RAG dependencies
         run: |
-          pip install -r rag-server/requirements.txt
+          python -m pip install -r rag-server/requirements.txt
 
-      # 6. Run all Student 4 tests
+      # 7. Install Multi-Agent dependencies
+      - name: Install Multi-Agent dependencies
+        run: |
+          python -m pip install -r ai-services/multi-agent-server/requirements.txt
+
+      # 8. Release 2 pre-commit testing
+      - name: Release 2 Pre-commit Pytest
+        working-directory: student-4
+        run: |
+          python -m pytest tests/ -v
+
+      # 9. Release 2 post-commit unit testing
+      - name: Release 2 Post-commit AI-assisted Unit Testing
+        working-directory: student-4
+        run: |
+          python -m pytest tests/ -v \
+            --junitxml=release2-test-results.xml
+
+      # 10. Upload Student 4 test results
+      - name: Upload Release 2 Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-4-release2-test-results
+          path: student-4/release2-test-results.xml
+          if-no-files-found: warn
+
+      # 11. Test shared Multi-Agent Server
+      - name: Test Multi-Agent Server
+        run: |
+          python -m pytest ai-services/multi-agent-server/tests/ -v \
+            --junitxml=multi-agent-test-results.xml
+
+      # 12. Upload Multi-Agent test results
+      - name: Upload Multi-Agent Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-4-multi-agent-test-results
+          path: multi-agent-test-results.xml
+          if-no-files-found: warn
+
+      # 13. Run all Student 4 tests
       - name: Run Student 4 tests
         working-directory: student-4
         run: |
-          pytest tests/ -v
+          python -m pytest tests/ -v
 
-      # 7. Validate Student 4 MCP Python files
+      # 14. Validate MCP Python files
       - name: Validate Student 4 MCP files
         run: |
           python -m py_compile \
@@ -66,7 +121,7 @@ jobs:
             mcp-server/tools/student4_event_tools.py \
             student-4/backend/mcp_client.py
 
-      # 8. Validate Student 4 RAG Python files
+      # 15. Validate RAG Python files
       - name: Validate Student 4 RAG files
         run: |
           python -m py_compile \
@@ -74,22 +129,27 @@ jobs:
             rag-server/retrievers/student4_event_retriever.py \
             student-4/backend/rag_client.py
 
-      # 9. Build Student 4 Docker images
+      # 16. Validate Multi-Agent Python files
+      - name: Validate Multi-Agent Python files
+        run: |
+          python -m compileall -q ai-services/multi-agent-server
+
+      # 17. Build Student 4 Docker images
       - name: Build Student 4 Docker images
         run: |
           docker compose build database backend frontend
 
-      # 10. Start Student 4 services
+      # 18. Start Student 4 services
       - name: Start Student 4 services
         run: |
           docker compose up -d --no-deps database backend frontend
 
-      # 11. Show container status
+      # 19. Show container status
       - name: Show running containers
         run: |
           docker compose ps
 
-      # 12. Validate frontend
+      # 20. Validate frontend
       - name: Validate Student 4 frontend
         run: |
           for i in {1..8}; do
@@ -108,7 +168,7 @@ jobs:
             sleep 5
           done
 
-      # 13. Validate backend
+      # 21. Validate backend
       - name: Validate Student 4 backend
         run: |
           for i in {1..8}; do
@@ -127,7 +187,7 @@ jobs:
             sleep 5
           done
 
-      # 14. Validate database service
+      # 22. Validate database service
       - name: Validate Student 4 database service
         run: |
           for i in {1..8}; do
@@ -146,7 +206,7 @@ jobs:
             sleep 5
           done
 
-      # 15. Show logs on failure
+      # 23. Show Docker logs on failure
       - name: Show Docker logs on failure
         if: failure()
         run: |
@@ -162,7 +222,7 @@ jobs:
           echo "===== OLLAMA LOGS ====="
           docker compose logs ollama || true
 
-      # 16. Tear down containers
+      # 24. Tear down containers
       - name: Tear down containers
         if: always()
         run: |
