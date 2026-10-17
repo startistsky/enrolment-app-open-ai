@@ -1,0 +1,143 @@
+# Student 3 — Release 2 Evidence Report
+
+## 1. Feature Overview
+
+Student 3 is responsible for Campus Resource Management in the Student Enrolment Application.
+
+Release 2 extends the existing resource management functionality with an independent multi-agent workflow, integrating resource evidence, AI-assisted recommendations, human review, automated testing and CI validation.
+
+The workflow is exposed through `/workflow/resource` in the shared Multi-Agent Server and is integrated with the Student 3 backend through `/api/multi-agent/resource`.
+
+## 2. Multi-Agent Architecture
+
+The Resource Management workflow follows:
+
+**Planner → Worker → Reviewer → Human Decision**
+
+- **Planner Agent:** Analyses the user's resource request and prepares a plan.
+- **Worker Agent:** Identifies matching resources using database evidence and provides grounded recommendations.
+- **Reviewer Agent:** Reviews the Worker's output for unsupported claims, incorrect resource IDs and other risks.
+- **Human Reviewer:** Makes the final Accept, Partially Accept or Reject decision.
+
+The system does not automatically approve the AI recommendation. Human review is required before the workflow is marked completed.
+
+## 3. Live Multi-Agent Workflow Evidence
+
+Two Resource Management workflows were completed with recorded human decisions.
+
+| Workflow ID | Status | Human Decision |
+|---|---|---|
+| bcfd1fc0-c3a3-4775-8740-ee6fc875a5f4 | Completed | Partially Accept |
+| a8415e45-6b67-4f35-ae6f-bc858950785d | Completed | Accept |
+
+### Workflow 1 — Partially Accept
+
+The Worker produced resource recommendations grounded in database evidence. However, the Planner included irrelevant resources, and the Reviewer incorrectly reported that resource IDs were missing.
+
+The human reviewer selected **Partially Accept** because the recommendations were useful but the agent outputs contained issues requiring correction.
+
+### Workflow 2 — Accept
+
+The resource recommendations were checked against database evidence, including resource IDs, capacity and availability.
+
+The human reviewer selected **Accept** after verifying the relevant resource information.
+
+These two decisions demonstrate human oversight rather than automatic acceptance of AI-generated recommendations.
+
+## 4. Persistent JSONL Evidence
+
+The Multi-Agent Server records workflow information in:
+
+- `ai-services/multi-agent-server/workflow_history.jsonl`
+- `ai-services/multi-agent-server/coordination_audit.jsonl`
+
+The local evidence inspection identified:
+
+| Evidence | Count |
+|---|---:|
+| Resource workflow history records | 8 |
+| Resource coordination audit events | 36 |
+| Completed resource workflows with human decisions | 2 |
+
+Both completed workflows contain the following ordered audit events:
+
+1. `started`
+2. `planner_completed`
+3. `worker_completed`
+4. `reviewer_completed`
+5. `human_review_pending`
+6. `human_decision`
+
+The history includes pending and completed snapshots, while the audit trail records the coordination events and human decisions.
+
+Earlier pending workflows and a model error were also retained as part of the development and testing history.
+
+## 5. Automated Testing
+
+Student 3 maintains two Resource Multi-Agent test files:
+
+| Test File | Tests | Result |
+|---|---:|---|
+| `test_resource_agents.py` | 8 | PASS |
+| `test_student3_resource_workflow.py` | 9 | PASS |
+| **Total** | **17** | **PASS** |
+
+The Agent Regression Tests cover resource classification, availability and capacity matching, evidence grounding, invalid resource IDs and Reviewer validation.
+
+The Workflow API Tests cover agent execution order, pending human review, all three human decisions, invalid requests, invalid decisions, duplicate decision prevention and JSONL persistence.
+
+The Workflow API Tests use mocked agents to validate orchestration without depending on a live Ollama model.
+
+## 6. GitHub Actions CI Evidence
+
+The Student 3 CI workflow is configured in:
+
+`.github/workflows/student-3.yml`
+
+The GitHub Actions run completed successfully on 17 October 2026.
+
+**CI Result: SUCCESS**
+
+- 8 Resource Agent Regression Tests passed.
+- 9 Resource Workflow API Tests passed.
+- The Student 3 CI job completed successfully.
+
+GitHub Actions Evidence:
+
+https://github.com/startistsky/enrolment-app-open-ai/actions/runs/39006775584
+
+The CI workflow also includes MCP/RAG automated tests, dependency checks, Docker Compose validation and Student 3 Docker image builds.
+
+## 7. Security and Quality Gates
+
+Before committing the Resource Workflow tests and CI configuration, the following checks passed:
+
+- Ruff code quality checks
+- Ruff security checks
+- Detect Secrets
+- Dependency Audit
+- Git diff validation
+
+The Resource Workflow tests were committed in `f3ecbd0`.
+
+The CI configuration was updated in `d950da0`.
+
+## 8. Limitations and Improvements
+
+During live testing, the Planner sometimes included irrelevant resources, and the Reviewer incorrectly reported missing resource IDs.
+
+These issues demonstrated the importance of grounding agent responses in database evidence and retaining human approval authority.
+
+Additional regression tests were developed to verify resource matching, invalid IDs and Reviewer false-positive handling.
+
+The automated tests confirm the expected workflow behaviour under controlled conditions. They do not independently establish the reliability of every live model response.
+
+Cloud deployment validation and final presentation evidence should be documented separately after testing the deployed Student 3 application.
+
+## 9. Summary
+
+Student 3 Release 2 delivers an independent Resource Management Multi-Agent workflow with evidence-grounded recommendations, Reviewer validation, mandatory human approval and persistent JSONL audit records.
+
+Two live workflows were completed with recorded human decisions, and 17 Multi-Agent automated tests passed in GitHub Actions.
+
+Together, these results provide evidence of workflow orchestration, human oversight, testing and CI integration.
