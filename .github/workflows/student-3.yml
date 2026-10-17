@@ -69,6 +69,14 @@ jobs:
             -p 'test_resource_agents.py' \
             -v
 
+      # Run Student 3 Resource Workflow API and Human Review tests
+      - name: Run Student 3 Resource Workflow tests
+        run: |
+          PYTHONPATH=ai-services/multi-agent-server \
+          python -m pytest \
+            ai-services/multi-agent-server/tests/test_student3_resource_workflow.py \
+            -v
+
       # Validate Docker Compose configuration
       - name: Validate Docker Compose
         run: |
