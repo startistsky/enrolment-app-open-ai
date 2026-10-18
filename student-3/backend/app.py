@@ -32,7 +32,7 @@ AI_MODEL = os.getenv(
 @app.before_request
 def cloud_ai_guard():
     if os.getenv("AI_SERVICES_ENABLED", "true").lower() == "false" and (
-        request.path.startswith(("/recommend", "/rag/", "/api/mcp/"))
+        request.path.startswith(("/recommend", "/rag/", "/api/mcp/", "/api/multi-agent/"))
     ):
         return jsonify(error="AI, MCP, RAG and Multi-Agent services are disabled in this deployment"), 503
 
@@ -249,7 +249,11 @@ def detect_resource_types(question):
             continue
 
         if any(
-            keyword in text
+            (
+                keyword in text.split()
+                if keyword == "lab"
+                else keyword in text
+            )
             for keyword in keywords
         ):
             requested_types.add(
@@ -858,6 +862,92 @@ def rag_recommend():
         for match in grounded_matches
     )
 
+    # Validate live availability for availability-specific questions.
+    if requires_available_resource(question):
+        try:
+            resources = fetch_resources()
+            candidates = select_candidates(resources, question)
+        except requests.RequestException:
+            return jsonify({
+                "error": "Resource database unavailable"
+            }), 503
+
+        # Match retrieved knowledge against verified database records.
+        verified_names = {
+            resource.get("resource_name")
+            for resource in candidates
+        }
+
+        grounded_matches = [
+            match
+            for match in grounded_matches
+            if match.get("resource_name") in verified_names
+        ]
+
+        if not grounded_matches:
+            return jsonify({
+                "question": question,
+                "mode": "rag",
+                "answer": (
+                    "No retrieved campus resources are currently "
+                    "verified as available for this request."
+                ),
+                "model": AI_MODEL,
+                "citations": [],
+                "confidence": "low",
+                "matches": matches,
+            }), 200
+
+        context = "\n\n".join(
+            match.get("context", "")
+            for match in grounded_matches
+        )
+
+        # Build a verified answer from live database records.
+        # Do not let the LLM invent availability or capacity.
+        verified_resources = [
+            resource
+            for resource in candidates
+            if resource.get("resource_name") in {
+                match.get("resource_name")
+                for match in grounded_matches
+            }
+        ]
+
+        citations = list(dict.fromkeys(
+            match.get("citation")
+            for match in grounded_matches
+            if match.get("citation")
+        ))
+
+        confidence = (
+            "high"
+            if any(
+                match.get("confidence") == "high"
+                for match in grounded_matches
+            )
+            else "medium"
+        )
+
+        recommendations = [
+            (
+                f"{resource['resource_name']} is currently available "
+                f"and can accommodate {resource['capacity']} students. "
+                f"Location: {resource['location']}."
+            )
+            for resource in verified_resources
+        ]
+
+        return jsonify({
+            "question": question,
+            "mode": "rag",
+            "answer": "\n".join(recommendations),
+            "model": AI_MODEL,
+            "citations": citations,
+            "confidence": confidence,
+            "matches": matches,
+        }), 200
+
     # Stop unsupported procedural answers
     if detect_procedure_request(question):
         procedure_words = [
@@ -1014,11 +1104,67 @@ Grounded answer:
             "details": str(error),
         }), 503
 
+
+@app.post("/api/multi-agent/resource")
+def resource_multi_agent():
+    """Run Student 3 Resource Multi-Agent Workflow with database evidence."""
+    question_data = request.get_json(silent=True)
+
+    if not isinstance(question_data, dict):
+        return jsonify({"error": "JSON object required"}), 400
+
+    question = question_data.get("question")
+
+    if not isinstance(question, str) or not question.strip():
+        return jsonify({"error": "question is required"}), 400
+
+    multi_agent_url = os.getenv(
+        "MULTI_AGENT_SERVICE_URL",
+        "http://localhost:9201"
+    ).rstrip("/")
+
+    try:
+        resources = fetch_resources()
+
+        if not isinstance(resources, list):
+            return jsonify({
+                "error": "Invalid resource database response"
+            }), 502
+
+        response = requests.post(
+            f"{multi_agent_url}/workflow/resource",
+            json={
+                "feature": "resource_management",
+                "user_request": question.strip(),
+                "evidence": resources,
+            },
+            timeout=180,
+        )
+
+        try:
+            result = response.json()
+        except ValueError:
+            return jsonify({
+                "error": "Invalid Multi-Agent Server response"
+            }), 502
+
+        return jsonify(result), response.status_code
+
+    except requests.Timeout:
+        return jsonify({
+            "error": "Resource Multi-Agent request timed out"
+        }), 504
+
+    except requests.RequestException:
+        return jsonify({
+            "error": "Resource Database or Multi-Agent Server unavailable"
+        }), 503
+
 # Start
 
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=8000,
-        debug=os.getenv("FLASK_DEBUG", "true").lower() == "true"
+        debug=os.getenv("FLASK_DEBUG", "false").lower() == "true"
     )

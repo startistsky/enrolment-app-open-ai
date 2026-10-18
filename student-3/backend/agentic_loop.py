@@ -993,7 +993,8 @@ def retest():
     ]
 
 
-    result = subprocess.run(
+    # Fixed pytest command; no user-controlled arguments or shell execution.
+    result = subprocess.run(  # noqa: S603
         command,
         cwd=PROJECT_ROOT,
         text=True

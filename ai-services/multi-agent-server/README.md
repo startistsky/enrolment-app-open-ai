@@ -5,7 +5,9 @@ uses relative `/api` calls through Student 1's backend. That backend fetches
 `GET /courses` from the existing database service and supplies the records as
 evidence. Only the database service owns SQLite.
 
-Each synchronous workflow runs Planner, then Worker, then Reviewer. There is
+Course Management and Assignment Management use the same shared server while
+keeping feature-specific evidence rules and prompts. Each synchronous workflow
+runs Planner, then Worker, then Reviewer. There is
 no parallel execution, course mutation or automatic human decision. Worker
 attribution failures get at most one corrective retry, then fail explicitly. Missing evidence must be flagged by the Worker; the Reviewer checks
 against the original records and plan. Prompts constrain grounding but do not
@@ -68,9 +70,12 @@ curl -sS --max-time 400 http://localhost:9201/workflow/course \
   parent directories must already exist.
 
 Server endpoints: `GET /health`, `POST /workflow/course`,
+`POST /workflow/assignment`,
 `POST /workflow/<workflow_id>/decision`, `GET /workflow/status`.
 Backend endpoints: `POST /api/multi-agent/course-workflow`,
-`POST /api/multi-agent/course-workflow/<workflow_id>/decision`.
+`POST /api/multi-agent/course-workflow/<workflow_id>/decision`,
+`POST /api/multi-agent/assignment-workflow`, and
+`POST /api/multi-agent/assignment-workflow/<workflow_id>/decision`.
 
 Model connection/timeouts return structured 503; invalid model output or HTTP
 failures return 502. Backend connection/timeouts return 503; malformed or failed

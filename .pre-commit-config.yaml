@@ -6,7 +6,7 @@ repos:
     hooks:
       - id: ruff-security
         name: Ruff Security
-        entry: ruff check --config ruff.toml student-1 ai-services/multi-agent-server mcp-server rag-server shared scripts
+        entry: ruff check --config ruff.toml student-1 student-2 student-3 ai-services/multi-agent-server mcp-server rag-server shared scripts
         language: python
         additional_dependencies: ['ruff==0.16.10']
         pass_filenames: false
@@ -24,3 +24,11 @@ repos:
         additional_dependencies: ['pip-audit==2.10.1']
         pass_filenames: false
         always_run: true
+
+
+      - id: student-4-pytest
+        name: Student 4 Pre-commit Pytest
+        entry: student-4/.venv/bin/python -m pytest student-4/tests/ -q
+        language: system
+        pass_filenames: false
+        files: ^student-4/

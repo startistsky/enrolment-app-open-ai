@@ -320,3 +320,79 @@ def test_backend_rag_recommend_insufficient_context(monkeypatch):
             "to answer this question."
         )
     )
+
+
+def test_rag_available_room_uses_verified_database(monkeypatch):
+    """RAG must not recommend busy rooms or invent capacity."""
+
+    def mock_retrieve(query, top_k=3):
+        names = [
+            "Building 11 Study Room 1",
+            "Building 11 Study Room 2",
+        ]
+
+        return {
+            "matches": [
+                {
+                    "resource_name": name,
+                    "citation": f"campus_resources.txt#{name.replace(' ', '-')}",
+                    "confidence": "high",
+                    "context": f"Resource: {name}",
+                }
+                for name in names
+            ]
+        }
+
+    def mock_resources():
+        return [
+            {
+                "resource_name": "Building 11 Study Room 1",
+                "resource_type": "Study Room",
+                "availability_status": "Available",
+                "capacity": 6,
+                "location": "Building 11, Level 4",
+            },
+            {
+                "resource_name": "Building 11 Study Room 2",
+                "resource_type": "Study Room",
+                "availability_status": "Busy",
+                "capacity": 8,
+                "location": "Building 11, Level 4",
+            },
+        ]
+
+    def fail_if_ai_called(*args, **kwargs):
+        raise AssertionError(
+            "LLM should not generate live availability claims."
+        )
+
+    monkeypatch.setattr(
+        "app.retrieve_resource_context",
+        mock_retrieve,
+    )
+    monkeypatch.setattr(
+        "app.fetch_resources",
+        mock_resources,
+    )
+    monkeypatch.setattr(
+        "app.requests.post",
+        fail_if_ai_called,
+    )
+
+    client = app.test_client()
+
+    response = client.post(
+        "/rag/recommend",
+        json={
+            "question": "Find an available study room for 6 students"
+        },
+    )
+
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert data["mode"] == "rag"
+    assert "Building 11 Study Room 1" in data["answer"]
+    assert "can accommodate 6 students" in data["answer"]
+    assert "Building 11 Study Room 2" not in data["answer"]
+    assert len(data["citations"]) == 1
