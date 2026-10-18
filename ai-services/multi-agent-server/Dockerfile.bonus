@@ -1,0 +1,25 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install existing Multi-Agent dependencies.
+COPY ai-services/multi-agent-server/requirements.txt ./requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code and agent prompts.
+COPY ai-services/multi-agent-server/app.py ./app.py
+COPY ai-services/multi-agent-server/coordinator.py ./coordinator.py
+COPY ai-services/multi-agent-server/llm_client.py ./llm_client.py
+COPY ai-services/multi-agent-server/agents/ ./agents/
+COPY ai-services/multi-agent-server/prompts/ ./prompts/
+
+# Persistent workflow evidence will be mounted here.
+RUN mkdir -p /app/data
+
+ENV WORKFLOW_HISTORY_PATH=/app/data/workflow_history.jsonl
+ENV COORDINATION_AUDIT_PATH=/app/data/coordination_audit.jsonl
+
+EXPOSE 9201
+
+CMD ["python", "app.py"]
