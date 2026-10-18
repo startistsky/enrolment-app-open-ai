@@ -1,0 +1,104 @@
+name: Azure Student 3 Bonus Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: "Reviewed and pushed branch to deploy"
+        required: true
+        default: feature/azure-bonus-deployment
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-group5-cloud
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy B1-B4 to Azure
+    runs-on: ubuntu-latest
+    environment: azure-assessment
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout reviewed Bonus source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deploy_ref }}
+          persist-credentials: false
+
+      - name: Validate deployment source
+        run: |
+          set -Eeuo pipefail
+
+          test -f docker-compose.cloud.yml
+          test -f docker-compose.bonus.yml
+          test -f scripts/cloud/package_bonus.py
+          test -f scripts/cloud/configure-bonus-vm.sh
+          test -f scripts/cloud/deploy-azure-bonus.sh
+          test -f scripts/cloud/bonus-health-check.sh
+
+          docker compose \
+            -f docker-compose.cloud.yml \
+            -f docker-compose.bonus.yml \
+            config --quiet
+
+          for script in scripts/cloud/*.sh; do
+            bash -n "$script"
+          done
+
+          python3 -m py_compile \
+            scripts/cloud/package_bonus.py
+
+          echo "GROUP5_BONUS_SOURCE_VALIDATION_PASSED"
+
+      - name: Authenticate to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bonus and verify cloud functionality
+        env:
+          RESOURCE_GROUP: asd-group5-rg
+          VM_NAME: asd-group5-vm
+          SOURCE_DIR: ${{ github.workspace }}
+          SSH_PRIVATE_KEY: ${{ secrets.AZURE_VM_SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.AZURE_VM_SSH_PUBLIC_KEY }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+
+          key_file="$(mktemp "$RUNNER_TEMP/group5-bonus-key.XXXXXX")"
+
+          trap 'rm -f -- "$key_file"' EXIT
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$key_file"
+
+          chmod 600 "$key_file"
+
+          unset SSH_PRIVATE_KEY
+
+          export SSH_PRIVATE_KEY_PATH="$key_file"
+
+          bash scripts/cloud/deploy-azure-bonus.sh
+
+      - name: Record Bonus deployment result
+        if: always()
+        env:
+          DEPLOY_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "### Student 3 Azure Bonus B1-B4"
+            echo
+            echo "Deployment status: $DEPLOY_STATUS"
+            echo
+            echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo "A successful workflow requires VM-side functional checks."
+          } >> "$GITHUB_STEP_SUMMARY"

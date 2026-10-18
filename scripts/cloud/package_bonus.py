@@ -18,6 +18,7 @@ BONUS_ROOTS = (
 
 BONUS_FILES = {
     "docker-compose.bonus.yml",
+    "scripts/cloud/bonus-health-check.sh",
 }
 
 SKIP_PARTS = {
