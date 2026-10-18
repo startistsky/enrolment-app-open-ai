@@ -1,0 +1,20 @@
+services:
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: mcp-server/Dockerfile
+    environment:
+      STUDENT3_DATABASE_API_URL: http://student3-database:5004
+    expose:
+      - "9001"
+    depends_on:
+      - student3-database
+    restart: unless-stopped
+
+  student3-backend:
+    environment:
+      MCP_SERVER_URL: http://mcp-server:9001/mcp
+      AI_SERVICES_ENABLED: 'true'
+    depends_on:
+      - mcp-server
