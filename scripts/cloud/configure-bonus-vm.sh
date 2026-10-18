@@ -34,6 +34,8 @@ BONUS_SERVICES=(
 BACKEND="student3-backend"
 BACKEND_SWITCHED=0
 DEPLOYMENT_SUCCESS=0
+ORIGINAL_BACKEND_IMAGE=""
+ORIGINAL_BACKEND_CONTAINER=""
 
 log() {
   printf '[BONUS] %s\n' "$*"
@@ -148,13 +150,28 @@ rollback_backend() {
   (
     cd "$BASELINE"
 
-    docker compose \
+    [[ -n "$ORIGINAL_BACKEND_IMAGE" ]] || return 1
+
+    docker image inspect "$ORIGINAL_BACKEND_IMAGE" >/dev/null ||
+      return 1
+
+    # Pin rollback to the exact image running before deployment.
+    local rollback_override
+    rollback_override="$(mktemp "$BASELINE_REAL/rollback.XXXXXX.yml")"
+
+    printf 'services:\n  student3-backend:\n    image: "%s"\n    build: !reset null\n' \
+      "$ORIGINAL_BACKEND_IMAGE" > "$rollback_override"
+
+    if docker compose \
       -p "$PROJECT" \
       -f docker-compose.cloud.yml \
-      up -d \
-      --no-deps \
-      --force-recreate \
-      "$BACKEND"
+      -f "$rollback_override" \
+      up -d --no-deps --force-recreate --no-build "$BACKEND"; then
+      rm -f -- "$rollback_override"
+    else
+      rm -f -- "$rollback_override"
+      return 1
+    fi
   ) || return 1
 
   log "Checking restored backend"
@@ -276,6 +293,20 @@ BASELINE_STATUS="$(
 
 [[ "$BASELINE_STATUS" == "running" ]] ||
   fail "Existing Student 3 backend is not running"
+
+ORIGINAL_BACKEND_CONTAINER="$BASELINE_BACKEND_ID"
+
+ORIGINAL_BACKEND_IMAGE="$(
+  docker inspect     --format '{{.Image}}'     "$ORIGINAL_BACKEND_CONTAINER"
+)"
+
+[[ -n "$ORIGINAL_BACKEND_IMAGE" ]] ||
+  fail "Unable to capture original backend image"
+
+docker image inspect "$ORIGINAL_BACKEND_IMAGE" >/dev/null ||
+  fail "Original backend image unavailable"
+
+log "Original Student 3 backend image captured"
 
 curl \
   --fail \
