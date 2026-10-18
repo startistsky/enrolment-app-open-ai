@@ -78,3 +78,45 @@ def run(user_request, evidence):
     if not _aligned(fallback, requested, values):
         raise ModelError('Invalid planner request-field alignment after one corrective retry')
     return PlannerResult(fallback, 'deterministic_evidence_fallback')
+
+
+# student 5 
+def run_career(user_request, selected_job, career_details=None):
+    """Plan a career task usig the selected job as evidence"""
+
+    if not isinstance(user_request, str) or not user_request.strip():
+        raise ValueError("user_request is required")
+
+    if not isinstance(selected_job, dict):
+        raise ValueError("selected_job must be a dictionary")
+
+    career_details = career_details or {}
+
+    if not isinstance(career_details, dict):
+        raise ValueError("career_details must be a dictionary") 
+
+    context = {
+        "user_request": user_request.strip(),
+        "selected_job": selected_job,
+        "career_details": career_details,
+    }
+
+    fields = {
+        "plan": str,
+        "evidence_required": list,
+    }
+
+    result = generate("career_planner", context, fields)
+
+    if not result["plan"].strip():
+        raise ModelError("Career Planner returned an empty plan")
+
+    if not all(
+        isinstance(item, (str, dict))
+        for item in result["evidence_required"]
+    ):
+        raise ModelError(
+            "Career Planner returned invalid evidence requirements"
+        )
+
+    return PlannerResult(result, "model")

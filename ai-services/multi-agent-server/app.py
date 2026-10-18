@@ -5,7 +5,6 @@ from flask import Flask, jsonify, request
 
 from coordinator import Coordinator, DECISIONS
 
-
 def create_app(history_path=None, audit_path=None):
     app = Flask(__name__)
     base = Path(__file__).parent
@@ -35,6 +34,43 @@ def create_app(history_path=None, audit_path=None):
         result, status = coordinator.run(user_request.strip(), evidence)
         return jsonify(result), status
 
+    # career workflow
+    @app.post("/workflow/career") 
+    def careerworkflow(): 
+        body = request.get_json(silent=True)
+
+        if not isinstance(body, dict):
+            return jsonify(error="Request body must be a JSON object"), 400
+
+        user_request = body.get("user_request") 
+        if not isinstance(user_request, str) or not user_request.strip(): 
+            return jsonify(error="user_request is required"), 400
+
+        if body.get("feature") != "career_management": 
+            return jsonify(error="feature must be career_management"), 400
+
+        selected_job = body.get("selected_job") 
+        if not isinstance(selected_job, dict): 
+            return jsonify(error="selected_job must be a job object"), 400
+
+        job_id = selected_job.get("id") 
+        if ( not isinstance(job_id, int) or isinstance(job_id, bool) or job_id <= 0 ): 
+            return jsonify(error="selectedjob.id must be a positive integer"), 400
+
+        for field in ("title", "company"): 
+            value = selected_job.get(field) 
+            if not isinstance(value, str) or not value.strip(): 
+                return jsonify( error=f"selectedjob.{field} is required" ), 400
+
+        career_details = body.get("careerdetails", {}) 
+        if not isinstance(career_details, dict): 
+            return jsonify(error="career_details must be a JSON object"), 400
+
+        result, status = coordinator.run_career( user_request.strip(), selected_job, career_details, )
+
+        return jsonify(result), status
+
+    # human decision
     @app.post("/workflow/<workflow_id>/decision")
     def decision(workflow_id):
         body = request.get_json(silent=True)
@@ -55,6 +91,8 @@ def create_app(history_path=None, audit_path=None):
         return jsonify(error="Workflow evidence could not be persisted"), 503
 
     return app
+
+
 
 
 app = create_app()

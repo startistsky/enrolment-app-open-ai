@@ -3,15 +3,11 @@ import re
 from agents.course_request import completion_requirements, deterministic_completion, missing_fields, requested_values
 from llm_client import ModelError, generate
 
-
-
 class WorkerResult(dict):
     """Keep source metadata off the public JSON dictionary/schema."""
     def __init__(self, result, completion_source="model"):
         super().__init__(result)
         self.completion_source = completion_source
-
-
 
 def _valid_attribution(result, evidence):
     """Check record identifiers, never infer citations from answer text."""
@@ -56,7 +52,7 @@ def _resolve_provenance(answer, evidence):
     return [reference] if reference is not None else []
 
 
-def run(user_request, evidence, planner_result):
+def run(user_request, evidence, planner_result, selectedJob):
     context = {"user_request": user_request, "evidence": evidence,
                "planner_result": planner_result}
     fields = {"answer": str, "evidence_used": list, "missing_evidence": list}
@@ -96,3 +92,65 @@ def run(user_request, evidence, planner_result):
             raise ModelError("Invalid worker evidence attribution after one corrective retry")
         result = {**result, "evidence_used": references}
     return WorkerResult(result)
+
+
+# student 5 
+def run_career(user_request, selected_job, career_details=None, planner_result= None, revision_feedback = None):
+    """Run a career task using the selected job and career details as evidence."""
+
+    # validation
+    if not isinstance(user_request, str) or not user_request.strip():
+        raise ValueError("user_request is required")
+
+    if not isinstance(selected_job, dict):
+        raise ValueError("selected_job must be a dictionary")
+
+    career_details = career_details or {}
+
+    if not isinstance(career_details, dict):
+        raise ValueError("career_details must be a dictionary")
+
+    if planner_result is not None and not isinstance(planner_result, dict): 
+        raise ValueError("planner_result must be a dictionary")
+
+    if revision_feedback is not None and not isinstance(revision_feedback, str):
+        raise ValueError("revision_feedback must be a string")
+
+    planner_result = planner_result or {}
+
+    context = {
+        "user_request": user_request.strip(),
+        "selected_job": selected_job,
+        "career_details": career_details,
+        "plan": planner_result.get("plan", ""), 
+        "evidencerequired": planner_result.get("evidencerequired", []),
+        "revisionfeedback": revision_feedback or "", 
+    }
+
+    fields = {
+        "result": str,
+        "evidence_used": list,
+        "missing_information": list,
+    }
+
+    result = generate("career_worker", context, fields)
+
+    if not result["result"].strip(): 
+        raise ModelError("Career Worker returned an empty result")
+
+    if not all( isinstance(item, str) and item.strip() for item in result["evidence_used"] ): 
+        raise ModelError( "Career Worker returned invalid evidence references" )
+
+    if not all( isinstance(item, str) and item.strip() for item in result["missing_information"] ): 
+        raise ModelError( "Career Worker returned invalid missing information" )
+
+    valid_references = {
+    f"job_id: {selected_job['id']}",
+    "selected_job",
+    "career_details",
+    }
+
+    if any(ref not in valid_references for ref in result["evidence_used"]):
+        raise ModelError("Career Worker returned an unknown evidence reference")
+
+    return WorkerResult(result, "model")

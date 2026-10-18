@@ -129,3 +129,104 @@ def run(user_request, evidence, planner_result, worker_result):
         if _contradicts(result, facts) or _misstates_worker(result, worker_result, evidence, completeness):
             raise ModelError("Invalid reviewer evidence consistency after one corrective retry")
     return result
+
+
+# student 5 reviewer workflow
+def run_career(user_request, selected_job, career_details, planner_result, worker_result, revision_feedback=None,): 
+        """Review a career worker response against the selected job and user evidence."""
+
+        # validate function input 
+        if not isinstance(user_request, str) or not user_request.strip():
+            raise ValueError("user_request is required")
+
+        if not isinstance(selected_job, dict): 
+            raise ValueError("selectedjob must be a dictionary")
+
+        if not isinstance(selected_job.get("id"), int) or isinstance( selected_job.get("id"), bool ): 
+            raise ValueError("selected_job must contain an integer job id")
+
+        if not isinstance(career_details, dict): 
+            raise ValueError("careerdetails must be a dictionary")
+
+        # validate planner result 
+        if not isinstance(planner_result, dict): 
+            raise ValueError("plannerresult must be a dictionary")
+
+        # validate worker result
+        if not isinstance(worker_result, dict):
+            raise ModelError("Career Worker result must be a dictionary")
+
+        if not isinstance(worker_result.get("result"), str):
+            raise ModelError("Career Worker result must be a string")
+
+        if not isinstance(worker_result.get("evidence_used"), list):
+            raise ModelError("Career Worker evidence_used must be a list")
+
+        if not isinstance(worker_result.get("missing_information"), list):
+            raise ModelError("Career Worker missing_information must be a list")
+
+        if not all(
+            isinstance(item, str) and item.strip()
+            for item in worker_result["evidence_used"]
+        ):
+            raise ModelError("Career Worker returned invalid evidence references")
+
+        if not all(
+            isinstance(item, str) and item.strip()
+            for item in worker_result["missing_information"]
+        ):
+            raise ModelError("Career Worker returned invalid missing information")
+
+        # validate revision 
+        if revision_feedback is not None and not isinstance( revision_feedback, str ): 
+            raise ValueError("revision_feedback must be a string")
+
+        # context building
+        context = {
+            "user_request": user_request.strip(),
+            "selected_job": selected_job,
+            "career_details": career_details,
+            "planner_result": planner_result,
+            "worker_result": worker_result,
+            "revision_feedback": revision_feedback or "",
+            "review_requirements": {
+                "check_job_relevance": True,
+                "check_factual_support": True,
+                "check_personal_fact_accuracy": True,
+                "check_plan_compliance": True,
+                "check_completeness": True,
+                "check_evidence_attribution": True,
+                "check_missing_information": True,
+            },
+        }
+
+        fields = { 
+            "risk": str, ""
+            "unsupported_claims": list, 
+            "correction": str, 
+            "recommendation": str, 
+        }
+
+        result = generate("career_reviewer", context, fields)
+
+        print("DEBUG career reviewer result:", repr(result))
+        print("DEBUG unsupported_claims:", repr(result.get("unsupported_claims")))
+        print(
+            "DEBUG unsupported_claims type:",
+            type(result.get("unsupported_claims")),
+        )
+
+        # validate unsupported claims
+        if not all( isinstance(item, str) for item in result["unsupported_claims"] ): 
+            raise ModelError( "Career Reviewer returned invalid unsupported claims" )
+
+        # A review must not approve unsupported claims merely 
+        # just because the worker cited the selected job as its source.
+
+        if not result["risk"].strip(): 
+            raise ModelError("Career Reviewer returned an empty risk assessment")
+
+        if not result["recommendation"].strip(): 
+            raise ModelError("Career Reviewer returned an empty recommendation")
+
+        return result
