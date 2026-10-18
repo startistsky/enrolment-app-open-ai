@@ -1,0 +1,51 @@
+name: Azure Bonus Preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-group5-cloud
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    environment: azure-assessment
+    timeout-minutes: 15
+
+    steps:
+      - name: Authenticate to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check Azure VM resources
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          az vm run-command invoke \
+            --resource-group asd-group5-rg \
+            --name asd-group5-vm \
+            --command-id RunShellScript \
+            --scripts '
+              echo "===== Disk Space ====="
+              df -h /
+
+              echo "===== Memory ====="
+              free -h
+
+              echo "===== Docker Disk Usage ====="
+              docker system df
+
+              echo "===== Running Containers ====="
+              docker ps --format "table {{.Names}}\t{{.Status}}"
+            ' \
+            --query 'value[].message' \
+            --output tsv
