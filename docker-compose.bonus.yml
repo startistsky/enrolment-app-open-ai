@@ -42,6 +42,35 @@ services:
         ollama pull qwen2.5:0.5b
         echo "Qwen model is ready."
 
+  # B3 - Cloud RAG
+  rag-server:
+    build:
+      context: .
+      dockerfile: rag-server/Dockerfile.bonus
+    expose:
+      - "9101"
+    volumes:
+      - rag_bonus_chroma:/app/chroma
+      - rag_bonus_chroma_data:/app/chroma-data
+    depends_on:
+      rag-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # B3 - Initialise Student 3 RAG Knowledge
+  rag-init:
+    build:
+      context: .
+      dockerfile: rag-server/Dockerfile.bonus
+    command:
+      - python
+      - -c
+      - "from retrievers.student3_resource_retriever import index_knowledge; print(index_knowledge())"
+    volumes:
+      - rag_bonus_chroma:/app/chroma
+      - rag_bonus_chroma_data:/app/chroma-data
+    restart: "no"
+
   # Student 3 Backend Integration
 
   student3-backend:
@@ -50,11 +79,18 @@ services:
       AI_SERVICE_URL: http://ollama:11434/api/generate
       AI_MODEL: qwen2.5:0.5b
       MCP_SERVER_URL: http://mcp-server:9001/mcp
+      RAG_SERVER_URL: http://rag-server:9101
     depends_on:
       mcp-server:
         condition: service_started
       ollama-init:
         condition: service_completed_successfully
+      rag-init:
+        condition: service_completed_successfully
+      rag-server:
+        condition: service_started
 
 volumes:
   ollama_bonus_data:
+  rag_bonus_chroma:
+  rag_bonus_chroma_data:
