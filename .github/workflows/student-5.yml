@@ -90,6 +90,30 @@ jobs:
             sleep 2
           done
 
+      # Run MCP and RAG test 
+      - name: Test MCP and RAG
+        run: |
+          python -m pytest \
+            student-5/tests/test_rag_mcp.py \
+            -v
+
+      # Run R2 multi agent tests
+      - name: Run Student 5 Career Agent tests
+        run: |
+          PYTHONPATH=ai-services/multi-agent-server \
+          python -m unittest discover \
+            -s ai-services/multi-agent-server/tests \
+            -p 'test_career_agents.py' \
+            -v
+      
+      # Run workflow API and human review tests
+      - name: Run Student 5 Career Workflow tests
+        run: |
+          PYTHONPATH=ai-services/multi-agent-server \
+          python -m pytest \
+            ai-services/multi-agent-server/tests/test_student5_career_workflow.py \
+            -v
+
       # Backend health
       - name: Test backend health
         run: |

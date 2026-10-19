@@ -12,24 +12,30 @@ from agents import (
     planner_agent,
     reviewer_agent,
     worker_agent,
+    career_planner_agent, 
+    career_worker_agent,
+    career_reviewer_agent
+    
 )
 from llm_client import ModelError
 from agents import event_planner_agent
 from agents import event_worker_agent
 from agents import event_reviewer_agent
-
 from agents import resource_planner_agent
 from agents import resource_reviewer_agent
 from agents import resource_worker_agent
 
 DECISIONS = ["Accept", "Partially Accept", "Reject"]
 AGENT_SUITES = {
-    "course_management": (planner_agent, worker_agent, reviewer_agent),
+    "course_management": (
+        planner_agent,
+        worker_agent, 
+        reviewer_agent
+    ),
     "assignment_management": (
         assignment_planner_agent,
         assignment_worker_agent,
         assignment_reviewer_agent,
-
     ),
     "resource_management": (
         resource_planner_agent,
@@ -40,7 +46,12 @@ AGENT_SUITES = {
     event_planner_agent,
     event_worker_agent,
     event_reviewer_agent,
-),
+    ),
+    "career_management": (
+    career_planner_agent, 
+    career_worker_agent,
+    career_reviewer_agent
+    ),
 }
 
 class Coordinator:
@@ -100,8 +111,11 @@ class Coordinator:
                     stream.write(json.dumps(snapshot) + "\n")
 
     def run(self, user_request, evidence, feature="course_management"):
+        """Run the selected planner, worker, and reviewer workflow."""
+
         if feature not in AGENT_SUITES:
             return {"error": "Unsupported workflow feature"}, 400
+        
         workflow = {
             "workflow_id": str(uuid4()), "feature": feature,
             "status": "running", "evidence_count": len(evidence),
@@ -163,81 +177,3 @@ class Coordinator:
             return [{"workflow_id": w["workflow_id"], "status": w["status"],
                      "human_review_status": w["human_review"]["status"]}
                     for w in self.workflows.values()]
-
-    def run_career(self, user_request, selected_job, career_details=None):
-        """Run the career planner, worker, and reviewer sequentially."""
-
-        career_details = career_details or {}
-
-        workflow = {
-            "workflow_id": str(uuid4()),
-            "feature": "careermanagement",
-            "status": "running",
-            "evidence_count": 1 + int(bool(career_details)),
-            "human_review": {
-                "required": True,
-                "status": "pending",
-                "allowed_decisions": DECISIONS.copy(),
-            },
-            **{f"{role}_status": "pending" for role in ("planner", "worker", "reviewer")},
-        }
-
-        workflow_id = workflow["workflow_id"]
-
-        with self.lock:
-            self.workflows[workflow_id] = workflow
-            self.user_requests[workflow_id] = user_request
-
-        self.record(workflow, "started")
-
-        agents = (
-            ("planner", planner_agent),
-            ("worker", worker_agent),
-            ("reviewer", reviewer_agent),
-        )
-
-        for role, agent in agents:
-            try:
-                if role == "planner":
-                    result = agent.run_career(user_request, selected_job, career_details)
-                elif role == "worker":
-                    result = agent.run_career(
-                        user_request,
-                        selected_job,
-                        career_details,
-                        planner_result=workflow["planner_result"],
-                    )
-                else:
-                    result = agent.run_career(
-                        user_request,
-                        selected_job,
-                        career_details,
-                        planner_result=workflow["planner_result"],
-                        worker_result=workflow["worker_result"],
-                    )
-            except (ModelError, ValueError) as exc:
-                with self.lock:
-                    workflow[f"{role}_status"] = "failed"
-                    workflow["status"] = "failed"
-                    workflow["human_review"]["status"] = "unavailable"
-                    workflow["error"] = str(exc)
-                    workflow["failed_agent"] = role
-                    self.record(workflow, "model_error")
-                status = exc.status if isinstance(exc, ModelError) else 400
-                return copy.deepcopy(workflow), status
-
-            with self.lock:
-                if role == "planner":
-                    self.planner_completion_sources[workflow_id] = getattr(result, "completion_source", "model")
-                elif role == "worker":
-                    self.worker_completion_sources[workflow_id] = getattr(result, "completion_source", "model")
-
-                workflow[f"{role}_result"] = dict(result)
-                workflow[f"{role}_status"] = "completed"
-                self.record(workflow, f"{role}_completed")
-
-        with self.lock:
-            workflow["status"] = "pending_human_review"
-            self.record(workflow, "human_review_pending")
-
-        return copy.deepcopy(workflow), 200
