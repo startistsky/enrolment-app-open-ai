@@ -1,0 +1,119 @@
+services:
+
+  # B2 - Cloud MCP
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: mcp-server/Dockerfile
+    environment:
+      STUDENT3_DATABASE_API_URL: http://student3-database:5004
+    expose:
+      - "9001"
+    depends_on:
+      - student3-database
+    restart: unless-stopped
+
+  # B1 - Cloud AI
+
+  ollama:
+    image: ollama/ollama:latest
+    expose:
+      - "11434"
+    volumes:
+      - ollama_bonus_data:/root/.ollama
+    restart: unless-stopped
+
+  ollama-init:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    depends_on:
+      - ollama
+    entrypoint:
+      - /bin/sh
+      - -ec
+    command:
+      - |
+        until ollama list >/dev/null 2>&1; do
+          echo "Waiting for Ollama..."
+          sleep 2
+        done
+        ollama pull qwen2.5:0.5b
+        echo "Qwen model is ready."
+
+  # B3 - Cloud RAG
+  rag-server:
+    build:
+      context: .
+      dockerfile: rag-server/Dockerfile.bonus
+    expose:
+      - "9101"
+    volumes:
+      - rag_bonus_chroma:/app/chroma
+      - rag_bonus_chroma_data:/app/chroma-data
+    depends_on:
+      rag-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # B3 - Initialise Student 3 RAG Knowledge
+  rag-init:
+    build:
+      context: .
+      dockerfile: rag-server/Dockerfile.bonus
+    command:
+      - python
+      - -c
+      - "from retrievers.student3_resource_retriever import index_knowledge; print(index_knowledge())"
+    volumes:
+      - rag_bonus_chroma:/app/chroma
+      - rag_bonus_chroma_data:/app/chroma-data
+    restart: "no"
+
+  # B4 - Cloud Multi-Agent
+  multi-agent-server:
+    build:
+      context: .
+      dockerfile: ai-services/multi-agent-server/Dockerfile.bonus
+    environment:
+      OLLAMA_URL: http://ollama:11434/api/generate
+      OLLAMA_REVIEW_MODEL: qwen2.5:0.5b
+      WORKFLOW_HISTORY_PATH: /app/data/workflow_history.jsonl
+      COORDINATION_AUDIT_PATH: /app/data/coordination_audit.jsonl
+    expose:
+      - "9201"
+    volumes:
+      - multi_agent_bonus_data:/app/data
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Student 3 Backend Integration
+
+  student3-backend:
+    environment:
+      AI_SERVICES_ENABLED: 'true'
+      AI_SERVICE_URL: http://ollama:11434/api/generate
+      AI_MODEL: qwen2.5:0.5b
+      MCP_SERVER_URL: http://mcp-server:9001/mcp
+      RAG_SERVER_URL: http://rag-server:9101
+      MULTI_AGENT_SERVICE_URL: http://multi-agent-server:9201
+    depends_on:
+      mcp-server:
+        condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
+      rag-init:
+        condition: service_completed_successfully
+      rag-server:
+        condition: service_started
+      multi-agent-server:
+        condition: service_started
+
+volumes:
+  ollama_bonus_data:
+  rag_bonus_chroma:
+  rag_bonus_chroma_data:
+  multi_agent_bonus_data:

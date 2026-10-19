@@ -1,0 +1,23 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install CPU-only PyTorch where supported.
+RUN pip install --no-cache-dir \
+    torch \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Install the existing RAG dependencies.
+COPY rag-server/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy only the RAG application and knowledge.
+COPY rag-server/server.py ./server.py
+COPY rag-server/retrievers/ ./retrievers/
+COPY rag-server/knowledge/ ./knowledge/
+
+RUN mkdir -p /app/chroma /app/chroma-data
+
+EXPOSE 9101
+
+CMD ["python", "server.py"]
