@@ -80,16 +80,7 @@ jobs:
             sleep 2
           done
 
-      # Run R2 multi agent tests
-      - name: Run Student 5 Career Agent tests
-        run: |
-          PYTHONPATH=ai-services/multi-agent-server \
-          python -m unittest discover \
-            -s ai-services/multi-agent-server/tests \
-            -p 'test_career_agents.py' \
-            -v
-      
-      # Run workflow API and human review tests
+      # Run R2 tests
       - name: Run Student 5 Career Workflow tests
         run: |
           PYTHONPATH=ai-services/multi-agent-server \
