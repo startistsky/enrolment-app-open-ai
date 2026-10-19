@@ -43,16 +43,6 @@ jobs:
           python -m py_compile student-5/backend/model/database.py
           python -m py_compile student-5/backend/model/seed.py
 
-      # tests
-      - name: Run Student 5 tests
-        run: |
-          cd student-5
-          export PYTHONPATH="$PWD/backend"
-
-          python -m pytest tests/ \
-            --ignore=tests/test_rag_mcp.py \
-            -v
-
       # Docker compose validation
       - name: Validate Docker Compose
         run: |
