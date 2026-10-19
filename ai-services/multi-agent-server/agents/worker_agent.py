@@ -3,15 +3,11 @@ import re
 from agents.course_request import completion_requirements, deterministic_completion, missing_fields, requested_values
 from llm_client import ModelError, generate
 
-
-
 class WorkerResult(dict):
     """Keep source metadata off the public JSON dictionary/schema."""
     def __init__(self, result, completion_source="model"):
         super().__init__(result)
         self.completion_source = completion_source
-
-
 
 def _valid_attribution(result, evidence):
     """Check record identifiers, never infer citations from answer text."""
@@ -56,7 +52,7 @@ def _resolve_provenance(answer, evidence):
     return [reference] if reference is not None else []
 
 
-def run(user_request, evidence, planner_result):
+def run(user_request, evidence, planner_result, selectedJob):
     context = {"user_request": user_request, "evidence": evidence,
                "planner_result": planner_result}
     fields = {"answer": str, "evidence_used": list, "missing_evidence": list}

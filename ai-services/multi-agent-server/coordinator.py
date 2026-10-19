@@ -12,24 +12,30 @@ from agents import (
     planner_agent,
     reviewer_agent,
     worker_agent,
+    career_planner_agent, 
+    career_worker_agent,
+    career_reviewer_agent
+    
 )
 from llm_client import ModelError
 from agents import event_planner_agent
 from agents import event_worker_agent
 from agents import event_reviewer_agent
-
 from agents import resource_planner_agent
 from agents import resource_reviewer_agent
 from agents import resource_worker_agent
 
 DECISIONS = ["Accept", "Partially Accept", "Reject"]
 AGENT_SUITES = {
-    "course_management": (planner_agent, worker_agent, reviewer_agent),
+    "course_management": (
+        planner_agent,
+        worker_agent, 
+        reviewer_agent
+    ),
     "assignment_management": (
         assignment_planner_agent,
         assignment_worker_agent,
         assignment_reviewer_agent,
-
     ),
     "resource_management": (
         resource_planner_agent,
@@ -40,9 +46,13 @@ AGENT_SUITES = {
     event_planner_agent,
     event_worker_agent,
     event_reviewer_agent,
-),
+    ),
+    "career_management": (
+    career_planner_agent, 
+    career_worker_agent,
+    career_reviewer_agent
+    ),
 }
-
 
 class Coordinator:
     """Sequential execution with workflow snapshots and concise audit evidence.
@@ -101,8 +111,11 @@ class Coordinator:
                     stream.write(json.dumps(snapshot) + "\n")
 
     def run(self, user_request, evidence, feature="course_management"):
+        """Run the selected planner, worker, and reviewer workflow."""
+
         if feature not in AGENT_SUITES:
             return {"error": "Unsupported workflow feature"}, 400
+        
         workflow = {
             "workflow_id": str(uuid4()), "feature": feature,
             "status": "running", "evidence_count": len(evidence),

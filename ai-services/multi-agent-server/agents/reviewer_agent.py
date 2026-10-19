@@ -129,3 +129,4 @@ def run(user_request, evidence, planner_result, worker_result):
         if _contradicts(result, facts) or _misstates_worker(result, worker_result, evidence, completeness):
             raise ModelError("Invalid reviewer evidence consistency after one corrective retry")
     return result
+

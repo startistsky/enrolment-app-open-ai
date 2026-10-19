@@ -16,6 +16,7 @@ from crud.service import service
 
 from agent.ai_routes import ai_routes
 
+from agent.multi_agent_routes import multi_agent_routes
 
 app = Flask(
 
@@ -90,6 +91,11 @@ app.register_blueprint(
 
 app.register_blueprint(
     ai_routes,
+    url_prefix="/api"
+)
+
+app.register_blueprint(
+    multi_agent_routes,
     url_prefix="/api"
 )
 

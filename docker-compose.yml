@@ -203,6 +203,7 @@ services:
       DATABASE_PATH: /data/career.db
       MCP_SERVER_URL: http://host.docker.internal:9001/mcp
       RAG_SERVER_URL: http://host.docker.internal:9101
+      MULTI_AGENT_SERVER_URL: http://host.docker.internal:9201
     volumes:
       - student5-career-data:/data
     depends_on:

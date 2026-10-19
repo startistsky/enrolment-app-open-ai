@@ -6,7 +6,6 @@ from flask import Flask, jsonify, request
 
 from coordinator import Coordinator, DECISIONS
 
-
 def create_app(history_path=None, audit_path=None):
     app = Flask(__name__)
 
@@ -153,6 +152,45 @@ def create_app(history_path=None, audit_path=None):
         )
         return jsonify(result), status
 
+    # Student 5 workflow - career management 
+    @app.post("/workflow/career")
+    def career_workflow():
+        body = request.get_json(silent=True)
+        
+        if not isinstance(body, dict):
+            return jsonify(error="Request body must be a JSON object"), 400
+
+        user_request = body.get("user_request")
+
+        if not isinstance(user_request, str) or not user_request.strip():
+            return jsonify(error="user_request is required"), 400
+
+        if body.get("feature") != "career_management":
+            return jsonify(error="feature must be career_management"), 400
+
+        selected_job = body.get("selected_job")
+
+        if not isinstance(selected_job, dict):
+            return jsonify(error="selected_job must be a job object"), 400
+
+        career_details = body.get("career_details", {})
+
+        if not isinstance(career_details, dict):
+            return jsonify(error="career_details must be a JSON object"), 400
+
+        # match the evidence interface used by the coordinatior
+        evidence = {
+            "selected_job": selected_job,
+            "career_details": career_details,
+        }
+
+        result, status = coordinator.run(
+                user_request.strip(),
+                evidence,
+                feature="career_management",
+            )
+        
+        return jsonify(result), status
 
     @app.post("/workflow/event")
     def event_workflow():
@@ -267,8 +305,6 @@ def create_app(history_path=None, audit_path=None):
 # ============================================================
 
 app = create_app()
-
-
 
 if __name__ == "__main__":
     app.run(
