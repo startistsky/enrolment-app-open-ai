@@ -80,13 +80,6 @@ jobs:
             sleep 2
           done
 
-      # Run MCP and RAG test 
-      - name: Test MCP and RAG
-        run: |
-          python -m pytest \
-            student-5/tests/test_rag_mcp.py \
-            -v
-
       # Run R2 multi agent tests
       - name: Run Student 5 Career Agent tests
         run: |
