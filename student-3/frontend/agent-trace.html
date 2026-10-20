@@ -43,9 +43,9 @@
           Runtime Agent Trace
         </span>
 
-        <span class="trace-status">
+        <span id="traceStatus" class="trace-status">
           <span class="trace-status-dot"></span>
-          COMPLETED
+          <span id="traceStatusText">RUNTIME TRACE</span>
         </span>
       </div>
 
@@ -119,7 +119,7 @@
               Agent Step
             </span>
 
-            <h3>PLAN</h3>
+            <h3 id="tracePlanHeading">PLAN</h3>
 
             <p id="tracePlan"></p>
           </div>
@@ -135,7 +135,7 @@
               Execution
             </span>
 
-            <h3>ACT</h3>
+            <h3 id="traceActHeading">ACT</h3>
 
             <p id="traceAct"></p>
           </div>
@@ -151,7 +151,7 @@
               Evidence
             </span>
 
-            <h3>OBSERVE</h3>
+            <h3 id="traceObserveHeading">OBSERVE</h3>
 
             <p id="traceObserve"></p>
           </div>
@@ -167,7 +167,7 @@
               Response
             </span>
 
-            <h3>ADAPT</h3>
+            <h3 id="traceAdaptHeading">ADAPT</h3>
 
             <p id="traceAdapt"></p>
           </div>
@@ -190,6 +190,9 @@
       </section>
 
     </section>
+
+
+
 
   </main>
 

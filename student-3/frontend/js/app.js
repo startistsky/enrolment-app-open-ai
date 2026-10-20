@@ -567,6 +567,11 @@ function setMode(mode) {
     mcp: [
       "MCP Tools",
       "Structured campus resource tools."
+    ],
+
+    "multi-agent": [
+      "Multi-Agent Review",
+      "Agent workflow with human review required."
     ]
   };
 
@@ -853,11 +858,208 @@ async function askRag(question) {
   };
 }
 
+// Ask the Multi-Agent resource workflow
+async function askMultiAgent(question) {
+  const res = await fetch(
+    `${API}/api/multi-agent/resource`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ question }),
+      cache: "no-store"
+    }
+  );
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(
+      data.error || `Multi-Agent request failed (${res.status})`
+    );
+  }
+
+  return {
+    answer: data.answer || data.summary ||
+      "Multi-Agent workflow completed its initial review.",
+    data
+  };
+}
+
 // Display AI, RAG or MCP response
 function renderModeResponse(messageBody, mode, response) {
   if (!messageBody) return;
 
   const data = response.data || {};
+
+  // Multi-Agent workflow and human review evidence
+  if (mode === "multi-agent") {
+    messageBody.textContent =
+      data.worker_result?.answer || response.answer;
+
+    const card = document.createElement("div");
+    card.className = "response-meta multi-agent-meta";
+
+    const heading = document.createElement("div");
+    heading.className = "response-meta-heading";
+    heading.textContent = "🤖 MULTI-AGENT WORKFLOW";
+    card.appendChild(heading);
+
+    function addField(label, value) {
+      const block = document.createElement("div");
+      block.className = "response-meta-block";
+
+      const name = document.createElement("span");
+      name.className = "response-meta-label";
+      name.textContent = label;
+
+      const content = document.createElement("span");
+      content.className = "response-meta-value";
+      content.textContent = String(value ?? "Not returned");
+
+      block.appendChild(name);
+      block.appendChild(content);
+      card.appendChild(block);
+      return content;
+    }
+
+    addField("WORKFLOW ID", data.workflow_id);
+    const statusText = addField("STATUS", data.status);
+
+    addField("PLANNER STATUS", data.planner_status);
+    addField("PLANNER PLAN", data.planner_result?.plan);
+
+    addField("WORKER STATUS", data.worker_status);
+    addField("WORKER ANSWER", data.worker_result?.answer);
+
+    addField("REVIEWER STATUS", data.reviewer_status);
+    addField("REVIEWER RISK", data.reviewer_result?.risk);
+    addField("REVIEWER RECOMMENDATION",
+      data.reviewer_result?.recommendation);
+
+    const reviewText = addField(
+      "HUMAN REVIEW",
+      data.human_review?.status || "Not returned"
+    );
+
+    if (
+      data.workflow_id &&
+      data.status === "pending_human_review"
+    ) {
+      const actions = document.createElement("div");
+      actions.className = "multi-agent-actions";
+
+      const reason = document.createElement("input");
+      reason.type = "text";
+      reason.placeholder = "Review reason (optional)";
+      reason.className = "multi-agent-reason";
+      actions.appendChild(reason);
+
+      const buttons = document.createElement("div");
+      buttons.className = "multi-agent-buttons";
+
+      for (const decision of [
+        "Accept", "Partially Accept", "Reject"
+      ]) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = decision;
+
+        button.addEventListener("click", async () => {
+          const allButtons = buttons.querySelectorAll("button");
+          allButtons.forEach(item => item.disabled = true);
+
+          try {
+            const res = await fetch(
+              `${API}/api/multi-agent/${encodeURIComponent(
+                data.workflow_id
+              )}/decision`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  decision,
+                  reason: reason.value.trim()
+                })
+              }
+            );
+
+            const result = await res.json();
+
+            if (!res.ok) {
+              throw new Error(
+                result.error || "Human review failed"
+              );
+            }
+
+            statusText.textContent = result.status;
+            reviewText.textContent =
+              `${result.human_review?.status}: ${decision}`;
+
+            // Update the saved Agent Trace after human review
+            const saved = localStorage.getItem(
+              "student3AgentTrace"
+            );
+
+            if (saved) {
+              try {
+                const trace = JSON.parse(saved);
+
+                if (trace.workflow_id === data.workflow_id) {
+                  trace.status = result.status;
+                  trace.human_review = result.human_review;
+                  trace.adapt =
+                    `Human decision: ${decision}. ` +
+                    `Reason: ${result.human_review?.reason || "Not provided"}.`;
+
+                  const statusDetail = trace.details?.find(
+                    item => item.label === "WORKFLOW STATUS"
+                  );
+
+                  if (statusDetail) {
+                    statusDetail.value = result.status;
+                  }
+
+                  const reviewDetail = trace.details?.find(
+                    item => item.label === "HUMAN REVIEW"
+                  );
+
+                  if (reviewDetail) {
+                    reviewDetail.value =
+                      `${result.human_review?.status}: ${decision}`;
+                  }
+
+                  localStorage.setItem(
+                    "student3AgentTrace",
+                    JSON.stringify(trace)
+                  );
+                }
+              } catch (error) {
+                console.warn("Could not update Agent Trace:", error);
+              }
+            }
+
+            actions.remove();
+
+          } catch (error) {
+            reviewText.textContent = error.message;
+            allButtons.forEach(item => item.disabled = false);
+          }
+        });
+
+        buttons.appendChild(button);
+      }
+
+      actions.appendChild(buttons);
+      card.appendChild(actions);
+    }
+
+    messageBody.appendChild(card);
+    return;
+  }
 
   // AI stays conversational and simple
   if (mode === "ai") {
@@ -1339,6 +1541,66 @@ function saveAgentTrace(question, mode, response) {
       "Generated a concise recommendation from the selected campus resource context.";
   }
 
+  if (mode === "multi-agent") {
+    const planner = data.planner_result || {};
+    const worker = data.worker_result || {};
+    const reviewer = data.reviewer_result || {};
+    const review = data.human_review || {};
+
+    trace.workflow_id = data.workflow_id || "";
+    trace.status = data.status || "";
+    trace.human_review = review;
+
+    trace.details = [
+      {
+        label: "WORKFLOW ID",
+        value: trace.workflow_id
+      },
+      {
+        label: "WORKFLOW STATUS",
+        value: trace.status
+      },
+      {
+        label: "PLANNER",
+        value: data.planner_status || "unknown"
+      },
+      {
+        label: "WORKER",
+        value: data.worker_status || "unknown"
+      },
+      {
+        label: "REVIEWER",
+        value: data.reviewer_status || "unknown"
+      },
+      {
+        label: "HUMAN REVIEW",
+        value: review.status || "unknown"
+      }
+    ];
+
+    trace.plan =
+      planner.plan || "Planner output not available.";
+
+    trace.act =
+      worker.answer || "Worker output not available.";
+
+    trace.observe =
+      [
+        reviewer.risk,
+        reviewer.recommendation
+      ].filter(Boolean).join("\\n\\n") ||
+      "Reviewer output not available.";
+
+    trace.adapt =
+      review.status === "completed"
+        ? `Human decision: ${review.decision || "unknown"}. ` +
+          `Reason: ${review.reason || "Not provided"}.`
+        : "Awaiting human review decision.";
+
+    trace.result =
+      worker.answer || response.answer;
+  }
+
   localStorage.setItem(
     "student3AgentTrace",
     JSON.stringify(trace)
@@ -1398,7 +1660,9 @@ async function sendMessage() {
   const requestMode = aiMode;
 
   const label =
-    requestMode === "mcp"
+    requestMode === "multi-agent"
+      ? "Multi-Agent Review"
+      : requestMode === "mcp"
       ? "MCP Tool Result"
       : requestMode === "rag"
       ? "RAG Grounded Answer"
@@ -1421,6 +1685,10 @@ async function sendMessage() {
     } else if (requestMode === "rag") {
       response =
         await askRag(question);
+
+    } else if (requestMode === "multi-agent") {
+      response =
+        await askMultiAgent(question);
 
     } else {
       response =
