@@ -2,6 +2,12 @@ name: Azure Student 3 Bonus Deployment
 
 on:
   workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: "Reviewed and pushed branch to deploy"
+        required: true
+        default: feature/azure-bonus-deployment
+        type: string
 
 permissions:
   contents: read
@@ -22,7 +28,7 @@ jobs:
       - name: Checkout reviewed Bonus source
         uses: actions/checkout@v4
         with:
-          ref: feature/azure-bonus-deployment
+          ref: ${{ inputs.deploy_ref }}
           persist-credentials: false
 
       - name: Validate deployment source

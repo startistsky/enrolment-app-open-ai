@@ -78,3 +78,5 @@ def run(user_request, evidence):
     if not _aligned(fallback, requested, values):
         raise ModelError('Invalid planner request-field alignment after one corrective retry')
     return PlannerResult(fallback, 'deterministic_evidence_fallback')
+
+

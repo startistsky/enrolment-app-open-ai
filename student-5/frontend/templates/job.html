@@ -97,6 +97,22 @@
           preparation, interviews, skills, qualifications or career guidance.
         </p>
 
+        <!-- Mode selection -->
+        <div class="career-mode-selector">
+          <label for="career-agent-mode">Mode</label>
+
+          <select id="career-agent-mode" name="career-agent-mode">
+            <option value="career_agent">Career Agent</option>
+            <option value="multi_agent">Multi-Agent Workflow</option>
+          </select>
+
+          <p id="career-mode-description" class="career-mode-description">
+            Ask the Career Agent for job-specific guidance using career
+            knowledge sources.
+          </p>
+        </div>
+
+        <!-- Chat messages section  -->
         <div
           id="chat-messages"
           class="chat-messages"
@@ -154,12 +170,12 @@
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
 
     <script src="{{ url_for('static', filename='js/job.js') }}"></script>
-  <script>
-    document.querySelectorAll('a[data-campus-port]').forEach((link) => {
-      const url = new URL(link.getAttribute("href"), window.location.href);
-      url.port = link.dataset.campusPort;
-      link.href = url.href;
-    });
-  </script>
+    <script>
+      document.querySelectorAll("a[data-campus-port]").forEach((link) => {
+        const url = new URL(link.getAttribute("href"), window.location.href);
+        url.port = link.dataset.campusPort;
+        link.href = url.href;
+      });
+    </script>
   </body>
 </html>

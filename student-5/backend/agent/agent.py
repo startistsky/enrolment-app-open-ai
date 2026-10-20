@@ -766,7 +766,6 @@ def run_career_agent(
         HUMAN APPROVAL
 
     Maximum number of tool executions is controlled by
-    MAX_AGENT_STEPS.
     """
 
     # ========================================================
@@ -838,11 +837,9 @@ def run_career_agent(
 
         # ====================================================
         # AGENT LOOP
-        # ====================================================
+        # ===================================================
 
-        for step in range(
-            MAX_AGENT_STEPS
-        ):
+        for step in range(MAX_AGENT_STEPS):
 
             print(
                 f"--- AGENT STEP {step + 1}/{MAX_AGENT_STEPS} ---"

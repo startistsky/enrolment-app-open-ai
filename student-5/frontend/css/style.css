@@ -1218,6 +1218,135 @@ button:disabled {
 }
 
 /* =========================================
+   CAREER CHAT MODE SELECTOR
+========================================= */
+
+.career-mode-selector {
+  margin: 20px 0;
+  padding: 18px;
+  background: var(--green-soft);
+  border: 1px solid rgba(10, 155, 67, 0.15);
+  border-radius: 12px;
+}
+
+.career-mode-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.career-mode-selector select {
+  max-width: 420px;
+}
+
+.career-mode-description {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* =========================================
+   MULTI-AGENT WORKFLOW RESULTS
+========================================= */
+
+.multi-agent-message {
+  margin-top: 20px;
+}
+
+.workflow-id {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.workflow-result-section {
+  margin-top: 18px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.workflow-result-section h4 {
+  margin: 0 0 10px;
+  color: var(--green-dark);
+  font-size: 15px;
+}
+
+.workflow-result-section p {
+  line-height: 1.6;
+}
+
+.workflow-result-section pre,
+.analysis-object {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.workflow-human-review {
+  margin-top: 20px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.workflow-human-review h4 {
+  margin-top: 0;
+  color: var(--green-dark);
+}
+
+.workflow-human-review label {
+  display: block;
+  margin: 14px 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.workflow-human-review textarea {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.workflow-decision-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.workflow-review-complete {
+  margin-top: 18px;
+  padding: 16px;
+  background: var(--green-soft);
+  border: 1px solid rgba(10, 155, 67, 0.2);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
+.workflow-review-complete p {
+  margin-bottom: 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 800px) {
+  .career-mode-selector select {
+    max-width: none;
+  }
+
+  .workflow-decision-buttons {
+    flex-direction: column;
+  }
+
+  .workflow-decision-buttons button {
+    width: 100%;
+  }
+}
+
+/* =========================================
    RESPONSIVE
 ========================================= */
 
