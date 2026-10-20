@@ -91,6 +91,39 @@ if (!storedTrace) {
       details.style.display = "none";
     }
 
+
+    // Multi-Agent mode uses the same four-step layout,
+    // with labels reflecting the actual agent roles.
+    const multiAgent = trace.mode === "multi-agent";
+
+    const headings = {
+      tracePlanHeading: multiAgent ? "PLANNER" : "PLAN",
+      traceActHeading: multiAgent ? "WORKER" : "ACT",
+      traceObserveHeading: multiAgent ? "REVIEWER" : "OBSERVE",
+      traceAdaptHeading: multiAgent ? "HUMAN REVIEW" : "ADAPT"
+    };
+
+    Object.entries(headings).forEach(([id, value]) => {
+      document.getElementById(id).textContent = value;
+    });
+
+    const statusText = document.getElementById("traceStatusText");
+    const statusElement = document.getElementById("traceStatus");
+
+    if (multiAgent) {
+      const completed = trace.status === "completed";
+
+      statusText.textContent = completed
+        ? "COMPLETED"
+        : trace.status === "pending_human_review"
+          ? "PENDING HUMAN REVIEW"
+          : (trace.status || "UNKNOWN").replaceAll("_", " ").toUpperCase();
+
+      statusElement.classList.toggle("trace-pending", !completed);
+    } else {
+      statusText.textContent = "TRACE RECORDED";
+    }
+
     traceContent.hidden = false;
 
   } catch (error) {
