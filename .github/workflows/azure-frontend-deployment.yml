@@ -1,0 +1,59 @@
+name: Azure Student 3 Frontend Deployment
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-group5-cloud
+  cancel-in-progress: false
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    environment: azure-assessment
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout approved feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/azure-bonus-deployment
+          persist-credentials: false
+
+      - name: Validate frontend deployment scripts
+        run: |
+          bash -n scripts/cloud/deploy-azure-frontend.sh
+          bash -n scripts/cloud/configure-frontend-vm.sh
+          python3 -m py_compile scripts/cloud/package_frontend.py
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Student 3 frontend only
+        env:
+          RESOURCE_GROUP: asd-group5-rg
+          VM_NAME: asd-group5-vm
+          SOURCE_DIR: ${{ github.workspace }}
+          SSH_PRIVATE_KEY: ${{ secrets.AZURE_VM_SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.AZURE_VM_SSH_PUBLIC_KEY }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+
+          key_file="$(mktemp "$RUNNER_TEMP/group5-frontend-key.XXXXXX")"
+          trap 'rm -f -- "$key_file"' EXIT
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$key_file"
+          chmod 600 "$key_file"
+          unset SSH_PRIVATE_KEY
+
+          export SSH_PRIVATE_KEY_PATH="$key_file"
+          bash scripts/cloud/deploy-azure-frontend.sh
