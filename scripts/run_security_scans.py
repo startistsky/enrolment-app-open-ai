@@ -17,7 +17,7 @@ def run(command):
 def main():
     print("\nRuff Security", flush=True)
     results = [run([sys.executable, "-m", "ruff", "check", "--config", "ruff.toml",
-                    "student-1", "ai-services/multi-agent-server", "mcp-server", "rag-server", "shared", "scripts"])]
+                    "student-5", "ai-services/multi-agent-server", "mcp-server", "rag-server", "shared", "scripts"])]
     print("\nDetect Secrets", flush=True)
     # Include new, untracked source so the manual report covers Release 2 before staging.
     files = subprocess.check_output(  # noqa: S603,S607 -- fixed Git command, no shell/input.

@@ -25,3 +25,8 @@ select = ["S"]
 
 # Student 3 database API listens on the container network.
 "student-3/database/database_api.py" = ["S104"]
+
+# Student 5 
+"student-5/tests/*.py" = ["S101"]
+"student-5/backend/app.py" = ["S105"]
+"student-5/database/database_api.py" = ["S105"]
