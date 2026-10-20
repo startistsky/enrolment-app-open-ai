@@ -416,7 +416,8 @@ docker compose \
   mcp-server \
   rag-init \
   rag-server \
-  multi-agent-server
+  multi-agent-server \
+  student3-backend
 
 log "Starting Ollama"
 
