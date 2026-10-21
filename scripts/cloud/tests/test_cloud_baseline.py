@@ -100,6 +100,9 @@ def test_rendered_bonus_compose_enables_student5():
     assert student5['depends_on']['student5-database']['condition'] == 'service_completed_successfully'
     assert services['mcp-server']['environment']['CAREER_BACKEND_URL'] == 'http://127.0.0.1:8005'
     assert services['mcp-server']['network_mode'] == 'service:student5-backend'
+    assert 'expose' not in services['mcp-server']
+    assert 'ports' not in services['mcp-server']
+    assert 'EXPOSE 9001' not in (ROOT / 'mcp-server/Dockerfile').read_text()
     assert student5['environment']['MCP_SERVER_URL'] == 'http://127.0.0.1:9001/mcp'
     assert services['student3-backend']['environment']['MCP_SERVER_URL'] == 'http://student5-backend:9001/mcp'
     assert services['student5-frontend']['network_mode'] == 'service:student5-backend'

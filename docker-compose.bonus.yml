@@ -10,8 +10,6 @@ services:
     environment:
       STUDENT3_DATABASE_API_URL: http://student3-database:5004
       CAREER_BACKEND_URL: http://127.0.0.1:8005
-    expose:
-      - "9001"
     depends_on:
       - student3-database
       - student5-backend

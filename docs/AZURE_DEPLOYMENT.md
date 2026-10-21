@@ -27,8 +27,11 @@ data across container recreation. They live on the VM OS disk, not external stor
 The optional bonus overlay adds Ollama, MCP, RAG and multi-agent services for
 Students 3 and 5. The Student 5 frontend proxy and MCP container share the backend's
 network namespace to reach its loopback-bound API without changing the
-`127.0.0.1` binding or publishing port 8005. The frontend is published on port 8085;
-Student 3 reaches MCP using the Student 5 container's internal service address.
+`127.0.0.1` binding or publishing port 8005. MCP does not declare exposed or published
+ports in Compose or its image because Docker disallows exposed ports for a service
+using another container's network namespace. It remains reachable on port 9001
+through the Student 5 backend container's network address. The frontend is published
+on port 8085; Student 3 reaches MCP using the Student 5 container's internal service address.
 
 Frontend URLs use the VM hostname/IP and existing module ports:
 
