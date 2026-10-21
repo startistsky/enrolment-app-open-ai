@@ -295,7 +295,7 @@ services:
       context: .
       dockerfile: ./student-5/backend/Dockerfile
     ports:
-    - 127.0.0.1:8005:8005
+    - 8085:80
     environment:
       AI_SERVICE_URL: ''
       DATABASE_PATH: /data/career.db
@@ -326,8 +326,7 @@ services:
     build:
       context: .
       dockerfile: ./student-5/frontend/Dockerfile
-    ports:
-    - 8085:80
+    network_mode: service:student5-backend
     depends_on:
       student5-backend:
         condition: service_healthy

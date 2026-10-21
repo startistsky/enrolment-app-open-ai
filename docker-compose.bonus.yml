@@ -6,12 +6,17 @@ services:
     build:
       context: .
       dockerfile: mcp-server/Dockerfile
+    network_mode: "service:student5-backend"
     environment:
       STUDENT3_DATABASE_API_URL: http://student3-database:5004
+      CAREER_BACKEND_URL: http://127.0.0.1:8005
     expose:
       - "9001"
     depends_on:
-      - student3-database
+      student3-database:
+        condition: service_started
+      student5-backend:
+        condition: service_started
     restart: unless-stopped
 
   # B1 - Cloud AI
@@ -65,7 +70,7 @@ services:
     command:
       - python
       - -c
-      - "from retrievers.student3_resource_retriever import index_knowledge; print(index_knowledge())"
+      - "from retrievers.student3_resource_retriever import index_knowledge as index_resources; from retrievers.student5_career_retriever import index_knowledge as index_career; print(index_resources()); print(index_career())"
     volumes:
       - rag_bonus_chroma:/app/chroma
       - rag_bonus_chroma_data:/app/chroma-data
@@ -97,12 +102,31 @@ services:
       AI_SERVICES_ENABLED: 'true'
       AI_SERVICE_URL: http://ollama:11434/api/generate
       AI_MODEL: qwen2.5:0.5b
-      MCP_SERVER_URL: http://mcp-server:9001/mcp
+      MCP_SERVER_URL: http://student5-backend:9001/mcp
       RAG_SERVER_URL: http://rag-server:9101
       MULTI_AGENT_SERVICE_URL: http://multi-agent-server:9201
     depends_on:
-      mcp-server:
+      ollama-init:
+        condition: service_completed_successfully
+      rag-init:
+        condition: service_completed_successfully
+      rag-server:
         condition: service_started
+      multi-agent-server:
+        condition: service_started
+
+  # Student 5 Career Integration
+
+  student5-backend:
+    environment:
+      AI_SERVICES_ENABLED: 'true'
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:0.5b
+      OLLAMA_SMART_MODEL: qwen2.5:0.5b
+      MCP_SERVER_URL: http://127.0.0.1:9001/mcp
+      RAG_SERVER_URL: http://rag-server:9101
+      MULTI_AGENT_SERVER_URL: http://multi-agent-server:9201
+    depends_on:
       ollama-init:
         condition: service_completed_successfully
       rag-init:

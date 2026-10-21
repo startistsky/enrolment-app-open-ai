@@ -76,11 +76,37 @@ def test_rendered_cloud_compose_architecture():
         assert environment['FLASK_DEBUG'] == 'false'
         for key in ('AI_SERVICE_URL','OLLAMA_URL','MCP_SERVER_URL','RAG_SERVER_URL','MULTI_AGENT_SERVER_URL'):
             assert environment[key] == ''
-        assert all(port['host_ip'] == '127.0.0.1' for port in services[name]['ports'])
+        if name != 'student5-backend':
+            assert all(port['host_ip'] == '127.0.0.1' for port in services[name]['ports'])
     for name in ('student1-database','student2-database','student3-database','database','student5-database'):
         assert 'ports' not in services[name]
         assert any(volume['type'] == 'volume' and volume['target'] == '/data' for volume in services[name]['volumes'])
     assert services['student5-backend']['depends_on']['student5-database']['condition'] == 'service_completed_successfully'
+
+
+def test_rendered_bonus_compose_enables_student5():
+    result = subprocess.run(  # noqa: S603,S607 -- fixed read-only Compose config command.
+        [shutil.which('docker'), 'compose', '-f', 'docker-compose.cloud.yml',
+         '-f', 'docker-compose.bonus.yml', 'config', '--format', 'json'],
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    )
+    services = json.loads(result.stdout)['services']
+    student5 = services['student5-backend']
+    assert student5['environment']['AI_SERVICES_ENABLED'] == 'true'
+    assert student5['environment']['OLLAMA_URL'] == 'http://ollama:11434'
+    assert student5['environment']['MCP_SERVER_URL'] == 'http://127.0.0.1:9001/mcp'
+    assert student5['environment']['RAG_SERVER_URL'] == 'http://rag-server:9101'
+    assert student5['environment']['MULTI_AGENT_SERVER_URL'] == 'http://multi-agent-server:9201'
+    assert student5['depends_on']['student5-database']['condition'] == 'service_completed_successfully'
+    assert services['mcp-server']['environment']['CAREER_BACKEND_URL'] == 'http://127.0.0.1:8005'
+    assert services['mcp-server']['network_mode'] == 'service:student5-backend'
+    assert student5['environment']['MCP_SERVER_URL'] == 'http://127.0.0.1:9001/mcp'
+    assert services['student3-backend']['environment']['MCP_SERVER_URL'] == 'http://student5-backend:9001/mcp'
+    assert services['student5-frontend']['network_mode'] == 'service:student5-backend'
+    assert {'mode': 'ingress', 'target': 80, 'published': '8085', 'protocol': 'tcp'} in services['student5-backend']['ports']
+    assert 'host="127.0.0.1"' in (ROOT / 'student-5/backend/app.py').read_text()
+    assert 'student5_career_retriever' in services['rag-init']['command'][-1]
+    assert all(name in services for name in ('ollama', 'mcp-server', 'rag-server', 'multi-agent-server'))
 
 
 def test_private_source_archive_excludes_credentials_and_preserves_checkout(tmp_path):
@@ -98,7 +124,11 @@ def test_private_source_archive_excludes_credentials_and_preserves_checkout(tmp_
         subprocess.run(command, cwd=source, check=True)  # noqa: S603 -- fixed Git commands in temporary fixture.
     contents = {
         'docker-compose.cloud.yml': 'services: {}',
+        'docker-compose.bonus.yml': 'services: {}',
         'scripts/cloud/health-check.sh': '# fixture health script',
+        'mcp-server/Dockerfile': '# bonus MCP image',
+        'rag-server/Dockerfile.bonus': '# bonus RAG image',
+        'ai-services/multi-agent-server/Dockerfile.bonus': '# bonus agent image',
         'student-2/backend/app.py': '# current uncommitted application source',
         'student-5/frontend/js/api.js': 'const API_URL = "/api";',
         'student-2/.env': 'fixture local environment, excluded',
@@ -121,6 +151,13 @@ def test_private_source_archive_excludes_credentials_and_preserves_checkout(tmp_
                          'student-5/frontend/js/api.js', 'deployment-source.json'}
         assert archive.extractfile('student-2/backend/app.py').read().decode() == contents['student-2/backend/app.py']
         assert json.load(archive.extractfile('deployment-source.json'))['working_tree_modified'] is True
+    bonus_output = tmp_path / 'bonus-source.tar.gz'
+    packager.package(source, bonus_output, include_bonus=True)
+    with tarfile.open(bonus_output) as archive:
+        names = set(archive.getnames())
+        assert {'docker-compose.bonus.yml', 'mcp-server/Dockerfile',
+                'rag-server/Dockerfile.bonus',
+                'ai-services/multi-agent-server/Dockerfile.bonus'} <= names
     (source / 'student-2/backend/linked.py').symlink_to(tmp_path / 'outside.py')
     with pytest.raises(ValueError, match='non-regular'):
         packager.package(source, output)
