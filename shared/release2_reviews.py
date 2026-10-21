@@ -4,10 +4,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 import re
 
-
 MODES = ('multi-agent-review', 'testing-review', 'cloud-review')
+# add you multi-agent endpoints here
 ENDPOINTS = ('POST /api/multi-agent/course-workflow',
-             'POST /api/multi-agent/course-workflow/<workflow_id>/decision')
+             'POST /api/multi-agent/course-workflow/<workflow_id>/decision',
+             'POST /api/multi-agent/career-workflow',
+             'POST /api/multi-agent/career-workflow/<workflow_id>/decision',
+             )
 STEPS = ('started', 'planner_completed', 'worker_completed', 'reviewer_completed',
          'human_review_pending', 'human_decision')
 

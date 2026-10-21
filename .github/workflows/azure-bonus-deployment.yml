@@ -1,4 +1,4 @@
-name: Azure Student 3 Bonus Deployment
+name: Azure Students 3 and 5 Bonus Deployment
 
 on:
   workflow_dispatch:
@@ -37,10 +37,15 @@ jobs:
 
           test -f docker-compose.cloud.yml
           test -f docker-compose.bonus.yml
-          test -f scripts/cloud/package_bonus.py
-          test -f scripts/cloud/configure-bonus-vm.sh
-          test -f scripts/cloud/deploy-azure-bonus.sh
-          test -f scripts/cloud/bonus-health-check.sh
+          test -f scripts/cloud/package_source.py
+          test -f scripts/cloud/configure-vm.sh
+          test -f scripts/cloud/deploy-azure-vm.sh
+          test -f scripts/cloud/health-check.sh
+          test -f mcp-server/Dockerfile
+          test -f rag-server/Dockerfile.bonus
+          test -f ai-services/multi-agent-server/Dockerfile.bonus
+          test -f student-5/backend/agent/agent_tools.py
+          test -f rag-server/retrievers/student5_career_retriever.py
 
           docker compose \
             -f docker-compose.cloud.yml \
@@ -51,8 +56,7 @@ jobs:
             bash -n "$script"
           done
 
-          python3 -m py_compile \
-            scripts/cloud/package_bonus.py
+          python3 -m py_compile scripts/cloud/package_source.py
 
           echo "GROUP5_BONUS_SOURCE_VALIDATION_PASSED"
 
@@ -68,6 +72,8 @@ jobs:
           RESOURCE_GROUP: asd-group5-rg
           VM_NAME: asd-group5-vm
           SOURCE_DIR: ${{ github.workspace }}
+          HTTP_SOURCE_CIDR: ${{ vars.AZURE_HTTP_SOURCE_CIDR }}
+          INCLUDE_BONUS_SERVICES: "true"
           SSH_PRIVATE_KEY: ${{ secrets.AZURE_VM_SSH_PRIVATE_KEY }}
           SSH_PUBLIC_KEY: ${{ secrets.AZURE_VM_SSH_PUBLIC_KEY }}
         run: |
@@ -86,7 +92,7 @@ jobs:
 
           export SSH_PRIVATE_KEY_PATH="$key_file"
 
-          bash scripts/cloud/deploy-azure-bonus.sh
+          bash scripts/cloud/deploy-azure-vm.sh
 
       - name: Record Bonus deployment result
         if: always()
@@ -94,7 +100,7 @@ jobs:
           DEPLOY_STATUS: ${{ job.status }}
         run: |
           {
-            echo "### Student 3 Azure Bonus B1-B4"
+            echo "### Students 3 and 5 Azure Bonus B1-B4"
             echo
             echo "Deployment status: $DEPLOY_STATUS"
             echo

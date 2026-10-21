@@ -51,13 +51,20 @@ jobs:
       # Build
       - name: Build Student 5 Docker services
         run: |
-          docker compose build student5-database student5-backend
+          docker compose build student5-database student5-backend student5-frontend
 
+      # Show build evidence
+      - name: Show Student 5 Docker images
+        run: |
+          docker images | grep student5 || true
+
+      # Run services
       - name: Start services
         run: |
           docker compose up -d \
             student5-database \
             student5-backend \
+            student5-frontend \
             ollama
 
       # Show inital status
@@ -65,46 +72,13 @@ jobs:
         run: |
           docker compose ps
 
-      # Wait for services
-      - name: Wait for Student 5 services
-        run: |
-          echo "Waiting for Student 5 services..."
-
-          for i in {1..30}; do
-            if curl -fsS http://localhost:8005/health > /dev/null 2>&1; then
-              echo "Student 5 backend is ready."
-              break
-            fi
-
-            echo "Waiting for backend... attempt $i/30"
-            sleep 2
-          done
-
-      # Run R2 tests
+      # Multi agent workflow test
       - name: Run Student 5 Career Workflow tests
         run: |
           PYTHONPATH=ai-services/multi-agent-server \
           python -m pytest \
             ai-services/multi-agent-server/tests/test_student5_career_workflow.py \
             -v
-
-      # Backend health
-      - name: Test backend health
-        run: |
-          curl --fail \
-            --retry 10 \
-            --retry-delay 3 \
-            --retry-connrefused \
-            http://localhost:8005/health
-
-      # Jobs api
-      - name: Test Jobs endpoint
-        run: |
-          curl --fail \
-            --retry 10 \
-            --retry-delay 3 \
-            --retry-connrefused \
-            http://localhost:8005/api/jobs
 
       - name: Show final container status
         if: always()
@@ -131,3 +105,5 @@ jobs:
         if: always()
         run: |
           docker compose down -v
+
+

@@ -49,7 +49,11 @@ cleanup() {
 }
 trap cleanup EXIT
 # Package first; includes checked-out changes, excludes credentials/Git metadata/runtime data.
-python3 "$script_dir/package_source.py" --source-dir "$SOURCE_DIR" --output "$work_dir/source.tar.gz"
+package_args=(--source-dir "$SOURCE_DIR" --output "$work_dir/source.tar.gz")
+if [[ "${INCLUDE_BONUS_SERVICES:-false}" == true ]]; then
+  package_args+=(--include-bonus)
+fi
+python3 "$script_dir/package_source.py" "${package_args[@]}"
 checksum=$(python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1], "rb").read()).hexdigest())' "$work_dir/source.tar.gz")
 command -v az >/dev/null
 az account show --query '{subscription:name,state:state}' -o table

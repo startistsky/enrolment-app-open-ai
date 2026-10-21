@@ -24,6 +24,11 @@ Student 1–4 use internal database APIs. Student 5 has a one-shot database seed
 container and a backend that accesses the same named SQLite volume directly;
 its database container is not an HTTP service. Five named volumes retain database
 data across container recreation. They live on the VM OS disk, not external storage.
+The optional bonus overlay adds Ollama, MCP, RAG and multi-agent services for
+Students 3 and 5. The Student 5 frontend proxy and MCP container share the backend's
+network namespace to reach its loopback-bound API without changing the
+`127.0.0.1` binding or publishing port 8005. The frontend is published on port 8085;
+Student 3 reaches MCP using the Student 5 container's internal service address.
 
 Frontend URLs use the VM hostname/IP and existing module ports:
 
@@ -34,23 +39,24 @@ Frontend URLs use the VM hostname/IP and existing module ports:
 | Assignments | 8082 | 8002 |
 | Resources | 8083 | 8003 |
 | Events | 8080 | 8000 |
-| Career | 8085 | 8005 |
+| Career | 8085 | Container loopback only; not published |
 
-Nginx proxies browser API requests using Compose DNS names. Browser navigation
+Nginx proxies browser API requests using Compose DNS names, except the Student 5
+proxy, which uses `127.0.0.1:8005` in its shared network namespace. Browser navigation
 uses port metadata to build links on the current hostname and protocol. No database
-ports are published. Loopback in health checks refers to the container/VM itself;
-it is not a browser or container-to-container address. The cloud file contains no
+or backend API ports are published. Loopback in health checks refers to the
+container/VM itself; it is not a browser or container-to-container address. The cloud file contains no
 `host.docker.internal` references. Unused legacy top-level Student Dockerfiles
 are empty and are not selected by either Compose file.
 
 ## Local versus cloud and disabled AI
 
 The local `docker-compose.yml` remains unchanged and retains Ollama and host
-services. Local behavior defaults to AI enabled. Cloud sets
+services. Local behavior defaults to AI enabled. The baseline cloud deployment sets
 `AI_SERVICES_ENABLED=false` on every backend and clears all AI/MCP/RAG/Multi-Agent
-URLs. Server request guards reject relevant routes with HTTP 503 before any model,
-MCP, RAG, or Multi-Agent work. No Ollama, MCP, RAG or Multi-Agent container is
-included. Existing UI controls may remain visible and report the disabled response.
+URLs. The bonus workflow overlays that configuration, enables AI on Students 3 and 5,
+and connects both backends to the shared bonus services. Other student modules remain
+AI-disabled. Existing UI controls may remain visible and report the disabled response.
 Flask debug is disabled for cloud. This is an assessment baseline, not a production
 TLS/authentication deployment.
 
@@ -115,6 +121,8 @@ The deployment script:
 
 1. Packages application source from the checkout, before provisioning. The archive
    includes Student 1–5, shared frontend, cloud Compose and the health script.
+   The bonus workflow additionally packages the bonus Compose overlay, MCP, RAG
+   and multi-agent sources.
    Git metadata, checkout credentials, `.env` files (except `.env.example`), local
    key files, database files, runtime JSONL, caches and virtual environments are
    excluded. Symlinks are rejected. Review source for embedded credentials before
@@ -222,12 +230,24 @@ from the application archive. Azure authentication remains OIDC. In Actions,
 dispatch with the desired private branch. The workflow logs the deployment outcome
 and health checks. Collect external browser/CRUD evidence separately.
 
+`.github/workflows/azure-bonus-deployment.yml` is also manually dispatched and
+deploys the same release with the bonus Compose overlay. Select a pushed branch
+containing the bonus configuration and source. It builds the shared Ollama, MCP,
+RAG and multi-agent services, indexes both Student 3 resource and Student 5 career
+knowledge, and enables the AI integrations for Students 3 and 5. Its VM checks
+verify the bonus containers are running and Student 5 can reach the configured
+Ollama model. For local validation, use
+`docker compose -f docker-compose.cloud.yml -f docker-compose.bonus.yml config`;
+for local startup, append `up -d --build` to that command.
+
 ## Health and real assessment evidence
 
 On the VM, run `sudo bash /opt/asd-group5/current/scripts/cloud/health-check.sh`. It checks all
 frontend pages, backend health, database-backed reads and representative disabled
-AI routes. It does not perform write/delete operations or claim full CRUD success.
-For diagnosis, use `sudo bash -c 'cd /opt/asd-group5/current && docker compose -p asd-group5-cloud -f docker-compose.cloud.yml ps -a'` and the corresponding `logs` command.
+AI routes; for bonus releases it also verifies the MCP, RAG and multi-agent services
+are running and Student 5's Ollama integration is available. It does not perform
+write/delete operations or claim full CRUD success.
+For diagnosis, use `sudo bash -c 'cd /opt/asd-group5/current && docker compose -p asd-group5-cloud -f docker-compose.cloud.yml ps -a'` and the corresponding `logs` command; add `-f docker-compose.bonus.yml` for bonus releases.
 From the allowed external address, open all six URLs printed by deployment.
 
 Collect real evidence later for `reports/cloud-deployment-report.md`:

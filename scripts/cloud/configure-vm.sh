@@ -35,9 +35,13 @@ cd "$release_dir"
 cat deployment-source.json
 echo
 # Stable project name preserves the five database volumes across release directories.
-docker compose -p asd-group5-cloud -f docker-compose.cloud.yml config -q
-docker compose -p asd-group5-cloud -f docker-compose.cloud.yml up -d --build --wait --wait-timeout 300
-docker compose -p asd-group5-cloud -f docker-compose.cloud.yml ps -a
+compose_files=(-f docker-compose.cloud.yml)
+if [[ -f docker-compose.bonus.yml ]]; then
+  compose_files+=(-f docker-compose.bonus.yml)
+fi
+docker compose -p asd-group5-cloud "${compose_files[@]}" config -q
+docker compose -p asd-group5-cloud "${compose_files[@]}" up -d --build --wait --wait-timeout 300
+docker compose -p asd-group5-cloud "${compose_files[@]}" ps -a
 bash scripts/cloud/health-check.sh
 # Switch the operator's current-release link only after successful checks.
 ln -s "$release_dir" "$DEPLOY_DIR/current-$release_id"
