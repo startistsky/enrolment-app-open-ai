@@ -1138,7 +1138,7 @@ def resource_multi_agent():
                 "user_request": question.strip(),
                 "evidence": resources,
             },
-            timeout=180,
+            timeout=float(os.getenv("MULTI_AGENT_TIMEOUT_SECONDS", "420")),
         )
 
         try:
@@ -1159,6 +1159,43 @@ def resource_multi_agent():
         return jsonify({
             "error": "Resource Database or Multi-Agent Server unavailable"
         }), 503
+
+
+@app.post("/api/multi-agent/<workflow_id>/decision")
+def resource_multi_agent_decision(workflow_id):
+    """Forward a human review decision to the Multi-Agent Server."""
+    body = request.get_json(silent=True)
+
+    if not isinstance(body, dict):
+        return jsonify({"error": "JSON object required"}), 400
+
+    decision = body.get("decision")
+    reason = body.get("reason", "")
+
+    if decision not in ("Accept", "Partially Accept", "Reject"):
+        return jsonify({"error": "Invalid human decision"}), 400
+
+    if not isinstance(reason, str):
+        return jsonify({"error": "reason must be a string"}), 400
+
+    multi_agent_url = os.getenv(
+        "MULTI_AGENT_SERVICE_URL",
+        "http://localhost:9201"
+    ).rstrip("/")
+
+    try:
+        response = requests.post(
+            f"{multi_agent_url}/workflow/{workflow_id}/decision",
+            json={"decision": decision, "reason": reason.strip()},
+            timeout=15,
+        )
+        return jsonify(response.json()), response.status_code
+
+    except ValueError:
+        return jsonify({"error": "Invalid Multi-Agent response"}), 502
+
+    except requests.RequestException:
+        return jsonify({"error": "Multi-Agent Server unavailable"}), 503
 
 # Start
 

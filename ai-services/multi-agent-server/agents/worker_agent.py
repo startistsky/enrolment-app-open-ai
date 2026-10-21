@@ -52,7 +52,7 @@ def _resolve_provenance(answer, evidence):
     return [reference] if reference is not None else []
 
 
-def run(user_request, evidence, planner_result, selectedJob):
+def run(user_request, evidence, planner_result):
     context = {"user_request": user_request, "evidence": evidence,
                "planner_result": planner_result}
     fields = {"answer": str, "evidence_used": list, "missing_evidence": list}

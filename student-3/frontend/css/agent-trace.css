@@ -361,3 +361,58 @@ button.trace-back {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Release 2 dynamic status */
+.trace-status.trace-pending {
+  color: #9a691e;
+}
+
+.trace-status.trace-pending .trace-status-dot {
+  background: #d39a3b;
+}
+
+/* Multi-Agent review evidence */
+.multi-agent-evidence {
+  margin: 10px 30px 26px;
+  padding: 22px;
+  background: #f8faf9;
+  border: 1px solid #dce7de;
+  border-radius: 12px;
+}
+
+.multi-agent-evidence h3 {
+  margin: 0 0 16px;
+  color: #263c2d;
+  font-size: 15px;
+}
+
+.multi-agent-evidence-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #e5ebe6;
+}
+
+.multi-agent-evidence-item:last-child {
+  border-bottom: none;
+}
+
+.multi-agent-evidence-item strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #52705a;
+  font-size: 12px;
+}
+
+.multi-agent-evidence-item p {
+  margin: 0;
+  color: #4f5751;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .multi-agent-evidence {
+    margin: 10px 16px 20px;
+  }
+}
