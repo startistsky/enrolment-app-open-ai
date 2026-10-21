@@ -196,8 +196,6 @@ services:
     build:
       context: .
       dockerfile: ./student-5/backend/Dockerfile
-    ports:
-      - "8085:80"
     environment:
       AI_SERVICE_URL: http://ollama:11434/api/generate
       DATABASE_PATH: /data/career.db
@@ -214,7 +212,8 @@ services:
     build:
       context: .
       dockerfile: ./student-5/frontend/Dockerfile
-    network_mode: service:student5-backend
+    ports:
+      - "8085:80"
     depends_on:
       - student5-backend
 

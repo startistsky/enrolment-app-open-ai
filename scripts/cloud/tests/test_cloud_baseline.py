@@ -94,19 +94,19 @@ def test_rendered_bonus_compose_enables_student5():
     student5 = services['student5-backend']
     assert student5['environment']['AI_SERVICES_ENABLED'] == 'true'
     assert student5['environment']['OLLAMA_URL'] == 'http://ollama:11434'
-    assert student5['environment']['MCP_SERVER_URL'] == 'http://127.0.0.1:9001/mcp'
+    assert student5['environment']['MCP_SERVER_URL'] == 'http://mcp-server:9001/mcp'
     assert student5['environment']['RAG_SERVER_URL'] == 'http://rag-server:9101'
     assert student5['environment']['MULTI_AGENT_SERVER_URL'] == 'http://multi-agent-server:9201'
     assert student5['depends_on']['student5-database']['condition'] == 'service_completed_successfully'
-    assert services['mcp-server']['environment']['CAREER_BACKEND_URL'] == 'http://127.0.0.1:8005'
-    assert services['mcp-server']['network_mode'] == 'service:student5-backend'
-    assert 'expose' not in services['mcp-server']
+    assert services['mcp-server']['environment']['CAREER_BACKEND_URL'] == 'http://student5-backend:8006'
+    assert 'network_mode' not in services['mcp-server']
+    assert services['mcp-server']['expose'] == ['9001']
     assert 'ports' not in services['mcp-server']
-    assert 'EXPOSE 9001' not in (ROOT / 'mcp-server/Dockerfile').read_text()
-    assert student5['environment']['MCP_SERVER_URL'] == 'http://127.0.0.1:9001/mcp'
-    assert services['student3-backend']['environment']['MCP_SERVER_URL'] == 'http://student5-backend:9001/mcp'
-    assert services['student5-frontend']['network_mode'] == 'service:student5-backend'
-    assert {'mode': 'ingress', 'target': 80, 'published': '8085', 'protocol': 'tcp'} in services['student5-backend']['ports']
+    assert student5['environment']['MCP_SERVER_URL'] == 'http://mcp-server:9001/mcp'
+    assert services['student3-backend']['environment']['MCP_SERVER_URL'] == 'http://mcp-server:9001/mcp'
+    assert 'network_mode' not in services['student5-frontend']
+    assert {'mode': 'ingress', 'target': 80, 'published': '8085', 'protocol': 'tcp'} in services['student5-frontend']['ports']
+    assert 'proxy_pass http://127.0.0.1:8005;' in (ROOT / 'student-5/backend/nginx-proxy.conf').read_text()
     assert 'host="127.0.0.1"' in (ROOT / 'student-5/backend/app.py').read_text()
     assert 'student5_career_retriever' in services['rag-init']['command'][-1]
     assert all(name in services for name in ('ollama', 'mcp-server', 'rag-server', 'multi-agent-server'))

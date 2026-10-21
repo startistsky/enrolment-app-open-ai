@@ -10,4 +10,6 @@ COPY mcp-server/ ./mcp-server/
 
 WORKDIR /app/mcp-server
 
+EXPOSE 9001
+
 CMD ["python", "server.py"]

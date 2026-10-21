@@ -20,18 +20,10 @@ Confirm the selected subscription with `az account show` before executing script
 The scripts intentionally do not create or delete the shared resource group.
 
 `docker-compose.cloud.yml` contains all five modules plus the shared frontend.
-Student 1–4 use internal database APIs. Student 5 has a one-shot database seed
+Student 1–5 use internal database APIs. Student 5 has a one-shot database seed
 container and a backend that accesses the same named SQLite volume directly;
 its database container is not an HTTP service. Five named volumes retain database
 data across container recreation. They live on the VM OS disk, not external storage.
-The optional bonus overlay adds Ollama, MCP, RAG and multi-agent services for
-Students 3 and 5. The Student 5 frontend proxy and MCP container share the backend's
-network namespace to reach its loopback-bound API without changing the
-`127.0.0.1` binding or publishing port 8005. MCP does not declare exposed or published
-ports in Compose or its image because Docker disallows exposed ports for a service
-using another container's network namespace. It remains reachable on port 9001
-through the Student 5 backend container's network address. The frontend is published
-on port 8085; Student 3 reaches MCP using the Student 5 container's internal service address.
 
 Frontend URLs use the VM hostname/IP and existing module ports:
 
@@ -44,24 +36,13 @@ Frontend URLs use the VM hostname/IP and existing module ports:
 | Events | 8080 | 8000 |
 | Career | 8085 | Container loopback only; not published |
 
-Nginx proxies browser API requests using Compose DNS names, except the Student 5
-proxy, which uses `127.0.0.1:8005` in its shared network namespace. Browser navigation
-uses port metadata to build links on the current hostname and protocol. No database
-or backend API ports are published. Loopback in health checks refers to the
-container/VM itself; it is not a browser or container-to-container address. The cloud file contains no
-`host.docker.internal` references. Unused legacy top-level Student Dockerfiles
+Browser navigation uses port metadata to build links on the current hostname and protocol. No database or backend API ports are published. Loopback in health checks refers to the
+container/VM itself; it is not a browser or container-to-container address. The cloud file contains no `host.docker.internal` references. Unused legacy top-level Student Dockerfiles
 are empty and are not selected by either Compose file.
 
 ## Local versus cloud and disabled AI
 
-The local `docker-compose.yml` remains unchanged and retains Ollama and host
-services. Local behavior defaults to AI enabled. The baseline cloud deployment sets
-`AI_SERVICES_ENABLED=false` on every backend and clears all AI/MCP/RAG/Multi-Agent
-URLs. The bonus workflow overlays that configuration, enables AI on Students 3 and 5,
-and connects both backends to the shared bonus services. Other student modules remain
-AI-disabled. Existing UI controls may remain visible and report the disabled response.
-Flask debug is disabled for cloud. This is an assessment baseline, not a production
-TLS/authentication deployment.
+The local `docker-compose.yml` retains Ollama and host AI service URLs. Local behavior defaults to AI enabled. The baseline cloud deployment sets `AI_SERVICES_ENABLED=false` on every backend and clears all AI/MCP/RAG/Multi-Agent URLs. The bonus workflow overlays that configuration, enables AI on Students 3 and 5, and connects both backends to the shared bonus services. Other student modules remain AI-disabled. Existing UI controls may remain visible and report the disabled response. Flask debug is disabled for cloud. This is an assessment baseline, not a production TLS/authentication deployment.
 
 ## Audit and compatibility fixes
 
@@ -247,9 +228,7 @@ for local startup, append `up -d --build` to that command.
 
 On the VM, run `sudo bash /opt/asd-group5/current/scripts/cloud/health-check.sh`. It checks all
 frontend pages, backend health, database-backed reads and representative disabled
-AI routes; for bonus releases it also verifies the MCP, RAG and multi-agent services
-are running and Student 5's Ollama integration is available. It does not perform
-write/delete operations or claim full CRUD success.
+AI routes. It does not perform write/delete operations or claim full CRUD success.
 For diagnosis, use `sudo bash -c 'cd /opt/asd-group5/current && docker compose -p asd-group5-cloud -f docker-compose.cloud.yml ps -a'` and the corresponding `logs` command; add `-f docker-compose.bonus.yml` for bonus releases.
 From the allowed external address, open all six URLs printed by deployment.
 
