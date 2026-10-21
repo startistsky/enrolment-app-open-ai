@@ -9,6 +9,11 @@ on:
       - "ai-services/multi-agent-server/**"
       - "shared/**"
       - "docker-compose.yml"
+      - "docker-compose.cloud.yml"
+      - "docker-compose.bonus.yml"
+      - "scripts/cloud/**"
+      - "docs/AZURE_DEPLOYMENT.md"
+      - ".github/workflows/azure-bonus-deployment.yml"
       - ".github/workflows/student-1.yml"
   pull_request:
     paths:
@@ -18,6 +23,11 @@ on:
       - "ai-services/multi-agent-server/**"
       - "shared/**"
       - "docker-compose.yml"
+      - "docker-compose.cloud.yml"
+      - "docker-compose.bonus.yml"
+      - "scripts/cloud/**"
+      - "docs/AZURE_DEPLOYMENT.md"
+      - ".github/workflows/azure-bonus-deployment.yml"
       - ".github/workflows/student-1.yml"
 
 jobs:
