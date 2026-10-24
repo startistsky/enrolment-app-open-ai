@@ -6,12 +6,28 @@ on:
     paths:
       - "student-2/**"
       - "ai-services/multi-agent-server/**"
+      - "mcp-server/**"
+      - "rag-server/**"
+      - "docker-compose.yml"
+      - "docker-compose.cloud.yml"
+      - "docker-compose.bonus.yml"
+      - "scripts/cloud/**"
+      - "docs/AZURE_DEPLOYMENT.md"
+      - ".github/workflows/azure-bonus-deployment.yml"
       - ".github/workflows/student-2.yml"
   pull_request:
     branches: [main]
     paths:
       - "student-2/**"
       - "ai-services/multi-agent-server/**"
+      - "mcp-server/**"
+      - "rag-server/**"
+      - "docker-compose.yml"
+      - "docker-compose.cloud.yml"
+      - "docker-compose.bonus.yml"
+      - "scripts/cloud/**"
+      - "docs/AZURE_DEPLOYMENT.md"
+      - ".github/workflows/azure-bonus-deployment.yml"
       - ".github/workflows/student-2.yml"
 
 jobs:

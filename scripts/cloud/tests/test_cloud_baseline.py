@@ -84,13 +84,15 @@ def test_rendered_cloud_compose_architecture():
     assert services['student5-backend']['depends_on']['student5-database']['condition'] == 'service_completed_successfully'
 
 
-def test_rendered_bonus_compose_enables_student5():
+def test_rendered_bonus_compose_enables_all_student_ai_integrations():
     result = subprocess.run(  # noqa: S603,S607 -- fixed read-only Compose config command.
         [shutil.which('docker'), 'compose', '-f', 'docker-compose.cloud.yml',
          '-f', 'docker-compose.bonus.yml', 'config', '--format', 'json'],
         cwd=ROOT, capture_output=True, text=True, check=True,
     )
     services = json.loads(result.stdout)['services']
+    for name in ('student1-backend', 'student2-backend', 'student3-backend', 'backend', 'student5-backend'):
+        assert services[name]['environment']['AI_SERVICES_ENABLED'] == 'true'
     student5 = services['student5-backend']
     assert student5['environment']['AI_SERVICES_ENABLED'] == 'true'
     assert student5['environment']['OLLAMA_URL'] == 'http://ollama:11434'
@@ -110,6 +112,29 @@ def test_rendered_bonus_compose_enables_student5():
     assert 'host="127.0.0.1"' in (ROOT / 'student-5/backend/app.py').read_text()
     assert 'student5_career_retriever' in services['rag-init']['command'][-1]
     assert all(name in services for name in ('ollama', 'mcp-server', 'rag-server', 'multi-agent-server'))
+    student1 = services['student1-backend']['environment']
+    assert student1['AI_SERVICE_URL'] == 'http://ollama:11434/api/generate'
+    assert student1['MCP_SERVER_URL'] == 'http://mcp-server:9001/mcp'
+    assert student1['RAG_SERVER_URL'] == 'http://rag-server:9101'
+    assert student1['MULTI_AGENT_SERVER_URL'] == 'http://multi-agent-server:9201'
+    student2 = services['student2-backend']['environment']
+    assert student2['OLLAMA_URL'] == 'http://ollama:11434/api/generate'
+    assert student2['RAG_SERVER_URL'] == 'http://rag-server:9101'
+    assert student2['MULTI_AGENT_SERVER_URL'] == 'http://multi-agent-server:9201'
+    student4 = services['backend']['environment']
+    assert student4['MULTI_AGENT_ENABLED'] == 'true'
+    assert student4['AI_SERVICE_URL'] == 'http://ollama:11434/api/generate'
+    assert student4['MCP_SERVER_URL'] == 'http://mcp-server:9001/mcp'
+    assert student4['RAG_SERVER_URL'] == 'http://rag-server:9101'
+    assert student4['MULTI_AGENT_SERVER_URL'] == 'http://multi-agent-server:9201'
+    mcp_environment = services['mcp-server']['environment']
+    assert mcp_environment['STUDENT1_BACKEND_URL'] == 'http://student1-backend:8001'
+    assert mcp_environment['STUDENT2_BACKEND_URL'] == 'http://student2-backend:8002'
+    assert mcp_environment['STUDENT4_BACKEND_URL'] == 'http://backend:8000'
+    rag_environment = services['rag-server']['environment']
+    assert rag_environment['STUDENT1_BACKEND_URL'] == 'http://student1-backend:8001'
+    assert rag_environment['STUDENT2_BACKEND_URL'] == 'http://student2-backend:8002'
+    assert rag_environment['STUDENT4_BACKEND_URL'] == 'http://backend:8000'
 
 
 def test_private_source_archive_excludes_credentials_and_preserves_checkout(tmp_path):

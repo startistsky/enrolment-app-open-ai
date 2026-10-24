@@ -7,7 +7,10 @@ services:
       context: .
       dockerfile: mcp-server/Dockerfile
     environment:
+      STUDENT1_BACKEND_URL: http://student1-backend:8001
+      STUDENT2_BACKEND_URL: http://student2-backend:8002
       STUDENT3_DATABASE_API_URL: http://student3-database:5004
+      STUDENT4_BACKEND_URL: http://backend:8000
       CAREER_BACKEND_URL: http://student5-backend:8006
     expose:
       - "9001"
@@ -49,6 +52,10 @@ services:
     build:
       context: .
       dockerfile: rag-server/Dockerfile.bonus
+    environment:
+      STUDENT1_BACKEND_URL: http://student1-backend:8001
+      STUDENT2_BACKEND_URL: http://student2-backend:8002
+      STUDENT4_BACKEND_URL: http://backend:8000
     expose:
       - "9101"
     volumes:
@@ -92,6 +99,41 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  # Student 1 Course Integration
+  student1-backend:
+    environment:
+      AI_SERVICES_ENABLED: 'true'
+      AI_SERVICE_URL: http://ollama:11434/api/generate
+      AI_MODEL: qwen2.5:0.5b
+      MCP_SERVER_URL: http://mcp-server:9001/mcp
+      RAG_SERVER_URL: http://rag-server:9101
+      MULTI_AGENT_SERVER_URL: http://multi-agent-server:9201
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+      mcp-server:
+        condition: service_started
+      rag-server:
+        condition: service_started
+      multi-agent-server:
+        condition: service_started
+
+  # Student 2 Assignment Integration
+  student2-backend:
+    environment:
+      AI_SERVICES_ENABLED: 'true'
+      OLLAMA_URL: http://ollama:11434/api/generate
+      OLLAMA_MODEL: qwen2.5:0.5b
+      RAG_SERVER_URL: http://rag-server:9101
+      MULTI_AGENT_SERVER_URL: http://multi-agent-server:9201
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+      rag-server:
+        condition: service_started
+      multi-agent-server:
+        condition: service_started
+
   # Student 3 Backend Integration
 
   student3-backend:
@@ -104,6 +146,26 @@ services:
       MULTI_AGENT_SERVICE_URL: http://multi-agent-server:9201
     depends_on:
       mcp-server:
+        condition: service_started
+
+  # Student 4 Event Integration
+  backend:
+    environment:
+      AI_SERVICES_ENABLED: 'true'
+      MULTI_AGENT_ENABLED: 'true'
+      AI_SERVICE_URL: http://ollama:11434/api/generate
+      MODEL_NAME: qwen2.5:0.5b
+      MCP_SERVER_URL: http://mcp-server:9001/mcp
+      RAG_SERVER_URL: http://rag-server:9101
+      MULTI_AGENT_SERVER_URL: http://multi-agent-server:9201
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+      mcp-server:
+        condition: service_started
+      rag-server:
+        condition: service_started
+      multi-agent-server:
         condition: service_started
 
 

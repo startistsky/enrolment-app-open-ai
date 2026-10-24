@@ -1,4 +1,4 @@
-name: Azure Students 3 and 5 Bonus Deployment
+name: Azure Students 1-5 Bonus Deployment
 
 on:
   workflow_dispatch:
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy B1-B4 to Azure
+    name: Deploy Students 1-5 with B1-B4
     runs-on: ubuntu-latest
     environment: azure-assessment
     timeout-minutes: 90
@@ -45,6 +45,12 @@ jobs:
           test -f rag-server/Dockerfile.bonus
           test -f ai-services/multi-agent-server/Dockerfile.bonus
           test -f student-5/backend/agent/agent_tools.py
+          test -f mcp-server/tools/student1_course_tools.py
+          test -f mcp-server/tools/student2_assignment_tools.py
+          test -f mcp-server/tools/student4_event_tools.py
+          test -f rag-server/retrievers/student1_course_retriever.py
+          test -f rag-server/retrievers/student2_assignment_retriever.py
+          test -f rag-server/retrievers/student4_event_retriever.py
           test -f rag-server/retrievers/student5_career_retriever.py
 
           docker compose \
@@ -100,7 +106,7 @@ jobs:
           DEPLOY_STATUS: ${{ job.status }}
         run: |
           {
-            echo "### Students 3 and 5 Azure Bonus B1-B4"
+            echo "### Students 1-5 Azure Bonus B1-B4"
             echo
             echo "Deployment status: $DEPLOY_STATUS"
             echo
