@@ -4,6 +4,7 @@ import importlib.util
 import json
 import sys
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -24,6 +25,7 @@ from agents import (  # noqa: E402
     resource_worker_agent,
     resource_reviewer_agent,
 )
+import llm_client  # noqa: E402
 
 
 @pytest.fixture
@@ -120,6 +122,82 @@ def test_resource_workflow_order_and_pending_review(setup):
     snapshots = read_jsonl(history)
     assert len(snapshots) == 1
     assert snapshots[0]["status"] == "pending_human_review"
+
+
+@pytest.mark.parametrize(
+    ("prompt_name", "required_fields", "output"),
+    [
+        (
+            "resource_planner",
+            {"plan": str, "evidence_required": list},
+            {"plan": "Find a matching room.", "evidence_required": ["capacity"]},
+        ),
+        (
+            "resource_worker",
+            {
+                "answer": str,
+                "evidence_used": list,
+                "missing_evidence": list,
+            },
+            {
+                "answer": "Study Room A meets the requirements.",
+                "evidence_used": ["1"],
+                "missing_evidence": [],
+            },
+        ),
+        (
+            "resource_reviewer",
+            {
+                "risk": str,
+                "unsupported_claims": list,
+                "correction": str,
+                "recommendation": str,
+            },
+            {
+                "risk": "No unsupported claims identified.",
+                "unsupported_claims": [],
+                "correction": "",
+                "recommendation": "Proceed to human review.",
+            },
+        ),
+    ],
+)
+def test_resource_prompts_use_bounded_schema_valid_generation(
+    monkeypatch, prompt_name, required_fields, output
+):
+    post = Mock(return_value=Mock(
+        ok=True,
+        json=Mock(return_value={"response": json.dumps(output)}),
+    ))
+    monkeypatch.setattr(llm_client.requests, "post", post)
+
+    result = llm_client.generate(
+        prompt_name,
+        {"user_request": "Find a room.", "evidence": []},
+        required_fields,
+        prompt_name=prompt_name,
+    )
+
+    assert result == output
+    request = post.call_args.kwargs["json"]
+    assert request["options"]["num_predict"] == 256
+    assert request["format"]["required"] == list(required_fields)
+    assert request["format"]["additionalProperties"] is False
+
+
+def test_non_resource_prompt_has_no_resource_generation_limit(monkeypatch):
+    post = Mock(return_value=Mock(
+        ok=True,
+        json=Mock(return_value={"response": '{"plan": "Summarize the courses."}'}),
+    ))
+    monkeypatch.setattr(llm_client.requests, "post", post)
+
+    assert llm_client.generate(
+        "planner",
+        {},
+        {"plan": str},
+    ) == {"plan": "Summarize the courses."}
+    assert "num_predict" not in post.call_args.kwargs["json"]["options"]
 
 
 @pytest.mark.parametrize(
