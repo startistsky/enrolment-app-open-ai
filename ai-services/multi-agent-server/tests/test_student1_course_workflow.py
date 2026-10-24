@@ -139,9 +139,67 @@ def test_empty_evidence(setup):
 
 @pytest.mark.parametrize('reply', [[], {}, {'response': 'not JSON'}, {'response': '{}'}])
 def test_invalid_model_output(monkeypatch, reply):
-    monkeypatch.setattr(llm_client.requests, 'post', Mock(return_value=Mock(ok=True, json=Mock(return_value=reply))))
-    with pytest.raises(ModelError):
+    post = Mock(return_value=Mock(ok=True, json=Mock(return_value=reply)))
+    monkeypatch.setattr(llm_client.requests, 'post', post)
+    with pytest.raises(ModelError, match='after 2 attempts'):
         llm_client.generate('planner', {}, {'plan': str, 'evidence_required': list})
+    assert post.call_count == 2
+
+
+def test_malformed_output_retried_and_validated(monkeypatch):
+    valid = {'plan': 'Use matching resources', 'evidence_required': ['resource_id']}
+    post = Mock(side_effect=[
+        Mock(ok=True, json=Mock(return_value={
+            'response': '{"plan": "unfinished',
+            'done_reason': 'stop',
+            'eval_count': 18,
+            'prompt_eval_count': 240,
+        })),
+        Mock(ok=True, json=Mock(return_value={'response': json.dumps(valid)})),
+    ])
+    monkeypatch.setattr(llm_client.requests, 'post', post)
+
+    assert llm_client.generate(
+        'planner', {}, {'plan': str, 'evidence_required': list}
+    ) == valid
+    assert [call.kwargs['json']['options']['seed'] for call in post.call_args_list] == [42, 43]
+
+
+def test_incomplete_output_retried_and_validated(monkeypatch):
+    valid = {'plan': 'Use matching resources', 'evidence_required': ['resource_id']}
+    post = Mock(side_effect=[
+        Mock(ok=True, json=Mock(return_value={
+            'response': json.dumps({'plan': 'Use matching resources'}),
+            'done_reason': 'length',
+            'eval_count': 128,
+            'prompt_eval_count': 240,
+        })),
+        Mock(ok=True, json=Mock(return_value={'response': json.dumps(valid)})),
+    ])
+    monkeypatch.setattr(llm_client.requests, 'post', post)
+
+    assert llm_client.generate(
+        'planner', {}, {'plan': str, 'evidence_required': list}
+    ) == valid
+    assert post.call_count == 2
+
+
+def test_persistent_malformed_output_fails_with_completion_metadata(monkeypatch):
+    post = Mock(return_value=Mock(ok=True, json=Mock(return_value={
+        'response': '{"plan": "unfinished',
+        'done_reason': 'length',
+        'eval_count': 128,
+        'prompt_eval_count': 240,
+    })))
+    monkeypatch.setattr(llm_client.requests, 'post', post)
+
+    with pytest.raises(
+        ModelError,
+        match=r'invalid JSON output after 2 attempts; last completion: '
+              r'done_reason=length, eval_count=128, prompt_eval_count=240',
+    ):
+        llm_client.generate('planner', {}, {'plan': str})
+    assert post.call_count == 2
 
 
 def test_model_configuration(monkeypatch):
