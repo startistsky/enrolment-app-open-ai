@@ -24,7 +24,6 @@ Student 1–5 use internal database APIs. Student 5 has a one-shot database seed
 container and a backend that accesses the same named SQLite volume directly;
 its database container is not an HTTP service. Five named volumes retain database
 data across container recreation. They live on the VM OS disk, not external storage.
-
 Frontend URLs use the VM hostname/IP and existing module ports:
 
 | Module | Public port | Backend (VM loopback only) |
@@ -42,7 +41,7 @@ are empty and are not selected by either Compose file.
 
 ## Local versus cloud and disabled AI
 
-The local `docker-compose.yml` retains Ollama and host AI service URLs. Local behavior defaults to AI enabled. The baseline cloud deployment sets `AI_SERVICES_ENABLED=false` on every backend and clears all AI/MCP/RAG/Multi-Agent URLs. The bonus workflow overlays that configuration, enables AI on Students 3 and 5, and connects both backends to the shared bonus services. Other student modules remain AI-disabled. Existing UI controls may remain visible and report the disabled response. Flask debug is disabled for cloud. This is an assessment baseline, not a production TLS/authentication deployment.
+The local `docker-compose.yml` retains Ollama and host AI service URLs. Local behavior defaults to AI enabled. The baseline cloud deployment sets `AI_SERVICES_ENABLED=false` on every backend and clears all AI/MCP/RAG/Multi-Agent URLs. Student 4 also sets `MULTI_AGENT_ENABLED=false`; Student 5's cloud request guard blocks both its AI and Multi-Agent blueprints when AI services are disabled. The bonus workflow overlays that configuration and enables AI on Students 1–5, connecting each module to the integrations its backend supports. Student 2 uses Ollama, RAG and Multi-Agent; Students 1, 3, 4 and 5 also connect to MCP. The shared MCP and RAG services use Compose DNS to call the relevant backends. Student 1 course RAG syncs live course data when queried; Student 2 assignment and Student 4 event RAG read their backend data live. Student 3 resource and Student 5 career knowledge are initialized into the persistent RAG index. Flask debug is disabled for cloud. This is an assessment baseline, not a production TLS/authentication deployment.
 
 ## Audit and compatibility fixes
 
@@ -217,10 +216,11 @@ and health checks. Collect external browser/CRUD evidence separately.
 `.github/workflows/azure-bonus-deployment.yml` is also manually dispatched and
 deploys the same release with the bonus Compose overlay. Select a pushed branch
 containing the bonus configuration and source. It builds the shared Ollama, MCP,
-RAG and multi-agent services, indexes both Student 3 resource and Student 5 career
-knowledge, and enables the AI integrations for Students 3 and 5. Its VM checks
-verify the bonus containers are running and Student 5 can reach the configured
-Ollama model. For local validation, use
+RAG and multi-agent services, enables supported AI integrations for Students 1–5,
+and checks that MCP can reach the participating backends. Student 3 resource and
+Student 5 career knowledge are initialized in RAG; Student 1 course, Student 2
+assignment and Student 4 event data are retrieved live. The Student 3 bonus smoke
+test verifies Ollama, MCP, RAG and multi-agent behavior. For local validation, use
 `docker compose -f docker-compose.cloud.yml -f docker-compose.bonus.yml config`;
 for local startup, append `up -d --build` to that command.
 

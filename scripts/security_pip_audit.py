@@ -8,13 +8,20 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIREMENTS = (
+    "student-1/requirements.txt",
     "student-1/backend/requirements.txt",
     "student-1/database/requirements.txt",
     "student-1/tests/requirements.txt",
+    "student-2/backend/requirements.txt",
+    "student-2/database/requirements.txt",
+    "student-2/tests/requirements.txt",
     "student-3/backend/requirements.txt",
     "student-3/database/requirements.txt",
     "student-3/tests/requirements.txt",
+    "student-4/backend/requirements.txt",
+    "student-4/database/requirements.txt",
     "student-5/backend/requirements.txt",
+    "student-5/database/requirements.txt",
     "student-5/tests/requirements.txt",
     "ai-services/multi-agent-server/requirements.txt",
     "mcp-server/requirements.txt",

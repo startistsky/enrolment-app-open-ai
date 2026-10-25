@@ -4,27 +4,16 @@ exclude: '(^|/)(\.venv[^/]*|venv|env|__pycache__|chroma[^/]*|docker-data|ollama-
 repos:
   - repo: local
     hooks:
-      - id: ruff-security
-        name: Ruff Security
-        entry: ruff check --config ruff.toml student-1 student-2 student-3 ai-services/multi-agent-server mcp-server rag-server shared scripts
+      - id: security-scans
+        name: Security Scans and Report
+        entry: python scripts/run_security_scans.py
         language: python
-        additional_dependencies: ['ruff==0.16.10']
+        additional_dependencies:
+          - ruff==0.16.10
+          - detect-secrets==1.5.0
+          - pip-audit==2.10.1
         pass_filenames: false
         always_run: true
-      - id: detect-secrets
-        name: Detect Secrets
-        entry: detect-secrets-hook --baseline .secrets.baseline
-        language: python
-        additional_dependencies: ['detect-secrets==1.5.0']
-        exclude: '^\.secrets\.baseline$'
-      - id: pip-audit
-        name: Dependency Audit
-        entry: python scripts/security_pip_audit.py --gate
-        language: python
-        additional_dependencies: ['pip-audit==2.10.1']
-        pass_filenames: false
-        always_run: true
-
 
       - id: student-4-pytest
         name: Student 4 Pre-commit Pytest

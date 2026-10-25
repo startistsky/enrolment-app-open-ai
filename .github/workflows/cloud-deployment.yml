@@ -5,7 +5,7 @@ on:
       deploy_ref:
         description: 'Pushed branch to deploy (must contain the cloud files)'
         required: true
-        default: feature/student-1-release-2
+        default: main
 permissions:
   contents: read
   id-token: write

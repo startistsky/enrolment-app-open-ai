@@ -99,11 +99,12 @@ available). Raw course evidence and service configuration/credentials are not
 persisted. Keep requests and reasons free of secrets; snapshots contain their
 text and model outputs. Keep these local files as assessment report evidence.
 
-Worker references must identify supplied course codes or IDs. Validation
-conservatively requires attribution for any nonblank answer with non-empty
-evidence; it never guesses which course supports an answer. Reference validity
-does not prove that a course supports each claim; Reviewer and human checks
-still assess that. Empty evidence permits an empty attribution list.
+Worker references must identify evidence supplied to the selected workflow:
+course codes or IDs, assignment IDs, resource IDs, event IDs, or the selected
+career record. The shared review checks that attribution is present whenever
+the workflow records non-empty evidence; it does not guess whether each
+reference supports an answer. Reviewer and human checks still assess grounding.
+Empty evidence permits an empty attribution list.
 
 Workflow outputs and decision reasons are held in memory in a single process.
 Restarting clears reviewable workflows; rerun the request after a restart.

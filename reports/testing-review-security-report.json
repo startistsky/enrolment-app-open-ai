@@ -1,0 +1,41 @@
+{
+  "review_evidence": {
+    "scope": "all students",
+    "generated_at": "2026-10-25",
+    "evidence_source": "agentic-review-logs/pre-commit-security-report.md",
+    "ruff": "PASS",
+    "detect_secrets": "PASS",
+    "pip_audit_raw": "FAIL",
+    "pip_audit_gate": "PASS",
+    "unresolved_findings": [
+      {
+        "advisory_id": "GHSA-f4j7-r4q5-qw2c",
+        "accepted": true,
+        "resolved": false,
+        "rationale": "The current pip-audit output lists no patched version for chromadb 1.5.9.",
+        "mitigation": "The documented deployment uses embedded persistent storage rather than the affected Chroma HTTP or model-repository configuration APIs."
+      },
+      {
+        "advisory_id": "GHSA-36p7-vc44-83pf",
+        "accepted": true,
+        "resolved": false,
+        "rationale": "The current pip-audit output lists no patched version for chromadb 1.5.9.",
+        "mitigation": "The documented application does not expose the affected Chroma UPDATE_COLLECTION or model-repository API."
+      },
+      {
+        "advisory_id": "GHSA-xph7-9rjv-w5fr",
+        "accepted": true,
+        "resolved": false,
+        "rationale": "The current pip-audit output lists no patched version for chromadb 1.5.9.",
+        "mitigation": "The documented application uses an embedded local collection and does not expose the affected Chroma HTTP RBAC service."
+      },
+      {
+        "advisory_id": "GHSA-2wm9-hf6c-p5cr",
+        "accepted": true,
+        "resolved": false,
+        "rationale": "The current pip-audit output lists no patched version for chromadb 1.5.9.",
+        "mitigation": "The documented application does not expose the affected Chroma multi-tenant collection HTTP API."
+      }
+    ]
+  }
+}

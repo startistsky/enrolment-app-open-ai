@@ -61,3 +61,49 @@ def test_database_unavailable(client):
 
     assert response.status_code == 503
     assert response.get_json()["error"] == "Database service unavailable"
+
+
+def test_multi_agent_resource_workflow_endpoint(client):
+    resources = [{"resource_id": 7, "resource_name": "Study Room A"}]
+    upstream = Mock()
+    upstream.status_code = 200
+    upstream.json.return_value = {
+        "workflow_id": "resource-test",
+        "status": "pending_human_review",
+    }
+
+    with patch.object(backend, "fetch_resources", return_value=resources), patch.object(
+        backend.requests, "post", return_value=upstream,
+    ) as post:
+        response = client.post(
+            "/api/multi-agent/resource",
+            json={"question": "Find a study room"},
+        )
+
+    assert response.status_code == 200
+    assert response.get_json()["workflow_id"] == "resource-test"
+    assert post.call_args.args[0].endswith("/workflow/resource")
+    assert post.call_args.kwargs["json"]["feature"] == "resource_management"
+    assert post.call_args.kwargs["json"]["evidence"] == resources
+
+
+def test_multi_agent_resource_decision_endpoint(client):
+    upstream = Mock()
+    upstream.status_code = 200
+    upstream.json.return_value = {
+        "workflow_id": "resource-test",
+        "status": "completed",
+        "human_review": {"status": "completed", "decision": "Accept"},
+    }
+
+    with patch.object(backend.requests, "post", return_value=upstream) as post:
+        response = client.post(
+            "/api/multi-agent/resource-test/decision",
+            json={"decision": "Accept", "reason": "Reviewed"},
+        )
+
+    assert response.status_code == 200
+    assert response.get_json()["human_review"]["decision"] == "Accept"
+    assert post.call_args.args[0].endswith(
+        "/workflow/resource-test/decision"
+    )

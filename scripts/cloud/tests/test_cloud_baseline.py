@@ -29,7 +29,9 @@ with server.test_request_context(crud_paths[student]):
 def ai_route(rule):
     path = rule.rule
     return (path.startswith(('/api/mcp/', '/api/rag/', '/api/multi-agent/', '/api/agentic/', '/api/ai', '/rag/', '/recommend'))
-            or path.endswith('/recommendation') or rule.endpoint.startswith(('ai.', 'ai_routes.')))
+            or path.startswith('/api/workflow/')
+            or path.endswith('/recommendation')
+            or rule.endpoint.startswith(('ai.', 'ai_routes.', 'multi_agent_routes.')))
 with patch('requests.sessions.Session.request', side_effect=AssertionError('Unexpected network request')):
     rules = [rule for rule in server.url_map.iter_rules() if ai_route(rule)]
     assert rules
@@ -54,7 +56,8 @@ if student == 5:
     result = subprocess.run(  # noqa: S603 -- fixed Python executable and internal test program, no shell.
         [sys.executable, '-c', code], cwd=ROOT / f'student-{student}/backend',
         env=os.environ | {'AI_SERVICES_ENABLED': 'false', 'TEST_STUDENT': str(student),
-                          'DATABASE_PATH': str(tmp_path / 'career.db')},
+                          'DATABASE_PATH': str(tmp_path / 'career.db'),
+                          **({'MULTI_AGENT_ENABLED': 'false'} if student == 4 else {})},
         capture_output=True, text=True, check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
@@ -78,19 +81,22 @@ def test_rendered_cloud_compose_architecture():
             assert environment[key] == ''
         if name != 'student5-backend':
             assert all(port['host_ip'] == '127.0.0.1' for port in services[name]['ports'])
+    assert services['backend']['environment']['MULTI_AGENT_ENABLED'] == 'false'
     for name in ('student1-database','student2-database','student3-database','database','student5-database'):
         assert 'ports' not in services[name]
         assert any(volume['type'] == 'volume' and volume['target'] == '/data' for volume in services[name]['volumes'])
     assert services['student5-backend']['depends_on']['student5-database']['condition'] == 'service_completed_successfully'
 
 
-def test_rendered_bonus_compose_enables_student5():
+def test_rendered_bonus_compose_enables_all_student_ai_integrations():
     result = subprocess.run(  # noqa: S603,S607 -- fixed read-only Compose config command.
         [shutil.which('docker'), 'compose', '-f', 'docker-compose.cloud.yml',
          '-f', 'docker-compose.bonus.yml', 'config', '--format', 'json'],
         cwd=ROOT, capture_output=True, text=True, check=True,
     )
     services = json.loads(result.stdout)['services']
+    for name in ('student1-backend', 'student2-backend', 'student3-backend', 'backend', 'student5-backend'):
+        assert services[name]['environment']['AI_SERVICES_ENABLED'] == 'true'
     student5 = services['student5-backend']
     assert student5['environment']['AI_SERVICES_ENABLED'] == 'true'
     assert student5['environment']['OLLAMA_URL'] == 'http://ollama:11434'
@@ -108,8 +114,56 @@ def test_rendered_bonus_compose_enables_student5():
     assert {'mode': 'ingress', 'target': 80, 'published': '8085', 'protocol': 'tcp'} in services['student5-frontend']['ports']
     assert 'proxy_pass http://127.0.0.1:8005;' in (ROOT / 'student-5/backend/nginx-proxy.conf').read_text()
     assert 'host="127.0.0.1"' in (ROOT / 'student-5/backend/app.py').read_text()
+    rag_init_command = services['rag-init']['command'][-1]
+    assert 'ensure_knowledge_indexed as ensure_career' in rag_init_command
+    assert "career_result.get('success') is True" in rag_init_command
+    assert services['rag-init']['volumes'] == services['rag-server']['volumes']
     assert 'student5_career_retriever' in services['rag-init']['command'][-1]
     assert all(name in services for name in ('ollama', 'mcp-server', 'rag-server', 'multi-agent-server'))
+    student1 = services['student1-backend']['environment']
+    assert student1['AI_SERVICE_URL'] == 'http://ollama:11434/api/generate'
+    assert student1['MCP_SERVER_URL'] == 'http://mcp-server:9001/mcp'
+    assert student1['RAG_SERVER_URL'] == 'http://rag-server:9101'
+    assert student1['MULTI_AGENT_SERVER_URL'] == 'http://multi-agent-server:9201'
+    student2 = services['student2-backend']['environment']
+    assert student2['OLLAMA_URL'] == 'http://ollama:11434/api/generate'
+    assert student2['RAG_SERVER_URL'] == 'http://rag-server:9101'
+    assert student2['MULTI_AGENT_SERVER_URL'] == 'http://multi-agent-server:9201'
+    student4 = services['backend']['environment']
+    assert student4['MULTI_AGENT_ENABLED'] == 'true'
+    assert student4['AI_SERVICE_URL'] == 'http://ollama:11434/api/generate'
+    assert student4['MCP_SERVER_URL'] == 'http://mcp-server:9001/mcp'
+    assert student4['RAG_SERVER_URL'] == 'http://rag-server:9101'
+    assert student4['MULTI_AGENT_SERVER_URL'] == 'http://multi-agent-server:9201'
+    mcp_environment = services['mcp-server']['environment']
+    assert mcp_environment['STUDENT1_BACKEND_URL'] == 'http://student1-backend:8001'
+    assert mcp_environment['STUDENT2_BACKEND_URL'] == 'http://student2-backend:8002'
+    assert mcp_environment['STUDENT4_BACKEND_URL'] == 'http://backend:8000'
+    rag_environment = services['rag-server']['environment']
+    assert rag_environment['STUDENT1_BACKEND_URL'] == 'http://student1-backend:8001'
+    assert rag_environment['STUDENT2_BACKEND_URL'] == 'http://student2-backend:8002'
+    assert rag_environment['STUDENT4_BACKEND_URL'] == 'http://backend:8000'
+
+
+def test_bonus_workflow_defaults_to_main_and_preserves_deployment_data():
+    import yaml
+
+    workflow = yaml.safe_load((ROOT / '.github/workflows/azure-bonus-deployment.yml').read_text())
+    triggers = workflow.get('on', workflow.get(True))
+    assert triggers['workflow_dispatch']['inputs']['deploy_ref']['default'] == 'main'
+    validation = next(
+        step for step in workflow['jobs']['deploy']['steps']
+        if step['name'] == 'Validate deployment source'
+    )['run']
+    assert 'ai-services/multi-agent-server/llm_client.py' in validation
+    assert 'tests/test_student3_resource_workflow.py' in validation
+
+    deployment_script = (ROOT / 'scripts/cloud/configure-bonus-vm.sh').read_text()
+    assert 'PROJECT="asd-group5-cloud"' in deployment_script
+    assert not any(
+        line.strip().startswith('docker compose down')
+        for line in deployment_script.splitlines()
+    )
 
 
 def test_private_source_archive_excludes_credentials_and_preserves_checkout(tmp_path):
