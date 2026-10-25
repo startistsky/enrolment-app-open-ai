@@ -11,6 +11,14 @@ import pytest
 ROOT = Path(__file__).resolve().parents[3]
 
 
+def test_baseline_health_check_uses_supported_methods_for_disabled_routes():
+    script = (ROOT / 'scripts/cloud/health-check.sh').read_text()
+
+    assert "'GET 8001/api/mcp/course-count'" in script
+    assert "'POST 8001/api/rag/course'" in script
+    assert "request_args=(--silent --show-error -o /dev/null -w '%{http_code}' --request \"$method\")" in script
+
+
 @pytest.mark.parametrize('student', [1, 2, 3, 4, 5])
 def test_cloud_guards_preserve_crud_and_block_all_ai_routes(student, tmp_path):
     code = '''
