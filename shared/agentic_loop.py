@@ -4,11 +4,6 @@ import json
 import sys
 import traceback
 
-import requests
-from mcp import ClientSession
-from mcp.client.streamable_http import streamable_http_client
-
-
 MCP_URL = "http://localhost:9001/mcp"
 RAG_URL = "http://localhost:9101"
 
@@ -27,6 +22,9 @@ def print_step(name, message):
 
 
 async def validate_mcp():
+    from mcp import ClientSession
+    from mcp.client.streamable_http import streamable_http_client
+
     print_section("MCP VALIDATION MODE")
 
     print_step(
@@ -147,6 +145,8 @@ async def validate_mcp():
 
 
 def validate_rag():
+    import requests
+
     print_section("RAG VALIDATION MODE")
 
     endpoint = f"{RAG_URL}/retrieve/resource"
@@ -325,6 +325,22 @@ def parse_args():
     parser.add_argument("--security-report", default="reports/student-1-pre-commit-security-report.md")
     parser.add_argument("--ci-report", default="reports/student-1-post-commit-ci-report.md")
     parser.add_argument("--cloud-report", default="reports/cloud-deployment-report.md")
+    parser.add_argument(
+        "--feature",
+        choices=(
+            "course_management",
+            "assignment_management",
+            "resource_management",
+            "event_management",
+            "career_management",
+        ),
+        help="Select the feature-specific Testing Review profile.",
+    )
+    parser.add_argument(
+        "--deployment-profile",
+        choices=("baseline", "bonus"),
+        help="Select the Cloud Review deployment profile.",
+    )
     parser.add_argument("--log-dir", default="agentic-review-logs")
     parser.add_argument("--output")
     return parser.parse_args()
@@ -347,7 +363,14 @@ def main():
             "cloud-review": (args.cloud_report,),
         }
         try:
-            result = execute_review(args.mode, paths[args.mode], args.log_dir, args.output)
+            result = execute_review(
+                args.mode,
+                paths[args.mode],
+                args.log_dir,
+                args.output,
+                feature=args.feature,
+                deployment_profile=args.deployment_profile,
+            )
         except OSError:
             print("FAIL: Review log/output could not be written.")
             return 1
