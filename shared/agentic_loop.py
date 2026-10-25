@@ -3,12 +3,14 @@ import asyncio
 import json
 import sys
 import traceback
+from pathlib import Path
 
 import requests
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
-
+# preserve R1 agentic loop 
+# added release 2 review by using the release2_reviews.py
 MCP_URL = "http://localhost:9001/mcp"
 RAG_URL = "http://localhost:9101"
 
@@ -322,13 +324,29 @@ def parse_args():
 
     parser.add_argument("--workflow-history", default="ai-services/multi-agent-server/workflow_history.jsonl")
     parser.add_argument("--coordination-audit", default="ai-services/multi-agent-server/coordination_audit.jsonl")
-    parser.add_argument("--security-report", default="reports/student-1-pre-commit-security-report.md")
-    parser.add_argument("--ci-report", default="reports/student-1-post-commit-ci-report.md")
+    parser.add_argument(
+        "--student",
+        choices=("all", "1", "2", "3", "4", "5"),
+        help="Review scope for Multi-Agent, Testing, and Cloud reviews. Defaults to all for Multi-Agent and Student 1 for Testing/Cloud.",
+    )
+    parser.add_argument("--security-report")
+    parser.add_argument("--ci-report")
     parser.add_argument("--cloud-report", default="reports/cloud-deployment-report.md")
     parser.add_argument("--log-dir", default="agentic-review-logs")
     parser.add_argument("--output")
     return parser.parse_args()
 
+
+def testing_report_paths(student, report_dir="reports"):
+    directory = Path(report_dir)
+    combined_security = directory / "testing-review-security-report.json"
+    combined_ci = directory / "testing-review-ci-report.json"
+    if student == "all" or (combined_security.is_file() and combined_ci.is_file()):
+        return str(combined_security), str(combined_ci)
+    return (
+        str(directory / f"student-{student}-pre-commit-security-report.md"),
+        str(directory / f"student-{student}-post-commit-ci-report.md"),
+    )
 
 def main():
     args = parse_args()
@@ -341,13 +359,22 @@ def main():
     if args.mode in ("multi-agent-review", "testing-review", "cloud-review"):
         from release2_reviews import execute_review
 
+        student = args.student or (
+            "all" if args.mode == "multi-agent-review" else "1"
+        )
+        default_security_report, default_ci_report = testing_report_paths(student)
+        security_report = args.security_report or default_security_report
+        ci_report = args.ci_report or default_ci_report
         paths = {
             "multi-agent-review": (args.workflow_history, args.coordination_audit),
-            "testing-review": (args.security_report, args.ci_report),
+            "testing-review": (security_report, ci_report),
             "cloud-review": (args.cloud_report,),
         }
         try:
-            result = execute_review(args.mode, paths[args.mode], args.log_dir, args.output)
+            result = execute_review(
+                args.mode, paths[args.mode], args.log_dir, args.output,
+                student=student,
+            )
         except OSError:
             print("FAIL: Review log/output could not be written.")
             return 1

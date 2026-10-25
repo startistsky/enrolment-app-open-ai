@@ -33,7 +33,7 @@ services:
       DATABASE_API_URL: http://student3-database:5004
       RAG_SERVER_URL: ''
       MCP_SERVER_URL: ''
-      AI_SERVICES_ENABLED: 'false'
+      AI_SERVICES_ENABLED: 'true'
       OLLAMA_URL: ''
       MULTI_AGENT_SERVER_URL: ''
       FLASK_DEBUG: 'false'
@@ -102,11 +102,12 @@ services:
     environment:
       AI_SERVICE_URL: ''
       DATABASE_SERVICE_URL: http://database:5002
-      AI_SERVICES_ENABLED: 'false'
+      AI_SERVICES_ENABLED: ''
       OLLAMA_URL: ''
       MCP_SERVER_URL: ''
       RAG_SERVER_URL: ''
       MULTI_AGENT_SERVER_URL: ''
+      MULTI_AGENT_ENABLED: ''
       FLASK_DEBUG: 'false'
     depends_on:
       database:
@@ -174,7 +175,7 @@ services:
       RAG_SERVER_URL: ''
       MULTI_AGENT_SERVER_URL: ''
       MULTI_AGENT_TIMEOUT_SECONDS: '390'
-      AI_SERVICES_ENABLED: 'false'
+      AI_SERVICES_ENABLED: ''
       OLLAMA_URL: ''
       FLASK_DEBUG: 'false'
     depends_on:
@@ -240,7 +241,7 @@ services:
       OLLAMA_URL: ''
       OLLAMA_MODEL: qwen2.5:0.5b
       RAG_SERVER_URL: ''
-      AI_SERVICES_ENABLED: 'false'
+      AI_SERVICES_ENABLED: ''
       AI_SERVICE_URL: ''
       MCP_SERVER_URL: ''
       MULTI_AGENT_SERVER_URL: ''
@@ -299,7 +300,7 @@ services:
       DATABASE_PATH: /data/career.db
       MCP_SERVER_URL: ''
       RAG_SERVER_URL: ''
-      AI_SERVICES_ENABLED: 'false'
+      AI_SERVICES_ENABLED: ''
       OLLAMA_URL: ''
       MULTI_AGENT_SERVER_URL: ''
       FLASK_DEBUG: 'false'

@@ -6,7 +6,7 @@ on:
       deploy_ref:
         description: "Reviewed and pushed branch to deploy"
         required: true
-        default: feature/azure-bonus-deployment
+        default: main
         type: string
 
 permissions:
@@ -45,6 +45,8 @@ jobs:
           test -f rag-server/Dockerfile.bonus
           test -f ai-services/multi-agent-server/Dockerfile.bonus
           test -f student-5/backend/agent/agent_tools.py
+          test -f ai-services/multi-agent-server/llm_client.py
+          test -f ai-services/multi-agent-server/tests/test_student3_resource_workflow.py
           test -f mcp-server/tools/student1_course_tools.py
           test -f mcp-server/tools/student2_assignment_tools.py
           test -f mcp-server/tools/student4_event_tools.py

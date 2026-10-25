@@ -44,3 +44,15 @@ class AuditGateTests(unittest.TestCase):
 
     def test_clean_audit_passes(self):
         self.assertEqual(audit.audit_result({'dependencies': []}, 0, True), 0)
+
+    def test_all_student_dependency_manifests_are_audited(self):
+        for student, components in {
+            1: ('requirements.txt', 'backend/requirements.txt', 'database/requirements.txt',
+                'tests/requirements.txt'),
+            2: ('backend/requirements.txt', 'database/requirements.txt', 'tests/requirements.txt'),
+            3: ('backend/requirements.txt', 'database/requirements.txt', 'tests/requirements.txt'),
+            4: ('backend/requirements.txt', 'database/requirements.txt'),
+            5: ('backend/requirements.txt', 'database/requirements.txt', 'tests/requirements.txt'),
+        }.items():
+            for component in components:
+                self.assertIn(f'student-{student}/{component}', audit.REQUIREMENTS)

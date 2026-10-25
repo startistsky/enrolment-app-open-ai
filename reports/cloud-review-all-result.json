@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-10-25T07:20:23.841374+00:00",
+  "review_mode": "cloud-review",
+  "evidence_paths": [
+    "reports/cloud-deployment-report.md"
+  ],
+  "evidence_reviewed": [
+    "reports/cloud-deployment-report.md"
+  ],
+  "observations": [
+    "Student 1 cloud validation passed: frontend_access",
+    "Student 1 cloud validation passed: backend_api_access",
+    "Student 1 cloud validation passed: database_connectivity",
+    "Student 1 cloud validation passed: crud_validation",
+    "Student 1 cloud validation passed: persistence_validation",
+    "Student 2 cloud validation passed: frontend_access",
+    "Student 2 cloud validation passed: backend_api_access",
+    "Student 2 cloud validation passed: database_connectivity",
+    "Student 2 cloud validation passed: crud_validation",
+    "Student 3 cloud validation passed: frontend_access",
+    "Student 3 cloud validation passed: backend_api_access",
+    "Student 3 cloud validation passed: database_connectivity",
+    "Student 3 cloud validation passed: crud_validation",
+    "Student 4 cloud validation passed: frontend_access",
+    "Student 4 cloud validation passed: backend_api_access",
+    "Student 4 cloud validation passed: database_connectivity",
+    "Student 4 cloud validation passed: crud_validation",
+    "Student 5 cloud validation passed: frontend_access",
+    "Student 5 cloud validation passed: backend_api_access",
+    "Student 5 cloud validation passed: database_connectivity",
+    "Student 5 cloud validation passed: crud_validation"
+  ],
+  "risks_or_gaps": [
+    "Student 2 cloud validation missing or failed: persistence_validation",
+    "Student 3 cloud validation missing or failed: persistence_validation",
+    "Student 4 cloud validation missing or failed: persistence_validation",
+    "Student 5 cloud validation missing or failed: persistence_validation",
+    "Service must be documented disabled by default: ai_mode",
+    "Service must be documented disabled by default: mcp",
+    "Service must be documented disabled by default: rag",
+    "Service must be documented disabled by default: multi_agent",
+    "Final human approval evidence missing or release not accepted"
+  ],
+  "recommendations": [
+    "Supply or correct missing evidence and rerun."
+  ],
+  "validation_status": "FAIL",
+  "student_scope": "all"
+}

@@ -1,0 +1,105 @@
+{
+  "students": {
+    "1": {
+      "student": "1",
+      "commit": "350197ed9d6b7380d6a0b0c0afc8e179c1657e3e",
+      "run_url": "https://github.com/startistsky/enrolment-app-open-ai/actions/runs/40096639035",
+      "workflow_result": "succeeded",
+      "endpoint_tests": {
+        "POST /api/multi-agent/course-workflow": "PASS",
+        "POST /api/multi-agent/course-workflow/<workflow_id>/decision": "PASS"
+      },
+      "endpoint_test_evidence": {
+        "source": "GitHub Actions Post-commit endpoint tests step and local pytest",
+        "local_command": "pytest student-1/tests/test_multi_agent_integration.py::test_course_workflow_endpoint_proxy student-1/tests/test_multi_agent_integration.py::test_course_workflow_decision_endpoint_proxy",
+        "local_result": "2 passed"
+      },
+      "steps": {
+        "Post-commit endpoint tests": "succeeded",
+        "Run Student 1 tests": "succeeded",
+        "Build Student 1 database image": "succeeded",
+        "Build Student 1 backend image": "succeeded",
+        "Build Student 1 frontend image": "succeeded"
+      }
+    },
+    "2": {
+      "student": "2",
+      "commit": "5651dc70fbeaa33faf7031e12bfd4f0e3ee43457",
+      "run_url": "https://github.com/startistsky/enrolment-app-open-ai/actions/runs/40096233236",
+      "workflow_result": "succeeded",
+      "endpoint_tests": {
+        "POST /api/multi-agent/assignment-workflow": "PASS",
+        "POST /api/multi-agent/assignment-workflow/<workflow_id>/decision": "PASS"
+      },
+      "endpoint_test_evidence": {
+        "source": "GitHub Actions Student 2 endpoint and Multi-Agent tests step and local pytest",
+        "local_command": "pytest student-2/tests ai-services/multi-agent-server/tests/test_student2_assignment_workflow.py",
+        "local_result": "8 passed"
+      },
+      "steps": {
+        "Run Student 2 endpoint and Multi-Agent tests": "succeeded",
+        "Build Student 2 containers": "succeeded"
+      }
+    },
+    "3": {
+      "student": "3",
+      "commit": "5651dc70fbeaa33faf7031e12bfd4f0e3ee43457",
+      "run_url": "https://github.com/startistsky/enrolment-app-open-ai/actions/runs/40096233219",
+      "workflow_result": "succeeded",
+      "endpoint_tests": {
+        "POST /api/multi-agent/resource": "PASS",
+        "POST /api/multi-agent/<workflow_id>/decision": "PASS"
+      },
+      "endpoint_test_evidence": {
+        "source": "Local pytest on checkout 9488e8d with uncommitted endpoint regression tests",
+        "local_command": "pytest student-3/tests/test_backend_ci.py ai-services/multi-agent-server/tests/test_student3_resource_workflow.py",
+        "local_result": "15 passed"
+      },
+      "steps": {
+        "Run Student 3 Backend API CI tests": "succeeded",
+        "Run Student 3 Resource Workflow tests": "succeeded",
+        "Build Student 3 database": "succeeded",
+        "Build Student 3 backend": "succeeded",
+        "Build Student 3 frontend": "succeeded"
+      }
+    },
+    "4": {
+      "student": "4",
+      "commit": "350197ed9d6b7380d6a0b0c0afc8e179c1657e3e",
+      "run_url": "https://github.com/startistsky/enrolment-app-open-ai/actions/runs/40096639038",
+      "workflow_result": "succeeded",
+      "endpoint_tests": {
+        "POST /api/multi-agent/event-workflow": "PASS",
+        "POST /api/multi-agent/event-workflow/<workflow_id>/decision": "PASS"
+      },
+      "endpoint_test_evidence": {
+        "source": "Local full Student 4 pytest suite on checkout 9488e8d with uncommitted decision endpoint regression test",
+        "local_command": "pytest student-4/tests",
+        "local_result": "29 passed"
+      },
+      "steps": {
+        "Run Student 4 tests": "succeeded",
+        "Build Student 4 Docker images": "succeeded"
+      }
+    },
+    "5": {
+      "student": "5",
+      "commit": "5651dc70fbeaa33faf7031e12bfd4f0e3ee43457",
+      "run_url": "https://github.com/startistsky/enrolment-app-open-ai/actions/runs/40096233240",
+      "workflow_result": "succeeded",
+      "endpoint_tests": {
+        "POST /api/workflow/career": "PASS",
+        "POST /api/workflow/<workflow_id>/decision": "PASS"
+      },
+      "endpoint_test_evidence": {
+        "source": "Local pytest on checkout 9488e8d with uncommitted endpoint regression tests",
+        "local_command": "pytest student-5/tests/test_multi_agent_routes.py ai-services/multi-agent-server/tests/test_student5_career_workflow.py",
+        "local_result": "14 passed"
+      },
+      "steps": {
+        "Run Student 5 Career Workflow tests": "succeeded",
+        "Build Student 5 Docker services": "succeeded"
+      }
+    }
+  }
+}

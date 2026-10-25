@@ -40,7 +40,7 @@ seed()
 @app.before_request
 def cloud_ai_guard():
     if os.getenv("AI_SERVICES_ENABLED", "true").lower() == "false" and (
-        request.blueprint == "ai_routes"
+        request.blueprint in {"ai_routes", "multi_agent_routes"}
     ):
         return jsonify(error="AI, MCP, RAG and Multi-Agent services are disabled in this deployment"), 503
 

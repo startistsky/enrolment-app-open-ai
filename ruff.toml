@@ -26,6 +26,11 @@ select = ["S"]
 # Student 3 database API listens on the container network.
 "student-3/database/database_api.py" = ["S104"]
 
+# Student 4 pytest assertions and container listeners are intentional.
+"student-4/tests/*.py" = ["S101"]
+"student-4/backend/app.py" = ["S104"]
+"student-4/database/app.py" = ["S104"]
+
 # Student 5 
 "student-5/tests/*.py" = ["S101"]
 "student-5/backend/app.py" = ["S105"]

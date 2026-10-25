@@ -62,7 +62,7 @@ ai-services/multi-agent-server/coordination_audit.jsonl
 .venv*/
 .ruff_cache/
 
-# Local assessment review execution evidence
+# Local generated security and assessment review evidence
 agentic-review-logs/
 
 # Preserve pre-refactor local evidence until manually migrated.

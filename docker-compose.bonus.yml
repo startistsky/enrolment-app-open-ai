@@ -66,7 +66,7 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
-  # B3 - Initialise Student 3 RAG Knowledge
+  # B3 - Initialise RAG Knowledge from S3 and S5
   rag-init:
     build:
       context: .
@@ -74,7 +74,7 @@ services:
     command:
       - python
       - -c
-      - "from retrievers.student3_resource_retriever import index_knowledge as index_resources; from retrievers.student5_career_retriever import index_knowledge as index_career; print(index_resources()); print(index_career())"
+      - "from retrievers.student3_resource_retriever import index_knowledge as index_resources; from retrievers.student5_career_retriever import ensure_knowledge_indexed as ensure_career; resource_result=index_resources(); career_result=ensure_career(); print(resource_result); print(career_result); assert resource_result.get('status') == 'indexed'; assert career_result.get('success') is True"
     volumes:
       - rag_bonus_chroma:/app/chroma
       - rag_bonus_chroma_data:/app/chroma-data

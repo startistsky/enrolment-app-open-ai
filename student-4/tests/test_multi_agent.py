@@ -99,3 +99,30 @@ def test_human_review_rejects_invalid_decision():
             )
 
     assert response.status_code == 400
+
+
+def test_human_review_submits_valid_decision():
+    app.config["TESTING"] = True
+    upstream = Mock()
+    upstream.status_code = 200
+    upstream.json.return_value = {
+        "workflow_id": "test-123",
+        "status": "completed",
+        "human_review": {"status": "completed", "decision": "Accept"},
+    }
+
+    with patch.dict(os.environ, {"MULTI_AGENT_ENABLED": "true"}), patch(
+        "multi_agent.requests.post",
+        return_value=upstream,
+    ) as mock_post:
+        with app.test_client() as client:
+            response = client.post(
+                "/api/multi-agent/event-workflow/test-123/decision",
+                json={"decision": "Accept", "reason": "Reviewed"},
+            )
+
+    assert response.status_code == 200
+    assert response.get_json()["human_review"]["decision"] == "Accept"
+    assert mock_post.call_args.args[0].endswith(
+        "/workflow/test-123/decision"
+    )
