@@ -1,4 +1,3 @@
 -r ../backend/requirements.txt
-pytest==9.0.3
-chromadb
-sentence-transformers
+-r ../../rag-server/requirements.txt
+pytest
