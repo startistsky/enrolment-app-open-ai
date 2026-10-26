@@ -17,6 +17,9 @@ def test_baseline_health_check_uses_supported_methods_for_disabled_routes():
     assert "'GET 8001/api/mcp/course-count'" in script
     assert "'POST 8001/api/rag/course'" in script
     assert "request_args=(--silent --show-error -o /dev/null -w '%{http_code}' --request \"$method\")" in script
+    assert "'POST 8005/api/ai/chat'" not in script
+    assert 'exec -T student5-backend' in script
+    assert 'Expected disabled 503 from Student 5 AI' in script
 
 
 @pytest.mark.parametrize('student', [1, 2, 3, 4, 5])
