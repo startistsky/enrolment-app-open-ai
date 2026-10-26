@@ -23,7 +23,6 @@ disabled_checks=(
   'POST 8002/api/ai/recommendations'
   'POST 8003/recommend'
   'POST 8000/api/ai'
-  'POST 8005/api/ai/chat'
 )
 if [[ ! -f docker-compose.bonus.yml ]]; then
   for check in "${disabled_checks[@]}"; do
@@ -35,6 +34,8 @@ if [[ ! -f docker-compose.bonus.yml ]]; then
     code=$(curl "${request_args[@]}" "http://127.0.0.1:$endpoint")
     [[ "$code" == 503 ]] || { echo "Expected disabled 503 from $endpoint, received $code" >&2; exit 1; }
   done
+  docker compose -p asd-group5-cloud -f docker-compose.cloud.yml exec -T student5-backend \
+    python -c 'import urllib.error, urllib.request; request=urllib.request.Request("http://127.0.0.1:8005/api/ai/chat", data=b"{}", headers={"Content-Type":"application/json"}, method="POST"); exec("try:\n response=urllib.request.urlopen(request, timeout=5)\n status=response.status\nexcept urllib.error.HTTPError as error:\n status=error.code"); print(status); assert status == 503, f"Expected disabled 503 from Student 5 AI, received {status}"'
 fi
 echo 'Health/read checks and deployment-mode AI checks passed. This does not prove CRUD writes or human release approval.'
 if [[ -f docker-compose.bonus.yml ]]; then
