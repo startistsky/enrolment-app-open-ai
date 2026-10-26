@@ -16,10 +16,23 @@ for endpoint in '8081/api/courses' '8082/api/assignments' '8083/resources' '8080
   curl --fail --silent --show-error "http://127.0.0.1:$endpoint" >/dev/null
   echo "Database-backed read $endpoint: reachable"
 done
-disabled_endpoints=('8001/api/mcp/course-count' '8001/api/rag/course' '8001/api/multi-agent/course-workflow' '8002/api/ai/recommendations' '8003/recommend' '8000/api/ai' '8005/api/ai/chat')
+disabled_checks=(
+  'GET 8001/api/mcp/course-count'
+  'POST 8001/api/rag/course'
+  'POST 8001/api/multi-agent/course-workflow'
+  'POST 8002/api/ai/recommendations'
+  'POST 8003/recommend'
+  'POST 8000/api/ai'
+  'POST 8005/api/ai/chat'
+)
 if [[ ! -f docker-compose.bonus.yml ]]; then
-  for endpoint in "${disabled_endpoints[@]}"; do
-    code=$(curl --silent --show-error -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$endpoint")
+  for check in "${disabled_checks[@]}"; do
+    read -r method endpoint <<< "$check"
+    request_args=(--silent --show-error -o /dev/null -w '%{http_code}' --request "$method")
+    if [[ "$method" == POST ]]; then
+      request_args+=(--header 'Content-Type: application/json' --data '{}')
+    fi
+    code=$(curl "${request_args[@]}" "http://127.0.0.1:$endpoint")
     [[ "$code" == 503 ]] || { echo "Expected disabled 503 from $endpoint, received $code" >&2; exit 1; }
   done
 fi
